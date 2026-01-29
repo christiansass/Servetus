@@ -171,6 +171,13 @@ Open an issue or submit a PR.
 
 ---
 
+## Under Consideration
+
+- **Config onboarding** — Setup guide for initial configuration (timezone, projects, tags, spelling preferences)
+- **Split rules from values** — Cleaner separation between system specs (Toolkit) and user settings (config)
+
+---
+
 ## License
 
 MIT — because sovereign knowledge should be free.
