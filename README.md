@@ -1,26 +1,30 @@
 # Servetus
 
-**The sovereign knowledge engine for Nextcloud + Obsidian + the Web.**
+**A human-readable operating system for personal knowledge sovereignty.**
 
 > *"There is no trust without truth, and there is no assistant without trust."*
+
+**Current Version: 0.2.0** · [Changelog](CHANGELOG.md)
 
 ---
 
 ## What Is Servetus?
 
-Servetus is a **reality-grounded personal knowledge architecture** — an open standard for capturing, organizing, and preserving your life's context in a way that:
+Servetus is an **operating system where Claude is the kernel and the file system is the program.**
 
-- **Remains human-readable** when all systems fail
-- **Chains AI interpretations to verifiable evidence**
-- **Keeps you sovereign** over your own memory
+- **Kernel:** Claude (or any LLM) — processes instructions, executes operations
+- **File system:** Plain Markdown in Obsidian — human-readable, no binaries
+- **System libraries:** `Toolkit/` — specs that define behavior
+- **User space:** `config/` — personal settings
+- **Shell:** Conversation — the command interface
 
-Servetus is not an AI assistant. It's the **memory architecture that AI assistants should write to** — and that you can audit, edit, and trust.
+Everything is human-readable. When all systems fail, you open the folder and your entire life is still there.
 
 ---
 
 ## Why Servetus?
 
-Modern AI tools promise to remember everything for you. But they store your life in opaque databases, process it through black-box models, and return interpretations you cannot verify.
+Modern AI tools store your life in opaque databases, process it through black-box models, and return interpretations you cannot verify.
 
 **When the AI says "you discussed X with Y on Z date" — how do you know that's true?**
 
@@ -50,39 +54,72 @@ The AI sits in the middle of the stack, not at the top. It serves the system. It
 
 ---
 
+## File System (Altitude Model)
+
+Folders are numbered by zoom level — ground truth at the bottom, big picture at the top:
+
+```
+Servetus/
+├── 00-system/            # System files, CLI, VERSION
+├── 01-witnesses/         # Ground truth — artifacts, evidence (most zoomed in)
+├── 02-daily-logs/        # Daily capture stream
+├── 03-events/            # Discrete moments in time
+├── 04-projects/          # Work clusters with deliverables
+├── 05-arcs/              # Long-running narrative threads
+├── 06-radar/             # Current viewport — what you're tracking
+├── 07-storymap/          # 30,000ft view (most zoomed out)
+├── Toolkit/              # System specs (the instruction set)
+├── config/               # User settings (gitignored for privacy)
+└── templates/            # Note templates
+```
+
+**Altitude principle:** Witnesses anchor reality. Events aggregate witnesses. Arcs thread events. Storymap shows the whole map.
+
+---
+
 ## Core Data Model
 
-Servetus defines six fundamental record types:
+| Type | Purpose | Altitude |
+|------|---------|----------|
+| **Witness** | Evidence that grounds events in reality (photo, recording, transcript) | 01 |
+| **Daily Log** | Stream-of-consciousness capture, timestamped | 02 |
+| **Event** | A discrete moment in time (meeting, conversation, photo cluster) | 03 |
+| **Project** | Mid-length goal with deliverables | 04 |
+| **Arc** | A long-running storyline (relationship, life chapter) | 05 |
+| **Storymap** | The full map of your life | 07 |
 
-| Type | Purpose |
-|------|---------|
-| **Event** | A discrete moment in time (meeting, photo cluster, conversation) |
-| **Arc** | A long-running storyline (project, relationship, life chapter) |
-| **Witness** | Evidence that grounds events in reality (photo, recording, transcript) |
-| **Person** | Linked to CardDAV/Nextcloud Contacts with temporal relationships |
-| **Daily Log** | Stream-of-consciousness capture, timestamped and tagged |
-| **Project** | Mid-length goal with deliverables, connected to arcs and events |
+All records are **plain Markdown** with **YAML frontmatter** — readable by humans, parseable by machines.
 
-All records are stored as **plain Markdown** with **YAML frontmatter** — readable by humans, parseable by machines, editable in any text editor.
+---
+
+## System Queries
+
+Ask the AI:
+
+| Query | What happens |
+|-------|--------------|
+| "What version?" | Reads `00-system/VERSION`, reports current release |
+| "What's new?" | Reads `CHANGELOG.md`, summarizes recent changes |
+| "System status" | Reports version, structure health, config state |
 
 ---
 
 ## Architecture Principles
 
 ### 1. Human-Readable Always
-If Servetus dies tomorrow, you open the folder in Obsidian (or any text editor) and your entire life is still there. No database exports. No proprietary formats. Just files.
+No binary blobs. No compiled code. No proprietary formats. Just files.
 
-### 2. Sovereignty by Default
-Your data lives in **your** Nextcloud. Your notes live in **your** Obsidian vault. Servetus is the orchestration layer — it doesn't own anything.
+### 2. File System IS the Program
+Structure defines behavior. Move a file, change the system.
 
-### 3. AI as Servant, Not Authority
-LLMs are useful tools for processing, summarizing, and retrieving. But they don't get to be the final word on what happened. That's above their pay grade.
+### 3. AI as Kernel, Not Authority
+Claude executes instructions. You make decisions. The AI is a servant, not a master.
 
-### 4. Reflection Over Generation
-Servetus is not about generating content. It's about **organizing your stream of consciousness** — capturing what you actually said, linking it to evidence, and making it findable.
+### 4. Sovereignty by Default
+Your data lives in YOUR Nextcloud. Your notes live in YOUR vault. Servetus orchestrates — it doesn't own.
 
-### 5. Forensic Usability
-Every record can be audited. Every AI interpretation can be checked against source material. If the model hallucinates, you have ground truth to compare.
+### 5. Version Everything
+`00-system/VERSION` + `CHANGELOG.md` — know what you're running.
 
 ---
 
@@ -90,71 +127,51 @@ Every record can be audited. Every AI interpretation can be checked against sour
 
 [Michael Servetus](https://en.wikipedia.org/wiki/Michael_Servetus) (1511–1553) was burned at the stake for heresy — not because he was wrong, but because he challenged the authority's interpretation of truth.
 
-When it's one man's word against another, whoever controls the context window gets to declare heresy.
-
 **LLMs are not neutral.** They're prediction engines that confabulate with confidence. Without a witness chain, you're trusting the institution to tell you your own story.
 
 Servetus (the system) keeps any AI accountable to reality.
 
-In the end, we let God be the judge — not the LLM.
-
 ---
 
-## Current Status
+## Current Status: v0.2.0
 
-**Phase: Specification / Whitepaper**
+**Implemented:**
+- ✅ Altitude-based folder structure
+- ✅ Witness template with time-bound exhibits + validity scoring
+- ✅ Radar system for situational awareness
+- ✅ VERSION file for system queries
+- ✅ Frontmatter schema with radar properties
+- ✅ System specs (Toolkit) separated from user config
+- ✅ Sharing model spec (future architecture)
 
-This repository contains:
-- ✅ Data model definitions (Events, Arcs, Witnesses, People)
-- ✅ Frontmatter schema (YAML standard for all records)
-- ✅ Export rules (Obsidian-compatible Markdown output)
-- ✅ Topic segmentation protocol
-- ✅ Sorting and placement rules
-- ✅ Time and spelling standards
-- ✅ Multi-vault architecture design
-
-**Not yet implemented:**
+**In Progress:**
 - ⏳ Voice capture pipeline
-- ⏳ LLM orchestration layer
 - ⏳ StoryMap visualization
-- ⏳ Chronology plugin for Nextcloud
-
-We're publishing the architecture now because **the concepts matter more than the code** — and the community needs to see what reality-grounded AI memory should look like.
-
----
-
-## File Structure
-
-```
-/spec
-  S00.01-00-00-servetus-bootloader.md
-  S00.01-01-00-servetus-export-rules.md
-  S00.01-01-10-servetus-topic-segmentation.md
-  S00.01-01-20-servetus-sorting-and-placement-protocol.md
-  S00.01-02-00-servetus-frontmatter-schema.md
-  S00.01-02-10-servetus-time-rules.md
-  S00.01-02-20-servetus-spelling-rules.md
-  S00.01-10-00-project-index.md
-  S00.01-10-10-project-tags.md
-  S00.01-20-00-overrides.md
-
-/docs
-  architecture.md
-  data-model.md
-  witness-chain.md
-  multi-vault.md
-```
+- ⏳ Multi-user witness validation
+- ⏳ Permission layers for shared storymap
 
 ---
 
 ## Integration Points
 
-Servetus is designed to work with:
+Servetus works with:
 
-- **Nextcloud** — Files, Contacts (CardDAV), Calendar (CalDAV), Tasks
-- **Obsidian** — Vault storage, graph view, daily notes, templates
-- **Any LLM** — Claude, GPT, Grok, local models — all treated as workers, not authorities
-- **StoryMap** (future) — Multi-lane timeline visualization
+- **Nextcloud** — Files, Contacts (CardDAV), Calendar (CalDAV)
+- **Obsidian** — Vault storage, graph view, templates
+- **Any LLM** — Claude, GPT, local models — all treated as kernels, not authorities
+- **StoryMap** (future) — Social layer with granular permissions
+
+---
+
+## Quick Start
+
+1. Clone this repo into your Obsidian vault
+2. Open in Obsidian
+3. Read `Toolkit/S00.01-00-00-servetus-bootloader*` to understand the system
+4. Customize `config/` with your projects and tags
+5. Start capturing in `02-daily-logs/`
+
+For AI assistants: Read `CLAUDE.md` first (create locally — it's gitignored).
 
 ---
 
@@ -162,7 +179,7 @@ Servetus is designed to work with:
 
 This is an open standard. We welcome:
 
-- Feedback on the data model
+- Feedback on the architecture
 - Implementation experiments
 - Integration proposals
 - Philosophy discussions
@@ -171,23 +188,9 @@ Open an issue or submit a PR.
 
 ---
 
-## Under Consideration
-
-- **Config onboarding** — Setup guide for initial configuration (timezone, projects, tags, spelling preferences)
-- **Split rules from values** — Cleaner separation between system specs (Toolkit) and user settings (config)
-
----
-
 ## License
 
 MIT — because sovereign knowledge should be free.
-
----
-
-## Links
-
-- [Obsidian](https://obsidian.md) — The recommended knowledge management interface
-- [Nextcloud](https://nextcloud.com) — The recommended self-hosted storage layer
 
 ---
 
