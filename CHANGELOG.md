@@ -7,6 +7,20 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [0.2.1] - 2026-01-31
+
+### Changed
+- **Toolkit filename convention** - Removed date suffixes from spec filenames
+  - Before: `S00.01-00-00-servetus-bootloader(2026-01-16).md`
+  - After: `S00.01-00-00-servetus-bootloader.md`
+- **Version tracking** - Added `system_version` field to frontmatter schema
+  - Version alignment now tracked in frontmatter, not filenames
+  - All specs updated to `system_version: 0.2.0`
+- **Cleaned up specs** - Removed errant FILENAME headers and code block wrappers from several spec files
+- **Updated internal links** - All wikilinks now use clean filenames without date suffixes
+
+---
+
 ## [0.2.0] - 2026-01-30
 
 ### Added
