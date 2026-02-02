@@ -1,5 +1,40 @@
+# Obsidian internals
 .obsidian/
+
+# Local AI preload (personal)
 CLAUDE.md
 
-# Personal config (projects, tags, overrides)
+# Personal config
 config/
+
+# ======================
+# Altitude folders: track specs, ignore content
+# ======================
+
+# Witnesses (ground truth)
+01-witnesses/**
+!01-witnesses/_witnesses-spec.md
+
+# Daily logs (stream capture)
+02-daily-logs/**
+!02-daily-logs/_daily-logs-spec.md
+
+# Events (discrete moments)
+03-events/**
+!03-events/_events-spec.md
+
+# Projects (work clusters)
+04-projects/**
+!04-projects/_projects-spec.md
+
+# Arcs (narrative threads)
+05-arcs/**
+!05-arcs/_arcs-spec.md
+
+# Radar (situational awareness)
+06-radar/**
+!06-radar/_radar-spec.md
+
+# Storymap (30,000ft view)
+07-storymap/**
+!07-storymap/_storymap-spec.md
