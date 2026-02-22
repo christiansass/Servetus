@@ -8,6 +8,16 @@
 
 ---
 
+## Independent Validation
+
+Servetus was designed without knowledge of [Fabric](https://github.com/danielmiessler/fabric), Daniel Miessler's open-source framework for augmenting humans with AI. The two projects independently converged on the same structural insight: **plain Markdown as behavior definition, AI as executor, humans in control of the process.**
+
+The overlap is in the plumbing — how you tell an LLM what to do via text files. The divergence is in the thesis. Fabric solved *"how do I reuse good prompts."* Servetus is solving *"how do I trust what an AI tells me about my own life."*
+
+That these projects arrived at the same file format from completely different problems isn't a coincidence — it's confirmation that the pattern is real and the need is wider than any single implementation.
+
+---
+
 ## What Is Servetus?
 
 Servetus is an **operating system where Claude is the kernel and the file system is the program.**
