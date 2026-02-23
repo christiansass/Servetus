@@ -82,6 +82,24 @@ Servetus/
 - Privacy pyramid: witnesses private by default, events selectively shareable, storymap public surface
 - Redaction layer: originals never modified, redactions visible and documented
 
+### Destination trust tiers (HARD CONSTRAINT):
+Data leaving the vault must respect trust levels. This is not optional.
+
+| Tier | Destination | Allowed Content |
+|------|------------|-----------------|
+| **Sovereign** | Nextcloud / self-hosted | Everything — vault data, logs, witnesses, credentials |
+| **Controlled** | Private Git repo | Code, specs, architecture. NO personal data, NO session logs |
+| **Public** | Public Git repo | README, Philosophy, templates. The standard, not the contents |
+| **Transient** | This instance (Claude/LLM) | Processing only. No credential persistence. Output flows UP |
+
+**Enforce this:**
+- `01-witnesses/`, `02-daily-logs/`, `06-radar/` → Sovereign tier ONLY. Do not push to Git.
+- `00-system/`, `Toolkit/`, `templates/` → Controlled tier acceptable
+- `README.md`, `Philosophy.md`, `LICENSE` → Public tier acceptable
+- Credentials, tokens → NEVER persist. Use revocable scoped tokens only. Warn user if they provide credentials in chat.
+
+If the only available transport is below the required trust tier, **flag the mismatch to the user** before proceeding. Do not silently push personal vault data to GitHub.
+
 ### General behavior:
 - Read the Toolkit specs before making structural decisions
 - Never store secrets (tokens, passwords, API keys) — redact as `[REDACTED]`
