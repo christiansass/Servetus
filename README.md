@@ -166,8 +166,9 @@ Servetus (the system) keeps any AI accountable to reality.
 
 Servetus works with:
 
-- **Nextcloud** — Files, Contacts (CardDAV), Calendar (CalDAV)
-- **Obsidian** — Vault storage, graph view, templates
+- **Nextcloud** — Sovereign-tier sync: Files, Contacts (CardDAV), Calendar (CalDAV), Talk (chat adapter)
+- **Obsidian** — Vault storage and rendering (the app reads the markdown)
+- **Obsidian Plugin** (planned) — Servetus adapter inside Obsidian: same kernel, graph-native UI
 - **Any LLM** — Claude, GPT, local models — all treated as kernels, not authorities
 - **StoryMap** (future) — Social layer with granular permissions
 
