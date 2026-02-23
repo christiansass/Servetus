@@ -102,6 +102,34 @@ This isn't just architecture. It's epistemology. It's a statement about what get
 
 ---
 
+## Submission, Not Collection
+
+Every piece of data in a Servetus vault is there because someone put it there deliberately.
+
+This sounds obvious. It isn't. It's the opposite of how every other system works.
+
+When you take a photo on your phone, it enters a pipeline you didn't design and don't control. It gets uploaded to a cloud service. Its EXIF metadata — GPS coordinates, device identifiers, timestamps, camera settings — gets ingested into a profile. Its contents get analyzed by machine learning models. It becomes training data, advertising signal, behavioral prediction fuel. You "agreed" to this in a license agreement you didn't read, and the agreement gives the platform rights you didn't intend to grant.
+
+You took a photo of your kid at the park. You didn't opt into feeding a facial recognition model.
+
+Servetus inverts this entirely. Nothing enters a vault passively. There is no background sync. There is no automatic upload. There is no dragnet.
+
+When you submit an artifact — a recording, a photo, a document — into a witness, you are performing a **deliberate act of evidentiary submission**. You are saying: *"This happened. I am placing this into my record. I intend for this to be preserved, organized, and available for verification."*
+
+That intentionality changes everything:
+
+- **Legally**: Evidence submitted with intent has different standing than data collected passively. You know what's in your vault because you put it there.
+- **Ethically**: You aren't surveilling anyone. You're documenting, with awareness and purpose. The people in the room can do the same thing with their own vaults — that's the cross-vault corroboration model.
+- **Architecturally**: There is no ingestion pipeline to exploit. No API scraping your camera roll. No background process mining your files. The vault boundary is absolute — nothing crosses it without an explicit human action.
+
+This is not a collection system. It's a **filing system for evidence you chose to preserve**.
+
+The difference between a security camera and a witness statement is intent. A camera records everything indiscriminately. A witness says: *"I was there. This is what I observed. I am putting my name on it."*
+
+Every artifact in a Servetus vault is a witness statement, not surveillance footage.
+
+---
+
 ## Sovereignty Is Not Privacy
 
 "Privacy" means others can't see your data.
