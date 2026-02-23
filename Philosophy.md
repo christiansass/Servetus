@@ -162,6 +162,27 @@ And yes — there should always be a version of the vault that works with nothin
 
 A fully connected vault is more powerful. A minimal vault is still a vault. The floor is sovereignty. The ceiling is up to you.
 
+### The Right to Exclude
+
+Consent isn't just about what you include. It's equally about what you choose to leave out.
+
+Hosting all of this on your own infrastructure doesn't create risk — it creates *capability*. The risk comes from not having the choice. When a platform decides what gets ingested into your profile, you have no exclusion mechanism. When you control the vault, exclusion is as deliberate and meaningful as inclusion.
+
+There are legitimate reasons to keep something out of an evidence-grade memory system:
+
+- **Off-the-record conversations** — something said with a mutual understanding that it wouldn't be documented
+- **Confidential disclosures** — information someone shared with you in trust, not for the record
+- **Privileged communications** — attorney-client advice that becomes discoverable if you file it into an evidence system; medical conversations protected by HIPAA
+- **Incomplete thoughts** — drafts, speculation, thought experiments that aren't ready to be "on record"
+- **Personal moments** — things you want to *remember* but not *file*, because not everything needs to be evidence
+- **Strategic omission** — sometimes the smart legal move is to *not* create a record
+
+The system must respect this. A vault that records everything by default is a surveillance tool with a different label. A vault that records nothing until you say so is a consent system.
+
+This means the architecture must support deliberate gaps. Not every moment needs a witness. Not every conversation needs a transcript. Not every calendar entry needs to feed context. The absence of a record is itself a valid choice — and the system should never make you feel like you're "missing" data by choosing not to file it.
+
+**Inclusion is an act of preservation. Exclusion is an act of discretion. Both require sovereignty.**
+
 ---
 
 ## Sovereignty Is Not Privacy
