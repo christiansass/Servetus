@@ -157,6 +157,34 @@ And trust requires truth. And truth requires evidence. And evidence requires wit
 
 ---
 
+## The Fabrication Problem
+
+The trust gap isn't just about AI memory anymore. It's about reality itself.
+
+In 2025, generating a convincing fake video requires minutes and minimal skill. Voice cloning needs seconds of sample audio. AI-generated text passes as human writing. Gaussian splatting creates photorealistic 3D scenes from a handful of photos. Any individual artifact — a video, a recording, a screenshot, a document — can be fabricated convincingly in isolation.
+
+This is not a future problem. This is a now problem. And it gets worse every month.
+
+When you can no longer tell a generated video from a real one, what counts as evidence? When someone can put words in your mouth with a voice clone and a deepfake, what proves you didn't say them? When a meme is indistinguishable from a press photo, what's defamation and what's satire?
+
+The courts haven't figured this out yet. The legal framework for digital evidence was built in an era when fabrication was expensive and detectable. That era is over.
+
+**The only defense against fabrication is corroboration.**
+
+A single artifact can be faked. A single recording can be questioned. A single vault can be fabricated.
+
+But multiple independent recordings, from multiple independent devices, maintained in multiple independent vaults, whose evidence interlocks on timestamps, audio fingerprints, spatial positioning, speaker identification, and environmental conditions — that convergence is extraordinarily difficult to fabricate. The physics don't cooperate. Two recordings of the same room from different positions have predictable acoustic relationships. Fake both convincingly and you're modeling room acoustics, microphone response curves, speaker radiation patterns, and environmental noise profiles — for every corroborating source.
+
+The cost of fabrication scales exponentially with the number of independent corroborating sources. The cost of genuine corroboration is near zero — you just record.
+
+**One vault is memory. Two vaults that agree are evidence. Multiple vaults that agree are certified history.**
+
+This is the deeper purpose of the witness chain. Not just "I can verify what the AI told me." But "I can prove what actually happened, and so can the other people who were there, and our proofs agree."
+
+Servetus doesn't prevent fabrication. Nothing can. But it makes truth *demonstrable* — and it makes fabrication *detectable* by establishing what the verifiable record actually contains.
+
+---
+
 ## In the End
 
 We don't let the AI be the judge.
