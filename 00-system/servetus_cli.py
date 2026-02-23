@@ -9,6 +9,10 @@ Usage:
     python servetus_cli.py voice --model large-v3    # Use larger model
     python servetus_cli.py voice --no-prosody        # Skip SVP generation
     python servetus_cli.py voice --list-devices      # Show microphones
+    python servetus_cli.py nc test                   # Test Nextcloud connection
+    python servetus_cli.py nc sync                   # Sync vault to Nextcloud
+    python servetus_cli.py nc listen                 # Listen on Talk room
+    python servetus_cli.py archive "session text"    # Archive session to vault + Nextcloud
 
 For log: if no text is passed, you'll be dropped into a prompt to type/paste,
 finish with Ctrl-D (Linux/macOS) or Ctrl-Z + Enter (Windows).
@@ -127,13 +131,94 @@ def cmd_voice(args):
     )
 
 
+def cmd_nc(args):
+    """Nextcloud operations: test, sync, listen."""
+    from nextcloud.config import load_config
+    from nextcloud.webdav import WebDAVClient
+
+    config = load_config()
+    if config is None:
+        print("Nextcloud not configured.")
+        print("Copy 00-system/nextcloud/nextcloud.yaml.example → config/nextcloud.yaml")
+        sys.exit(1)
+
+    if not args:
+        print("Usage: servetus nc <test|sync|listen>")
+        sys.exit(1)
+
+    subcmd = args[0]
+
+    if subcmd == "test":
+        client = WebDAVClient(config)
+        if client.test_connection():
+            print(f"  Connected to {config.url}")
+            print(f"  User: {config.username}")
+            print(f"  Vault root: {config.remote_root}")
+        else:
+            print(f"  Failed to connect to {config.url}")
+            sys.exit(1)
+
+    elif subcmd == "sync":
+        client = WebDAVClient(config)
+        if not client.test_connection():
+            print(f"  Cannot reach {config.url}")
+            sys.exit(1)
+        print(f"  Syncing vault to {config.url}{config.remote_root}")
+        for sync_path in config.sync_paths:
+            local_dir = VAULT_ROOT / sync_path.rstrip("/")
+            if local_dir.exists():
+                print(f"\n  {sync_path}")
+                counts = client.upload_directory(local_dir)
+                print(f"    uploaded: {counts['uploaded']}, failed: {counts['failed']}")
+
+    elif subcmd == "listen":
+        if not config.talk_enabled:
+            print("  Talk is not enabled in config/nextcloud.yaml")
+            sys.exit(1)
+        from nextcloud.talk import TalkListener
+        listener = TalkListener(config)
+
+        def handler(msg):
+            """Stub handler — replace with kernel dispatch."""
+            text = msg.get("message", "")
+            actor = msg.get("actorDisplayName", "unknown")
+            # For now, just acknowledge. The real kernel goes here.
+            return f"[Servetus received]: {text[:100]}"
+
+        listener.listen(handler)
+
+    else:
+        print(f"  Unknown nc subcommand: {subcmd}")
+        print("  Available: test, sync, listen")
+        sys.exit(1)
+
+
+def cmd_archive(args):
+    """Archive a session transcript to vault + Nextcloud."""
+    from nextcloud.archive import archive_session
+
+    if args:
+        content = " ".join(args)
+    else:
+        print("Paste session content. Press Ctrl-D (or Ctrl-Z on Windows) when done:")
+        content = sys.stdin.read().strip()
+
+    if not content:
+        print("No content provided, aborting.")
+        return
+
+    archive_session(content=content, source="claude-code")
+
+
 def main():
     if len(sys.argv) < 2:
         print("Servetus CLI")
         print()
         print("Commands:")
-        print("  log [text...]    Create a daily log entry")
-        print("  voice [options]  Record, transcribe, and analyze voice")
+        print("  log [text...]       Create a daily log entry")
+        print("  voice [options]     Record, transcribe, and analyze voice")
+        print("  nc <test|sync|listen>  Nextcloud operations")
+        print("  archive [text...]   Archive session to vault + Nextcloud")
         print()
         print("Voice options:")
         print("  --file PATH        Process existing audio file")
@@ -149,6 +234,10 @@ def main():
         cmd_log(args)
     elif command == "voice":
         cmd_voice(args)
+    elif command == "nc":
+        cmd_nc(args)
+    elif command == "archive":
+        cmd_archive(args)
     else:
         print(f"Unknown command: {command}")
         sys.exit(1)
