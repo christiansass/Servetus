@@ -224,6 +224,42 @@ A system that can't distinguish between these three states is a system that forc
 
 ---
 
+## Destination Trust Tiers
+
+Not all destinations are equal. Data that belongs in your vault does not belong on GitHub. Data that belongs on GitHub does not belong on a platform you don't control. Every output of the system needs a clearance level, and every destination has a trust rating.
+
+### The Trust Hierarchy
+
+| Tier | Destination | Trust Level | What Goes Here |
+|------|------------|-------------|----------------|
+| **Sovereign** | Local vault (Nextcloud/self-hosted) | Highest | Everything. Session logs, witnesses, daily logs, personal data, credentials, raw transcripts. Full vault contents. |
+| **Controlled** | Private Git repo | Moderate | Code, specs, architecture docs. No personal vault data, no session transcripts, no PII. |
+| **Public** | Public Git repo / open standard | Low | Philosophy, README, templates. The system definition, not the system contents. Nothing personal. |
+| **Transient** | Ephemeral processing (Claude, any LLM) | None assumed | Processing only. Output flows up to a trusted tier. No assumption of persistence, no assumption of deletion. Credentials only via revocable tokens with bounded scope. |
+
+### What This Means in Practice
+
+When an ephemeral Claude instance produces output, that output needs to go somewhere. The destination determines what's appropriate:
+
+- **Session logs** (personal vault data) → Sovereign tier only. If the only available transport is a lower tier (e.g., GitHub), that's a compromise to be minimized and cleaned up, not a default workflow.
+- **Code and specs** (system definition) → Controlled tier is fine. This is what Git is for.
+- **Philosophy and README** (public standard) → Public tier is fine. This is meant to be shared.
+- **Credentials and tokens** → Never below Sovereign tier. An ephemeral instance that needs to authenticate should use revocable, scoped tokens — and the user should revoke them when the session ends.
+
+### The Architectural Implication
+
+The system must be aware of where it's sending data and what trust level that destination carries. This is not a user preference — it's a hard constraint. A daily log pushed to GitHub is a data sovereignty violation, even if it's convenient. Convenience is not a valid override for trust tiers.
+
+Future implementations should enforce this:
+- Files in `01-witnesses/`, `02-daily-logs/`, `06-radar/` → Sovereign tier only
+- Files in `00-system/`, `Toolkit/`, `templates/` → Controlled tier acceptable
+- Files like `README.md`, `Philosophy.md`, `LICENSE` → Public tier acceptable
+- Credentials, tokens, session keys → Never persisted below Sovereign tier
+
+The consent architecture (opt-in data sources) controls what enters the vault. The trust tiers control what leaves it and where it goes.
+
+---
+
 ## Sovereignty Is Not Privacy
 
 "Privacy" means others can't see your data.
