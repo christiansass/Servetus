@@ -181,7 +181,7 @@ Servetus works with:
 4. Customize `config/` with your projects and tags
 5. Start capturing in `02-daily-logs/`
 
-For AI assistants: Read `CLAUDE.md` first (create locally — it's gitignored).
+For AI assistants: Read `CLAUDE.md` first — it contains the full system context, operating rules, and epistemological stance.
 
 ---
 
