@@ -183,6 +183,45 @@ This means the architecture must support deliberate gaps. Not every moment needs
 
 **Inclusion is an act of preservation. Exclusion is an act of discretion. Both require sovereignty.**
 
+### Deletion vs. Redaction
+
+There are two distinct operations for removing information from the system. They serve different purposes and must not be confused.
+
+**Deletion** means the data is gone from your vault. Not soft-deleted. Not moved to a hidden folder. Not recoverable from a journal file or write-ahead log. When you delete something from your own server, it's destroyed. This is your right as the sovereign owner of your infrastructure. You don't owe anyone an explanation. The data existed, you chose to remove it, and the system honors that completely.
+
+This is not evidence tampering — it's data ownership. You can't tamper with your own filing cabinet. You can only tamper with evidence that's been submitted to a proceeding. Before that point, it's your data, and you can burn it if you want.
+
+**Redaction** is a different operation entirely. Redaction means: the original record stays intact in your vault, but you produce a version with documented exclusions for sharing. The redactions are visible — not hidden, not seamless. The recipient sees that something was removed and sees the stated reason.
+
+This is the attorney who needs to share case notes but must protect client names. The doctor sharing a treatment timeline but redacting patient identifiers. The journalist sharing evidence of a pattern but protecting a source. The original is complete. The shared version has explicit, labeled gaps.
+
+```yaml
+# Redaction layer in shared record
+redactions:
+  - field: "participants[2]"
+    reason: "client-confidentiality"
+    authority: "attorney-client privilege"
+    redacted_by: "vault-owner"
+    date: 2026-03-15
+  - field: "transcript_lines[45-62]"
+    reason: "privileged-communication"
+    authority: "HIPAA"
+    redacted_by: "vault-owner"
+    date: 2026-03-15
+```
+
+The redaction record is itself evidence. It says: "Something was here. It was removed for a stated reason. The removal was intentional and documented." This is the opposite of fabrication — it's transparency about what you're *not* showing.
+
+**The three states of vault data:**
+
+| State | Meaning | Original exists? | Shared version? |
+|-------|---------|:-:|:-:|
+| **Present** | In the vault and shareable | Yes | Complete |
+| **Redacted** | In the vault but excluded from shared versions | Yes | With labeled gaps |
+| **Deleted** | Removed from the vault entirely | No | N/A |
+
+A system that can't distinguish between these three states is a system that forces you to choose between total disclosure and total destruction. Sovereignty means you don't have to make that choice.
+
 ---
 
 ## Sovereignty Is Not Privacy
