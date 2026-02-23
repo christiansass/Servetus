@@ -130,6 +130,40 @@ Every artifact in a Servetus vault is a witness statement, not surveillance foot
 
 ---
 
+## Explicit Consent as Architecture
+
+Intentional submission applies to artifacts — recordings, photos, documents. But a vault also benefits from structured data: your calendar, your contacts, your task lists.
+
+These are useful. Calendar context tells the system who you were meeting with and when. Contacts provide correct name spellings for transcription. Tasks connect to events and arcs. Excluding them makes the vault less capable. Including them makes the vault more complete.
+
+But inclusion must be a choice, not a default.
+
+The consent model for Servetus data sources works like this:
+
+**Each data source is a discrete opt-in.** You don't "agree to terms." You flip switches:
+
+- *Calendar:* "Yes, my calendar events are available to this vault for context." Or no.
+- *Contacts:* "Yes, my address book is available for name resolution and people linking." Or no.
+- *Tasks:* "Yes, tasks generated from my events feed back into my organizational layer." Or no.
+- *Location:* "Yes, my recordings include GPS metadata." Or no.
+- *Voice:* "Yes, I am submitting this recording for transcription and archival." Every time.
+
+Each permission is:
+- **Granular** — one source at a time, not bundled
+- **Visible** — you can see exactly what's connected and what isn't
+- **Reversible** — disconnect a source and the data pipeline stops; what was already filed remains (you filed it), but nothing new enters
+- **Local** — the consent is between you and your vault, not you and a corporation
+
+This is the opposite of "by using this service you agree to our privacy policy." There is no service. There is no policy. There is a vault on your machine and a set of switches you control.
+
+The important nuance: opting in doesn't mean the data leaves your control. Your calendar feeding context into your vault is not the same as your calendar being uploaded to a server. The data moves **laterally** — from one local source to another local system — never **vertically** into someone else's infrastructure.
+
+And yes — there should always be a version of the vault that works with nothing connected. No calendar. No contacts. No location. Just you, a microphone, and a folder of Markdown files. That's the floor. The fully connected vault — calendar, contacts, tasks, location, voice, all feeding context to each other — that's the ceiling. Both are valid. Both are sovereign. The difference is how much context you chose to give yourself.
+
+A fully connected vault is more powerful. A minimal vault is still a vault. The floor is sovereignty. The ceiling is up to you.
+
+---
+
 ## Sovereignty Is Not Privacy
 
 "Privacy" means others can't see your data.
