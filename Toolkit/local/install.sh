@@ -64,22 +64,23 @@ else
     # Standard Nextcloud sync locations (Linux + macOS)
     CANDIDATES=()
 
-    # Check common locations
+    # Check common locations (Linux + macOS)
     for candidate in \
         "$HOME/Nextcloud" \
         "$HOME/Documents/Nextcloud" \
         "$HOME/Cloud" \
+        "$HOME/Library/CloudStorage/Nextcloud-Nextcloud" \
+        "$HOME/Library/CloudStorage/Nextcloud" \
         "/mnt/Cloud/Nextcloud" \
         "/mnt/cloud/Nextcloud" \
-        "/media/$USER/Cloud/Nextcloud" \
-        "$HOME/Library/CloudStorage/Nextcloud"
+        "/media/$USER/Cloud/Nextcloud"
     do
         if [[ -d "$candidate" ]]; then
             CANDIDATES+=("$candidate")
         fi
     done
 
-    # Also search /mnt/* for any folder named Nextcloud
+    # Also search /mnt/* for any folder named Nextcloud (Linux)
     while IFS= read -r -d '' found; do
         # Avoid duplicates
         already=false
@@ -192,11 +193,24 @@ echo -e "  launcher → ${GREEN}$INSTALL_TARGET${NC}"
 # ---------------------------------------------------------------------------
 echo ""
 SHELL_RC=""
-case "$SHELL" in
-    */zsh)  SHELL_RC="$HOME/.zshrc" ;;
-    */bash) SHELL_RC="$HOME/.bashrc" ;;
-    *)      SHELL_RC="$HOME/.profile" ;;
-esac
+OS_TYPE="$(uname -s)"
+
+if [[ "$OS_TYPE" == "Darwin" ]]; then
+    # macOS: Terminal.app and iTerm2 open login shells — use .zprofile
+    # .zshrc is not sourced by login shells on macOS
+    case "$SHELL" in
+        */zsh)  SHELL_RC="$HOME/.zprofile" ;;
+        */bash) SHELL_RC="$HOME/.bash_profile" ;;
+        *)      SHELL_RC="$HOME/.profile" ;;
+    esac
+else
+    # Linux / WSL: terminals open interactive (non-login) shells — use .zshrc / .bashrc
+    case "$SHELL" in
+        */zsh)  SHELL_RC="$HOME/.zshrc" ;;
+        */bash) SHELL_RC="$HOME/.bashrc" ;;
+        *)      SHELL_RC="$HOME/.profile" ;;
+    esac
+fi
 
 if echo "$PATH" | grep -q "$INSTALL_DIR"; then
     echo -e "~/bin is already on PATH."
