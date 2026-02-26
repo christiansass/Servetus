@@ -29,6 +29,9 @@ import json
 import subprocess
 import urllib.request
 import urllib.error
+import socket
+import uuid
+import platform
 from pathlib import Path
 
 # VAULT_ROOT is written by install.sh at deploy time
@@ -41,6 +44,63 @@ PII_MAP_FILE    = CONFIG_DIR / "pii_map.json"
 ROUTER_CFG_FILE = CONFIG_DIR / "router_config.json"
 
 OLLAMA_API = "http://localhost:11434/api/chat"
+
+
+# ---------------------------------------------------------------------------
+# Origin fingerprint — shared with servetus_cli.py
+# ---------------------------------------------------------------------------
+
+def get_os() -> str:
+    """Returns a human-readable OS string. Reads /etc/os-release on Linux for distro name."""
+    system = platform.system()
+    if system == "Linux":
+        try:
+            for line in open("/etc/os-release"):
+                if line.startswith("PRETTY_NAME="):
+                    return line.split("=", 1)[1].strip().strip('"')
+        except Exception:
+            pass
+        return f"Linux {platform.release()}"
+    elif system == "Darwin":
+        return f"macOS {platform.mac_ver()[0]}"
+    elif system == "Windows":
+        return f"Windows {platform.version()}"
+    return system
+
+
+def get_origin() -> dict:
+    """
+    Returns machine fingerprint: human name, MAC, outbound IP, OS.
+    machine — config/overrides.md machine_name, else hostname
+    mac     — primary network interface hardware address (stable across OS on dual-boot)
+    ip      — outbound IP at session time (reveals network/location)
+    os      — human-readable OS name (disambiguates dual-boot sessions)
+    """
+    machine = socket.gethostname()
+    overrides = CONFIG_DIR / "overrides.md"
+    if overrides.exists():
+        for line in overrides.read_text().splitlines():
+            stripped = line.strip()
+            if stripped.startswith("machine_name:"):
+                val = stripped.split(":", 1)[1].strip().strip('"').strip("'")
+                if val:
+                    machine = val
+                break
+
+    mac_int = uuid.getnode()
+    mac = ":".join(["{:02x}".format((mac_int >> (8 * i)) & 0xff)
+                    for i in reversed(range(6))])
+
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+    except Exception:
+        ip = "unknown"
+
+    return {"machine": machine, "mac": mac, "ip": ip, "os": get_os()}
+
 
 # ---------------------------------------------------------------------------
 # Kernel identity preamble — injected before Toolkit on every boot
@@ -162,11 +222,13 @@ class ContextBubble:
     def build(self, max_history_turns: int = 6) -> str:
         parts = []
 
+        origin = get_origin()
         parts.append(
             "You are receiving a Servetus escalation.\n"
             "Servetus is a human-readable AI operating system running on a local machine. "
             "The local Ollama kernel has determined this query exceeds its capability "
-            "and is handing off to you with full context."
+            "and is handing off to you with full context.\n"
+            f"Originating machine: {origin['machine']} | {origin['mac']} | {origin['ip']} | {origin['os']}"
         )
 
         if self.reason:
@@ -431,11 +493,14 @@ class Router:
 
         return "local", local_response
 
-    def log(self, user_input: str, target: str, response: str):
+    def log(self, user_input: str, target: str, response: str, origin: dict = None):
         cli = SYSTEM_DIR / "servetus_cli.py"
         if not cli.exists():
             return
-        entry = f"[router/{target}]\nQ: {user_input}\nA: {response}"
+        origin_line = ""
+        if origin:
+            origin_line = f"<!-- origin: {origin['machine']} | {origin['mac']} | {origin['ip']} | {origin['os']} -->\n"
+        entry = f"[router/{target}]\n{origin_line}Q: {user_input}\nA: {response}"
         subprocess.run(
             [sys.executable, str(cli), "log", entry],
             capture_output=True,
@@ -455,11 +520,12 @@ def boot(config: dict) -> tuple:
     return session, file_count
 
 
-def banner(router: Router, file_count: int):
+def banner(router: Router, file_count: int, origin: dict):
     version_file = SYSTEM_DIR / "VERSION"
     version = version_file.read_text().strip() if version_file.exists() else "?"
 
     print(f"\n┌─ Servetus Router  v{version}")
+    print(f"│  machine    : {origin['machine']}  {origin['mac']}  {origin['ip']}  {origin['os']}")
     print(f"│  kernel     : {router.model} via Ollama")
     print(f"│  context    : {file_count} files loaded")
     print(f"│  default    : {router.default}")
@@ -472,7 +538,11 @@ def banner(router: Router, file_count: int):
     print()
 
 
-def cmd_status(router: Router):
+def cmd_status(router: Router, origin: dict):
+    print(f"  machine     : {origin['machine']}")
+    print(f"  mac         : {origin['mac']}")
+    print(f"  ip          : {origin['ip']}")
+    print(f"  os          : {origin['os']}")
     print(f"  model       : {router.model}")
     print(f"  default     : {router.default}")
     print(f"  escalates→  : {router.escalation_target}")
@@ -481,14 +551,14 @@ def cmd_status(router: Router):
     print(f"  pii map     : {len(router.scrubber.forward)} entries")
 
 
-def repl(router: Router, file_count: int, inline: str = None):
+def repl(router: Router, file_count: int, origin: dict, inline: str = None):
     if inline:
         target, response = router.route(inline)
         print(f"[{target}] {response}")
-        router.log(inline, target, response)
+        router.log(inline, target, response, origin)
         return
 
-    banner(router, file_count)
+    banner(router, file_count, origin)
 
     while True:
         try:
@@ -506,14 +576,14 @@ def repl(router: Router, file_count: int, inline: str = None):
                 print("Bye.")
                 break
             elif cmd == "/status":
-                cmd_status(router)
+                cmd_status(router, origin)
             else:
                 print(f"  Unknown command: {raw}")
             continue
 
         target, response = router.route(raw)
         print(f"\n[{target}]\n{response}\n")
-        router.log(raw, target, response)
+        router.log(raw, target, response, origin)
 
 
 def main():
@@ -525,9 +595,10 @@ def main():
             pass
 
     session, file_count = boot(config)
+    origin = get_origin()
     router = Router(session, config)
     inline = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else None
-    repl(router, file_count, inline)
+    repl(router, file_count, origin, inline)
 
 
 if __name__ == "__main__":
