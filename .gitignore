@@ -1,6 +1,9 @@
 # Obsidian internals
 .obsidian/
 
+# Claude Code local settings
+.claude/
+
 # Local AI preload (personal)
 CLAUDE.md
 
