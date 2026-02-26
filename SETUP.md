@@ -202,8 +202,19 @@ The installer will:
 - Ask if you're using Nextcloud (required for WebDAV/CalDAV features)
 - Find your Nextcloud root automatically, or ask you to confirm
 - Deploy the router to `~/bin/servetus`
-- Add `~/bin` to your PATH in `.bashrc` / `.zshrc`
+- Add `~/bin` to your PATH (see shell notes below)
 - Copy config templates to `config/`
+
+**Shell and PATH notes:**
+
+| OS | Shell | Config file written |
+|----|-------|-------------------|
+| Linux | bash | `~/.bashrc` |
+| Linux | zsh | `~/.zshrc` |
+| macOS | zsh (default) | `~/.zprofile` |
+| macOS | bash | `~/.bash_profile` |
+
+> **macOS note:** Terminal.app and iTerm2 open login shells by default. Login shells source `.zprofile`, not `.zshrc`. The installer handles this automatically — but if you see `command not found: servetus` after install, run `source ~/.zprofile` or open a new terminal window.
 
 ### 4. Configure PII Map
 
@@ -370,6 +381,22 @@ servetus "what is Servetus?"
 - .obsidian/ conflicts are normal (each machine has its own Obsidian config)
 - Add `.obsidian/` to .gitignore if using git
 - For Nextcloud, consider excluding .obsidian/ from sync
+
+### `command not found: servetus` on macOS
+
+macOS terminals open login shells which source `.zprofile`, not `.zshrc`. If the installer ran correctly but the command isn't found:
+
+```zsh
+source ~/.zprofile
+```
+
+Or open a new terminal window — login shells re-source `.zprofile` on open.
+
+If that doesn't work, confirm the launcher exists and `~/bin` is in PATH:
+```zsh
+ls ~/bin/servetus
+echo $PATH | tr ':' '\n' | grep bin
+```
 
 ### Permission errors on Linux/WSL
 
