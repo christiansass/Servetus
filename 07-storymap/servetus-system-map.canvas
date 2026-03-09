@@ -1,0 +1,387 @@
+{
+  "nodes": [
+    {
+      "id": "truth-hierarchy",
+      "type": "text",
+      "x": 0,
+      "y": -800,
+      "width": 480,
+      "height": 320,
+      "color": "1",
+      "text": "# Hierarchy of Truth\n\n**God / Reality / Truth**\n↓\n**Witnesses** — artifacts captured from reality\n↓\n**Structured Memory** — human-readable, editable, verifiable\n↓\n**AI Processing** — interpretation, assistance, synthesis\n↓\n**Human Review** — the user corrects, confirms, or rejects\n↓\n**Reality Check** — go back to the witness"
+    },
+    {
+      "id": "vault-header",
+      "type": "text",
+      "x": -800,
+      "y": -300,
+      "width": 300,
+      "height": 80,
+      "color": "6",
+      "text": "# VAULT FILESYSTEM\n**Altitude Model: Low = Ground Truth, High = Big Picture**"
+    },
+    {
+      "id": "00-system",
+      "type": "text",
+      "x": -800,
+      "y": -180,
+      "width": 300,
+      "height": 100,
+      "color": "4",
+      "text": "## 00-system/\n**System layer**\n- CLI (`servetus_cli.py`)\n- Voice pipeline code\n- Nextcloud adapters\n- VERSION"
+    },
+    {
+      "id": "01-witnesses",
+      "type": "text",
+      "x": -800,
+      "y": -50,
+      "width": 300,
+      "height": 80,
+      "color": "1",
+      "text": "## 01-witnesses/\n**Ground truth** — artifacts, audio, photos, docs\nSovereign tier ONLY. Never pushed to Git."
+    },
+    {
+      "id": "02-daily-logs",
+      "type": "text",
+      "x": -800,
+      "y": 60,
+      "width": 300,
+      "height": 80,
+      "color": "1",
+      "text": "## 02-daily-logs/\n**Daily capture stream**\n3 session logs filed. Sovereign tier ONLY."
+    },
+    {
+      "id": "03-events",
+      "type": "text",
+      "x": -800,
+      "y": 170,
+      "width": 300,
+      "height": 60,
+      "color": "3",
+      "text": "## 03-events/\n**Discrete moments in time** — empty, ready for use"
+    },
+    {
+      "id": "04-projects",
+      "type": "text",
+      "x": -800,
+      "y": 260,
+      "width": 300,
+      "height": 60,
+      "color": "3",
+      "text": "## 04-projects/\n**Work clusters with deliverables** — empty, ready"
+    },
+    {
+      "id": "05-arcs",
+      "type": "text",
+      "x": -800,
+      "y": 350,
+      "width": 300,
+      "height": 60,
+      "color": "5",
+      "text": "## 05-arcs/\n**Long-running narrative threads** — empty, ready"
+    },
+    {
+      "id": "06-radar",
+      "type": "text",
+      "x": -800,
+      "y": 440,
+      "width": 300,
+      "height": 80,
+      "color": "5",
+      "text": "## 06-radar/\n**Current viewport** — what's being tracked\n1 item on radar: Zeck competitor idea"
+    },
+    {
+      "id": "07-storymap",
+      "type": "text",
+      "x": -800,
+      "y": 550,
+      "width": 300,
+      "height": 60,
+      "color": "5",
+      "text": "## 07-storymap/\n**30,000ft view** — the whole map"
+    },
+    {
+      "id": "toolkit-header",
+      "type": "text",
+      "x": -400,
+      "y": -300,
+      "width": 320,
+      "height": 60,
+      "color": "6",
+      "text": "# TOOLKIT (System Specs)\n**The instruction set — 13 specs**"
+    },
+    {
+      "id": "tk-bootloader",
+      "type": "text",
+      "x": -400,
+      "y": -210,
+      "width": 320,
+      "height": 80,
+      "color": "2",
+      "text": "### S00.01-00-00 Bootloader\nHow to process kit files. Load order, precedence.\n\n### S00.00-00-00 Readme\nKit naming and precedence rules."
+    },
+    {
+      "id": "tk-export-sort",
+      "type": "text",
+      "x": -400,
+      "y": -100,
+      "width": 320,
+      "height": 100,
+      "color": "2",
+      "text": "### Export & Sorting\n- **S00.01-01-00** Export Rules\n- **S00.01-01-10** Topic Segmentation\n- **S00.01-01-20** Sorting & Placement Protocol"
+    },
+    {
+      "id": "tk-schema",
+      "type": "text",
+      "x": -400,
+      "y": 30,
+      "width": 320,
+      "height": 100,
+      "color": "2",
+      "text": "### Schema & Format\n- **S00.01-02-00** Frontmatter Schema\n- **S00.01-02-10** Time Rules\n- **S00.01-02-20** Spelling Rules"
+    },
+    {
+      "id": "tk-voice",
+      "type": "text",
+      "x": -400,
+      "y": 160,
+      "width": 320,
+      "height": 80,
+      "color": "2",
+      "text": "### Voice Pipeline\n- **S00.01-03-00** Voice Performance Format (SVP)\n- **S00.01-03-10** Voice Pipeline Spec"
+    },
+    {
+      "id": "tk-bot",
+      "type": "text",
+      "x": -400,
+      "y": 270,
+      "width": 320,
+      "height": 60,
+      "color": "2",
+      "text": "### Assistant\n- **S00.01-04-00** Talk Bot Service (RIO model)"
+    },
+    {
+      "id": "tk-sharing",
+      "type": "text",
+      "x": -400,
+      "y": 360,
+      "width": 320,
+      "height": 60,
+      "color": "2",
+      "text": "### Sharing\n- **S00.02-00-00** Storymap Sharing Model"
+    },
+    {
+      "id": "arch-header",
+      "type": "text",
+      "x": 100,
+      "y": -300,
+      "width": 600,
+      "height": 60,
+      "color": "6",
+      "text": "# SYSTEM ARCHITECTURE\n**OS metaphor — layers from I/O down to storage**"
+    },
+    {
+      "id": "arch-io",
+      "type": "text",
+      "x": 100,
+      "y": -210,
+      "width": 600,
+      "height": 100,
+      "color": "4",
+      "text": "## I/O Adapters\nSame kernel, different mouths and ears\n\n| Adapter | Status |\n|---------|--------|\n| **CLI** (`servetus_cli.py`) | Active |\n| **Nextcloud Talk** (`nextcloud/talk.py`) | Scaffolded |\n| **Obsidian Plugin** | Planned |\n| **System Tray** | Planned |\n| **Voice (Shokz)** | Phase 4 |"
+    },
+    {
+      "id": "arch-shell",
+      "type": "text",
+      "x": 100,
+      "y": -80,
+      "width": 600,
+      "height": 60,
+      "color": "4",
+      "text": "## Shell\nInterprets commands via Toolkit specs"
+    },
+    {
+      "id": "arch-kernel",
+      "type": "text",
+      "x": 100,
+      "y": 10,
+      "width": 600,
+      "height": 60,
+      "color": "1",
+      "text": "## Kernel\n**AI processes instructions — same interpreter everywhere.**\nYou sit here. Not at the top. Not as the authority."
+    },
+    {
+      "id": "arch-libs",
+      "type": "text",
+      "x": 100,
+      "y": 100,
+      "width": 280,
+      "height": 60,
+      "color": "4",
+      "text": "## System Libs\nToolkit/ — the spec library"
+    },
+    {
+      "id": "arch-userspace",
+      "type": "text",
+      "x": 420,
+      "y": 100,
+      "width": 280,
+      "height": 60,
+      "color": "4",
+      "text": "## User Space\nconfig/ — user settings (gitignored)"
+    },
+    {
+      "id": "arch-fs",
+      "type": "text",
+      "x": 100,
+      "y": 190,
+      "width": 600,
+      "height": 60,
+      "color": "4",
+      "text": "## File System\n00-system → 01-witnesses → 02-daily-logs → ... → 07-storymap"
+    },
+    {
+      "id": "arch-storage",
+      "type": "text",
+      "x": 100,
+      "y": 280,
+      "width": 600,
+      "height": 120,
+      "color": "4",
+      "text": "## Storage + Sync (Trust-Tiered)\n\n| Tier | Destination | Clearance |\n|------|------------|----------|\n| **Sovereign** | Nextcloud / self-hosted | Everything |\n| **Controlled** | Private Git | Code + specs |\n| **Public** | Public Git | Standards only |\n| **Transient** | Ephemeral LLM | Processing only |"
+    },
+    {
+      "id": "rio-header",
+      "type": "text",
+      "x": 800,
+      "y": -300,
+      "width": 500,
+      "height": 60,
+      "color": "6",
+      "text": "# RIO — PERSONAL ASSISTANT\n**You're the pilot. The assistant is your RIO.**"
+    },
+    {
+      "id": "rio-model",
+      "type": "text",
+      "x": 800,
+      "y": -210,
+      "width": 500,
+      "height": 180,
+      "color": "0",
+      "text": "## The RIO Model (F-14 Tomcat)\n\n- **Situational awareness** — calendar, projects, tasks, radar\n- **Covers blind spots** — ADD gaps in follow-through & context-switching\n- **Sits in meetings** — listening, extracting action items\n- **Post-call processing** — distributes info across PIM surface\n- **Context maintenance** — remembers what you need where\n- **Proactive not intrusive** — surfaces what's relevant, stays quiet in flow\n\n*\"Talk to me, Goose\"* → `brief.sitrep`"
+    },
+    {
+      "id": "rio-runtime",
+      "type": "text",
+      "x": 800,
+      "y": 0,
+      "width": 500,
+      "height": 140,
+      "color": "0",
+      "text": "## Bot Runtime (3 Layers)\n\n**1. Talk Client** — polls Talk room, sends responses\n(extends existing `TalkListener`)\n\n**2. Intent Parser** — local LLM turns natural language → structured Intent\n(action, service, target, confidence, sub-intents)\n\n**3. PIM Executor** — routes intents to Nextcloud services\n(WebDAV, CalDAV, CardDAV, REST APIs)"
+    },
+    {
+      "id": "rio-pim",
+      "type": "text",
+      "x": 800,
+      "y": 170,
+      "width": 500,
+      "height": 200,
+      "color": "0",
+      "text": "## Nextcloud PIM Surface\nThe assistant's hands — not just files\n\n| Service | Protocol | Ops |\n|---------|----------|-----|\n| Files | WebDAV | read, create, move, summarize |\n| Calendar | CalDAV | check, free, create, move, cancel |\n| Contacts | CardDAV | find, create, update, notes |\n| Tasks | VTODO | list, create, complete, defer |\n| Deck | REST | status, create, move, assign |\n| Notifications | REST | send reminders, check |\n\n**Cross-service:** morning brief, weekly preview, meeting prep, intake capture"
+    },
+    {
+      "id": "rio-hardware",
+      "type": "text",
+      "x": 800,
+      "y": 400,
+      "width": 500,
+      "height": 160,
+      "color": "0",
+      "text": "## Hardware Phases\n\n| Phase | Hardware | LLM |\n|-------|----------|-----|\n| **1 — Now** | Home PC, 1080 Ti (11GB) | Llama 3 8B Q4 via Ollama |\n| **2** | Mac Mini M1/M3, colocated | Llama 3 8B–70B via MLX |\n| **3** | Scaled fleet | Multiple Minis, multiple bots |\n| **4** | Voice-first | Shokz + Whisper + TTS |"
+    },
+    {
+      "id": "voice-pipeline",
+      "type": "text",
+      "x": 100,
+      "y": 480,
+      "width": 320,
+      "height": 140,
+      "color": "5",
+      "text": "## Voice Pipeline\n`00-system/voice/`\n\n**Capture** → Whisper STT → Prosody analysis → SVP format\n\nReused by:\n- Meeting mode (passive observation)\n- Phase 4 voice interface\n- Witness filing (audio → transcript)"
+    },
+    {
+      "id": "nextcloud-adapters",
+      "type": "text",
+      "x": 480,
+      "y": 480,
+      "width": 280,
+      "height": 140,
+      "color": "5",
+      "text": "## Nextcloud Adapters\n`00-system/nextcloud/`\n\n**Exists:**\n- talk.py, webdav.py, config.py, archive.py\n\n**Needed:**\n- caldav.py, carddav.py, deck.py, notify.py"
+    },
+    {
+      "id": "bot-code",
+      "type": "text",
+      "x": 100,
+      "y": 650,
+      "width": 320,
+      "height": 120,
+      "color": "3",
+      "text": "## Bot Service Code (To Build)\n`00-system/bot/`\n\n- `intent.py` — Intent parser (LLM-backed)\n- `executor.py` — PIM executor\n\n`00-system/bot-prompts/`\n- `copilot.md` — Primary assistant personality"
+    },
+    {
+      "id": "cli-commands",
+      "type": "text",
+      "x": 480,
+      "y": 650,
+      "width": 280,
+      "height": 120,
+      "color": "3",
+      "text": "## CLI Commands (To Build)\n\n```\nservetus bot start <name>\nservetus bot stop <name>\nservetus bot status\nservetus bot list\nservetus bot exec <name> \"msg\"\nservetus bot api <name> --port\n```"
+    },
+    {
+      "id": "principles",
+      "type": "text",
+      "x": -400,
+      "y": 480,
+      "width": 400,
+      "height": 280,
+      "color": "1",
+      "text": "# Core Principles\n\n1. **You are not the authority.** Witnesses define what happened.\n2. **Everything is human-readable.** If software dies, the folder survives.\n3. **Submission, not collection.** Every artifact is intentional.\n4. **Consent is granular.** Each data source is separate opt-in.\n5. **Sovereignty over privacy.** Architecture, not policy.\n6. **Exclusion is valid.** Gaps are deliberate.\n7. **Deletion is real.** Gone means gone."
+    },
+    {
+      "id": "status-now",
+      "type": "text",
+      "x": 800,
+      "y": 600,
+      "width": 500,
+      "height": 200,
+      "color": "6",
+      "text": "# STATUS — March 9, 2026\n\n**Specs:** 13 toolkit specs written\n**Code:** CLI + voice pipeline + Nextcloud adapters scaffolded\n**Docs:** Philosophy, CLAUDE.md, SETUP, CHANGELOG\n**Vault:** Folder structure live, altitude model applied\n\n**Next moves:**\n- Merge branch to `personal`\n- Build CalDAV/CardDAV clients\n- Build intent parser + PIM executor\n- Wire up `servetus bot start`\n- Phase 1 deployment on home PC with Ollama"
+    }
+  ],
+  "edges": [
+    {"id": "e1", "fromNode": "truth-hierarchy", "fromSide": "bottom", "toNode": "arch-kernel", "toSide": "top", "label": "AI sits here"},
+    {"id": "e2", "fromNode": "01-witnesses", "fromSide": "right", "toNode": "tk-export-sort", "toSide": "left", "label": "sorted by"},
+    {"id": "e3", "fromNode": "tk-bootloader", "fromSide": "right", "toNode": "arch-shell", "toSide": "left", "label": "loaded by"},
+    {"id": "e4", "fromNode": "arch-io", "fromSide": "right", "toNode": "rio-header", "toSide": "left", "label": "Talk adapter"},
+    {"id": "e5", "fromNode": "arch-kernel", "fromSide": "right", "toNode": "rio-runtime", "toSide": "left", "label": "LLM brain"},
+    {"id": "e6", "fromNode": "rio-runtime", "fromSide": "bottom", "toNode": "rio-pim", "toSide": "top"},
+    {"id": "e7", "fromNode": "rio-pim", "fromSide": "bottom", "toNode": "rio-hardware", "toSide": "top"},
+    {"id": "e8", "fromNode": "tk-voice", "fromSide": "bottom", "toNode": "voice-pipeline", "toSide": "top", "label": "spec → code"},
+    {"id": "e9", "fromNode": "tk-bot", "fromSide": "right", "toNode": "rio-model", "toSide": "left", "label": "spec → design"},
+    {"id": "e10", "fromNode": "voice-pipeline", "fromSide": "right", "toNode": "nextcloud-adapters", "toSide": "left"},
+    {"id": "e11", "fromNode": "nextcloud-adapters", "fromSide": "bottom", "toNode": "bot-code", "toSide": "right", "label": "consumed by"},
+    {"id": "e12", "fromNode": "bot-code", "fromSide": "right", "toNode": "cli-commands", "toSide": "left", "label": "exposed via"},
+    {"id": "e13", "fromNode": "arch-storage", "fromSide": "bottom", "toNode": "voice-pipeline", "toSide": "top"},
+    {"id": "e14", "fromNode": "rio-hardware", "fromSide": "bottom", "toNode": "status-now", "toSide": "top"},
+    {"id": "e15", "fromNode": "00-system", "fromSide": "bottom", "toNode": "01-witnesses", "toSide": "top"},
+    {"id": "e16", "fromNode": "01-witnesses", "fromSide": "bottom", "toNode": "02-daily-logs", "toSide": "top"},
+    {"id": "e17", "fromNode": "02-daily-logs", "fromSide": "bottom", "toNode": "03-events", "toSide": "top"},
+    {"id": "e18", "fromNode": "03-events", "fromSide": "bottom", "toNode": "04-projects", "toSide": "top"},
+    {"id": "e19", "fromNode": "04-projects", "fromSide": "bottom", "toNode": "05-arcs", "toSide": "top"},
+    {"id": "e20", "fromNode": "05-arcs", "fromSide": "bottom", "toNode": "06-radar", "toSide": "top"},
+    {"id": "e21", "fromNode": "06-radar", "fromSide": "bottom", "toNode": "07-storymap", "toSide": "top"}
+  ]
+}
