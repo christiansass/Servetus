@@ -1,4 +1,55 @@
+# Obsidian internals
 .obsidian/
 
-# Personal config (projects, tags, overrides)
+# Claude Code local settings
+.claude/
+
+# Local AI preload (personal)
+CLAUDE.md
+
+# Personal config
 config/
+
+# ======================
+# Altitude folders: track specs, ignore content
+# ======================
+
+# Inbox (unsorted captures)
+00-inbox/**
+!00-inbox/_inbox-spec.md
+
+# Artifacts (ground truth)
+01-artifacts/**
+!01-artifacts/_artifacts-spec.md
+
+# Memories (atomized thoughts)
+02-memories/**
+!02-memories/_memories-spec.md
+
+# Events (discrete moments)
+03-events/**
+!03-events/_events-spec.md
+
+# Projects (work clusters)
+04-projects/**
+!04-projects/_projects-spec.md
+
+# Arcs (narrative threads)
+05-arcs/**
+!05-arcs/_arcs-spec.md
+
+# Radar (situational awareness)
+06-radar/**
+!06-radar/_radar-spec.md
+
+# Storymap (30,000ft view)
+07-storymap/**
+!07-storymap/_storymap-spec.md
+
+# Witnesses (people, private intel)
+08-witnesses/**
+!08-witnesses/_witnesses-spec.md
+
+# Shared (publication layer)
+09-shared/**
+!09-shared/_shared-spec.md

@@ -26,7 +26,6 @@ radar_reason: "Brief why"      # Why it's being tracked
 ## Currently On Radar
 
 ### Strategic Ideas
-- [[idea-zeck-competitor-board-software(2026-01-29)]] — Post-Series A product opportunity
 
 ### Active Projects
 <!-- Add items as they come on radar -->

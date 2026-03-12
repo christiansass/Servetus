@@ -16,30 +16,100 @@ Usage:
 
 For log: if no text is passed, you'll be dropped into a prompt to type/paste,
 finish with Ctrl-D (Linux/macOS) or Ctrl-Z + Enter (Windows).
+
+Writes memory files into 02-memories/.
 """
 
 import sys
 import os
+import socket
+import uuid
+import platform
 from datetime import datetime
 from pathlib import Path
 
 VAULT_ROOT = Path(__file__).resolve().parent.parent
-LOG_DIR = VAULT_ROOT / "01-daily-logs"
+LOG_DIR    = VAULT_ROOT / "02-memories"
 
-def ensure_dirs():
-    LOG_DIR.mkdir(parents=True, exist_ok=True)
 
-def build_daily_log(content: str) -> str:
-    today = datetime.now()
+# ---------------------------------------------------------------------------
+# Origin fingerprint
+# ---------------------------------------------------------------------------
+
+def get_os() -> str:
+    system = platform.system()
+    if system == "Linux":
+        try:
+            for line in open("/etc/os-release"):
+                if line.startswith("PRETTY_NAME="):
+                    return line.split("=", 1)[1].strip().strip('"')
+        except Exception:
+            pass
+        return f"Linux {platform.release()}"
+    elif system == "Darwin":
+        return f"macOS {platform.mac_ver()[0]}"
+    elif system == "Windows":
+        return f"Windows {platform.version()}"
+    return system
+
+
+def get_origin() -> dict:
+    machine = socket.gethostname()
+    overrides = VAULT_ROOT / "config" / "overrides.md"
+    if overrides.exists():
+        for line in overrides.read_text().splitlines():
+            stripped = line.strip()
+            if stripped.startswith("machine_name:"):
+                val = stripped.split(":", 1)[1].strip().strip('"').strip("'")
+                if val:
+                    machine = val
+                break
+
+    mac_int = uuid.getnode()
+    mac = ":".join(["{:02x}".format((mac_int >> (8 * i)) & 0xff)
+                    for i in reversed(range(6))])
+
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+    except Exception:
+        ip = "unknown"
+
+    return {"machine": machine, "mac": mac, "ip": ip, "os": get_os()}
+
+
+# ---------------------------------------------------------------------------
+# Memory builder (v0.2 flat frontmatter)
+# ---------------------------------------------------------------------------
+
+def build_memory(content: str) -> str:
+    today    = datetime.now()
     date_iso = today.strftime("%Y-%m-%d")
-    pretty = today.strftime("%B %d, %Y")
+    pretty   = today.strftime("%B %d, %Y")
+    origin   = get_origin()
+
     return f"""---
-type: daily-log
-date: {date_iso}
+type: memory
 title: "Daily Log — {pretty}"
-source: servetus-cli
-status: draft
-tags: [daily-log]
+slug: "daily-log-{date_iso}"
+date: {date_iso}
+
+source_artifact: null
+linked_event: null
+linked_project: null
+linked_arc: null
+
+origin:
+  machine: "{origin['machine']}"
+  mac: "{origin['mac']}"
+  ip: "{origin['ip']}"
+  os: "{origin['os']}"
+
+circles: []
+published: false
+tags: [memory, daily-log]
 ---
 
 # Daily Log — {pretty}
@@ -51,44 +121,56 @@ tags: [daily-log]
 <add summary or let Servetus/LLM fill this later>
 
 ## 3) Key Points
-- 
+-
 
 ## 4) Events Detected
-- 
+-
 
 ## 5) Next Actions
-- [ ] 
+- [ ]
 """.rstrip() + "\n"
 
+
+# ---------------------------------------------------------------------------
+# Commands
+# ---------------------------------------------------------------------------
+
 def cmd_log(args):
-    ensure_dirs()
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+
     if args:
         raw = " ".join(args)
     else:
         print("Enter your log content. Press Ctrl-D (or Ctrl-Z on Windows) when done:")
-        raw_lines = sys.stdin.read()
-        raw = raw_lines.strip()
+        raw = sys.stdin.read().strip()
+
     if not raw:
         print("No content provided, aborting.")
         return
-    today = datetime.now()
+
+    today    = datetime.now()
     filename = today.strftime("%Y-%m-%d-servetus-log.md")
-    path = LOG_DIR / filename
+    path     = LOG_DIR / filename
+
     if path.exists():
-        # append with separator
+        origin = get_origin()
+        entry  = (
+            f"\n\n---\n"
+            f"# Additional Entry\n"
+            f"<!-- origin: {origin['machine']} | {origin['mac']} | {origin['ip']} | {origin['os']} -->\n\n"
+            f"{raw}\n"
+        )
         with open(path, "a", encoding="utf-8") as f:
-            f.write("\n\n---\n# Additional Entry\n\n")
-            f.write(raw + "\n")
+            f.write(entry)
         print(f"Appended to existing log: {path}")
     else:
-        text = build_daily_log(raw)
         with open(path, "w", encoding="utf-8") as f:
-            f.write(text)
-        print(f"Created new daily log: {path}")
+            f.write(build_memory(raw))
+        print(f"Created new memory: {path}")
+
 
 def cmd_voice(args):
     """Run the voice capture pipeline."""
-    # Parse voice-specific flags
     audio_file = None
     model = "base"
     language = None
@@ -179,10 +261,8 @@ def cmd_nc(args):
         listener = TalkListener(config)
 
         def handler(msg):
-            """Stub handler — replace with kernel dispatch."""
             text = msg.get("message", "")
             actor = msg.get("actorDisplayName", "unknown")
-            # For now, just acknowledge. The real kernel goes here.
             return f"[Servetus received]: {text[:100]}"
 
         listener.listen(handler)
@@ -215,10 +295,10 @@ def main():
         print("Servetus CLI")
         print()
         print("Commands:")
-        print("  log [text...]       Create a daily log entry")
-        print("  voice [options]     Record, transcribe, and analyze voice")
+        print("  log [text...]          Create a memory entry")
+        print("  voice [options]        Record, transcribe, and analyze voice")
         print("  nc <test|sync|listen>  Nextcloud operations")
-        print("  archive [text...]   Archive session to vault + Nextcloud")
+        print("  archive [text...]      Archive session to vault + Nextcloud")
         print()
         print("Voice options:")
         print("  --file PATH        Process existing audio file")
@@ -228,8 +308,10 @@ def main():
         print("  --no-prosody       Skip prosodic analysis")
         print("  --list-devices     Show available microphones")
         sys.exit(1)
+
     command = sys.argv[1]
-    args = sys.argv[2:]
+    args    = sys.argv[2:]
+
     if command == "log":
         cmd_log(args)
     elif command == "voice":
@@ -241,6 +323,7 @@ def main():
     else:
         print(f"Unknown command: {command}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
