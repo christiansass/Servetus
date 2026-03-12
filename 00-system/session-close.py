@@ -2,18 +2,22 @@
 """
 Servetus Session Close
 ----------------------
-Converts the most recent Claude Code session (.jsonl) into a Servetus
-artifact markdown file and writes it to 01-artifacts/YYYY/MM-MonthName/YYYY-MM-DD/.
+Converts the most recent Claude Code session (.jsonl) for the Servetus vault
+into a raw artifact markdown file and writes it to 00-inbox/YYYY/MM-MonthName/YYYY-MM-DD/.
+
+Only captures sessions from the Servetus project directory in ~/.claude/projects/.
+This ensures non-Servetus Claude Code sessions are never captured.
+
+Inbox is the entry point — all raw captures land here for review before filing.
 
 Usage:
-    python3 session-close.py                  # auto-detects most recent session
-    python3 session-close.py <path/to/file.jsonl>   # explicit file
+    python3 session-close.py                      # auto-detects most recent Servetus session
+    python3 session-close.py <path/to/file.jsonl> # explicit file
 
 The artifact file is named:
     YYYY-MM-DD-claude-session-<short-id>.md
 
-Run this at the end of every Claude Code session to ensure the session
-is captured as a verifiable artifact in the Servetus vault.
+Run this at the end of every Servetus Claude Code session (or use 'sc' which runs it automatically).
 """
 
 import sys
@@ -24,9 +28,9 @@ import platform
 from datetime import datetime, timezone
 from pathlib import Path
 
-VAULT_ROOT   = Path(__file__).resolve().parent.parent
-ARTIFACT_DIR = VAULT_ROOT / "01-artifacts"
-CONFIG_DIR   = VAULT_ROOT / "config"
+VAULT_ROOT = Path(__file__).resolve().parent.parent
+INBOX_DIR  = VAULT_ROOT / "00-inbox"
+CONFIG_DIR = VAULT_ROOT / "config"
 
 MONTH_NAMES = {
     1: "01-January", 2: "02-February", 3: "03-March", 4: "04-April",
@@ -87,21 +91,48 @@ def get_origin() -> dict:
 # Find most recent .jsonl session
 # ---------------------------------------------------------------------------
 
-def find_sessions_dir() -> Path:
-    """Find ~/.claude/projects/ directory."""
+def find_servetus_project_dir() -> Path:
+    """
+    Find the Claude Code project directory that corresponds to this Servetus vault.
+    Claude Code slugifies the vault path as the project directory name.
+    e.g. /Users/foo/Nextcloud/Obsidian/Servetus → -Users-foo-Nextcloud-Obsidian-Servetus
+    """
     home = Path.home()
-    sessions = home / ".claude" / "projects"
-    if sessions.exists():
-        return sessions
-    raise FileNotFoundError(f"Claude Code sessions directory not found at {sessions}")
+    projects = home / ".claude" / "projects"
+    if not projects.exists():
+        raise FileNotFoundError(f"Claude Code projects directory not found: {projects}")
+
+    # Slugify the vault root path the same way Claude Code does
+    slug = str(VAULT_ROOT).replace("/", "-").replace("\\", "-")
+    if slug.startswith("-"):
+        pass  # already has leading dash from absolute path
+    project_dir = projects / slug
+
+    if project_dir.exists():
+        return project_dir
+
+    # Fallback: search for a project dir whose slug contains key vault path components
+    vault_parts = [p for p in VAULT_ROOT.parts if p not in ("", "/")]
+    for d in projects.iterdir():
+        if d.is_dir() and all(p in d.name for p in vault_parts[-2:]):
+            return d
+
+    raise FileNotFoundError(
+        f"Could not find Claude Code project directory for vault: {VAULT_ROOT}\n"
+        f"Expected: {project_dir}\n"
+        f"Launch Claude Code from within the vault using 'sc' to ensure sessions are scoped correctly."
+    )
 
 
 def find_most_recent_jsonl() -> Path:
-    """Find the most recently modified .jsonl file across all project directories."""
-    sessions_dir = find_sessions_dir()
-    candidates = list(sessions_dir.rglob("*.jsonl"))
+    """Find the most recently modified .jsonl in the Servetus project directory only."""
+    project_dir = find_servetus_project_dir()
+    candidates = list(project_dir.glob("*.jsonl"))
     if not candidates:
-        raise FileNotFoundError("No .jsonl session files found in ~/.claude/projects/")
+        raise FileNotFoundError(
+            f"No .jsonl session files found in {project_dir}\n"
+            f"Make sure you launched this session using 'sc' from the Servetus vault."
+        )
     return max(candidates, key=lambda p: p.stat().st_mtime)
 
 
@@ -233,7 +264,7 @@ tags: [artifact, session, claude-code]
 def write_artifact(date: datetime, filename: str, content: str) -> Path:
     month_name = MONTH_NAMES[date.month]
     date_str   = date.strftime("%Y-%m-%d")
-    out_dir    = ARTIFACT_DIR / str(date.year) / month_name / date_str
+    out_dir    = INBOX_DIR / str(date.year) / month_name / date_str
     out_dir.mkdir(parents=True, exist_ok=True)
     out_path   = out_dir / filename
 
