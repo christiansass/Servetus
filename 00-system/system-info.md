@@ -60,6 +60,13 @@ The adapter only handles I/O — receiving input and delivering output.
 | **Public** | Public Git repo | Standards only |
 | **Transient** | Ephemeral LLM session | Processing only |
 
+│  00-system/  01-artifacts/  02-memories/ ...      │
+├─────────────────────────────────────────────────────┤
+│                  STORAGE LAYER                       │
+│         (Obsidian vault on local disk)              │
+└─────────────────────────────────────────────────────┘
+```
+
 ## Query Commands
 
 Ask Claude:

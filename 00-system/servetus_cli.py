@@ -92,8 +92,8 @@ def build_memory(content: str) -> str:
 
     return f"""---
 type: memory
-title: "Daily Log — {pretty}"
-slug: "daily-log-{date_iso}"
+title: "Memory — {pretty}"
+slug: "memory-{date_iso}"
 date: {date_iso}
 
 source_artifact: null
@@ -109,10 +109,10 @@ origin:
 
 circles: []
 published: false
-tags: [memory, daily-log]
+tags: [memory]
 ---
 
-# Daily Log — {pretty}
+# Memory — {pretty}
 
 ## 1) Raw Input
 {content.strip()}
@@ -288,6 +288,7 @@ def cmd_archive(args):
         return
 
     archive_session(content=content, source="claude-code")
+
 
 
 def main():
