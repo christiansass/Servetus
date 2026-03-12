@@ -50,8 +50,10 @@ config/
 
 # Witnesses (people, private intel)
 08-witnesses/**
+!08-witnesses/.gitkeep
 !08-witnesses/_witnesses-spec.md
 
 # Shared (publication layer)
 09-shared/**
+!09-shared/.gitkeep
 !09-shared/_shared-spec.md
