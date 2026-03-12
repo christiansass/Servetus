@@ -27,13 +27,15 @@ class NextcloudConfig:
     def __post_init__(self):
         if self.sync_paths is None:
             self.sync_paths = [
-                "01-witnesses/",
-                "02-daily-logs/",
+                "01-artifacts/",
+                "02-memories/",
                 "03-events/",
                 "04-projects/",
                 "05-arcs/",
                 "06-radar/",
                 "07-storymap/",
+                "08-witnesses/",
+                "09-shared/",
             ]
 
     @property
