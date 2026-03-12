@@ -2,7 +2,7 @@
 type: system
 purpose: OS identity and status
 ---
-
+[[]]
 # Servetus System Info
 
 ## Identity
