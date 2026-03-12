@@ -1,0 +1,8 @@
+{
+  "_comment": "Map real names/terms to tokens. Tokens are sent to external LLMs; real values are restored on response.",
+  "entities": {
+    "YourName": "user1",
+    "YourCity": "location1",
+    "YourServer": "host1"
+  }
+}
