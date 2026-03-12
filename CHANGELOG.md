@@ -7,6 +7,33 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [0.2.2] - 2026-03-11
+
+### Changed
+- **Folder rename: `01-witnesses/` → `01-artifacts/`** — files are artifacts (the tape), not witnesses (people)
+- **Folder rename: `02-daily-logs/` → `02-memories/`** — atomized thoughts, not time-bound logs
+- **`servetus_cli.py`** — LOG_DIR updated to `02-memories/`
+- **README** — fully rewritten to v0.2.1 architecture: artifact chain, corroboration scores, v0.2 folder structure, flat frontmatter examples, Map vs Engine, LLMs as Prototyping Environment, watch folder principle
+- **Philosophy.md** — merged v0.1, v0.2 session, and 2026-03-11 additions into single authoritative document
+
+### Added
+- **Philosophy: The Personal Origin** — verbal processor framing, prosthetic origin story
+- **Philosophy: Audio-First** — witness format hierarchy (audio > video > photo > text)
+- **Philosophy: Witness Consensus and Corroboration Score** — privacy-preserving numeric scoring, discovery angle
+- **Philosophy: The Sacred Space** — boundary between machine processing and human thought
+- **Philosophy: Map vs. Engine** — Servetus as memory map independent of AI vendor
+- **Philosophy: LLMs as Prototyping Environment** — spec-to-code pipeline
+- **Philosophy: The Framework Trap** — LLM-dependent frameworks are not software (landing page source)
+- **Philosophy: A Safety Net Around AI** — AI governance for individuals (landing page source)
+- **README: Corroboration Score** — numeric scoring model documented publicly
+- **README: Architecture Principle 7** — Every Folder Is a Watch Folder
+- **Toolkit: Migration path updated** — folder renames marked complete
+
+### Fixed
+- All Toolkit specs, SETUP.md, CHANGELOG, system-info updated to remove `01-witnesses` and `02-daily-logs` references
+
+---
+
 ## [0.2.1] - 2026-01-31
 
 ### Changed
@@ -25,8 +52,8 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 - **Altitude-based folder structure** - Folders now numbered by zoom level:
-  - `01-witnesses` (ground level, most zoomed in)
-  - `02-daily-logs`
+  - `01-artifacts` (ground level, most zoomed in)
+  - `02-memories`
   - `03-events`
   - `04-projects`
   - `05-arcs`
