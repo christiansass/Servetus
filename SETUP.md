@@ -331,8 +331,8 @@ Servetus is an operating system. Claude is the kernel. The file system is the pr
 ```
 Servetus/
 ├── 00-system/            # System files, VERSION
-├── 01-witnesses/         # Ground truth (most zoomed in)
-├── 02-daily-logs/        # Daily capture stream
+├── 01-artifacts/         # Ground truth (most zoomed in)
+├── 02-memories/        # Daily capture stream
 ├── 03-events/            # Discrete moments
 ├── 04-projects/          # Work clusters
 ├── 05-arcs/              # Narrative threads
