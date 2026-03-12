@@ -178,15 +178,29 @@ ROUTER_DEST="$INSTALL_DIR/servetus_router.py"
 sed "s|__VAULT_ROOT__|$VAULT_ROOT|g" "$ROUTER_SRC" > "$ROUTER_DEST"
 chmod 755 "$ROUTER_DEST"
 
-# Write the thin shell launcher
+# Write the thin shell launcher (Ollama router)
 cat > "$INSTALL_TARGET" <<LAUNCHER
 #!/usr/bin/env bash
 exec python3 "$ROUTER_DEST" "\$@"
 LAUNCHER
 chmod 755 "$INSTALL_TARGET"
 
+# Write the Claude Code launcher — runs claude, then session-close on exit
+SC_TARGET="$INSTALL_DIR/sc"
+cat > "$SC_TARGET" <<SCLAUNCHER
+#!/usr/bin/env bash
+# Servetus Claude — launch Claude Code and capture session on exit
+cd "$VAULT_ROOT" || exit 1
+claude "\$@"
+echo ""
+echo "[servetus] Session ended. Capturing artifact..."
+python3 "$VAULT_ROOT/00-system/session-close.py"
+SCLAUNCHER
+chmod 755 "$SC_TARGET"
+
 echo -e "  router   → ${GREEN}$ROUTER_DEST${NC}"
 echo -e "  launcher → ${GREEN}$INSTALL_TARGET${NC}"
+echo -e "  claude   → ${GREEN}$SC_TARGET${NC}  (use 'sc' to launch Claude Code with auto-capture)"
 
 # ---------------------------------------------------------------------------
 # 5. Ensure ~/bin is on PATH
@@ -251,9 +265,10 @@ done
 echo ""
 echo -e "${GREEN}${BOLD}Installation complete.${NC}"
 echo ""
-echo "  Start a session : servetus"
+echo "  Ollama router   : servetus"
 echo "  One-off query   : servetus \"your question here\""
 echo "  Route to Claude : servetus \"@claude your question\""
+echo "  Claude Code     : sc   (launches Claude + auto-captures session on exit)"
 echo ""
 echo -e "${DIM}Edit $CONFIG_DIR/pii_map.json to add PII entities to anonymize.${NC}"
 echo -e "${DIM}Edit $CONFIG_DIR/router_config.json to change model or default route.${NC}"
