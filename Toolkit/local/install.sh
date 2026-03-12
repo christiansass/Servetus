@@ -260,6 +260,47 @@ for tpl in pii_map.json router_config.json; do
 done
 
 # ---------------------------------------------------------------------------
+# 7. Deploy guardrails hook
+# ---------------------------------------------------------------------------
+echo ""
+echo -e "${BOLD}Deploying guardrails hook...${NC}"
+
+CLAUDE_DIR="$VAULT_ROOT/.claude"
+SETTINGS_FILE="$CLAUDE_DIR/settings.local.json"
+GUARDRAILS_SCRIPT="$VAULT_ROOT/Toolkit/local/guardrails.sh"
+
+mkdir -p "$CLAUDE_DIR"
+
+# Write settings.local.json with correct vault-absolute path
+cat > "$SETTINGS_FILE" <<SETTINGS
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3:*)",
+      "Bash(zip:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash $GUARDRAILS_SCRIPT"
+          }
+        ]
+      }
+    ]
+  }
+}
+SETTINGS
+
+chmod 644 "$SETTINGS_FILE"
+echo -e "  guardrails → ${GREEN}$SETTINGS_FILE${NC}"
+echo -e "  script     → ${GREEN}$GUARDRAILS_SCRIPT${NC}"
+
+# ---------------------------------------------------------------------------
 # Done
 # ---------------------------------------------------------------------------
 echo ""
