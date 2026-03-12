@@ -237,7 +237,8 @@ Real values are restored on responses. Order matters — put full phrases before
 Open a new terminal (or `source ~/.bashrc`) and run:
 
 ```bash
-servetus
+servetus        # Ollama router
+sc              # Claude Code with auto session-close on exit
 ```
 
 The router boots with your Toolkit loaded and Ollama as the local kernel. Queries that exceed local capability automatically escalate to Claude (or the configured `escalation_target`) with session context packaged as a handoff.

@@ -4,7 +4,7 @@
 
 > *"There is no trust without truth, and there is no assistant without trust."*
 
-**Current Version: 0.2.1** · [Changelog](CHANGELOG.md) · [Philosophy](Philosophy.md)
+**Current Version: 0.2.2** · [Changelog](CHANGELOG.md) · [Philosophy](Philosophy.md)
 
 ---
 
@@ -20,6 +20,16 @@ Servetus is a **memory map** — not a skill bolted onto an AI, but the sovereig
 When you switch AI vendors, the map remains. When the model hallucinates, the artifacts correct it. When the software fails, you open the folder and your life is still there.
 
 **Servetus is not anti-AI. It is the safety net that makes AI usable without being dangerous.**
+
+---
+
+## Independent Validation
+
+Servetus was designed without knowledge of [Fabric](https://github.com/danielmiessler/fabric), Daniel Miessler's open-source framework for augmenting humans with AI. The two projects independently converged on the same structural insight: **plain Markdown as behavior definition, AI as executor, humans in control of the process.**
+
+The overlap is in the plumbing — how you tell an LLM what to do via text files. The divergence is in the thesis. Fabric solved *"how do I reuse good prompts."* Servetus is solving *"how do I trust what an AI tells me about my own life."*
+
+That these projects arrived at the same file format from completely different problems isn't a coincidence — it's confirmation that the pattern is real and the need is wider than any single implementation.
 
 ---
 
@@ -166,7 +176,7 @@ Every spec in `Toolkit/` is a ticket waiting to become a committed function. The
 ## Architecture Principles
 
 ### 1. Human-Readable Always
-No binary blobs. No compiled code. No proprietary formats. Just files.
+No proprietary formats. No opaque databases. Plain Markdown and YAML — readable by humans, parseable by machines. Where compiled code exists, its behavior is defined by specs you can read and verify. The goal is provable, deterministic code that replaces LLM functions once behavior is proven — code cannot hallucinate, and it runs without LLM processing.
 
 ### 2. Map vs. Engine
 Servetus is a memory map, not a skill. The map exists independent of whichever AI reads it. Switch engines without losing memory.
@@ -177,8 +187,8 @@ LLMs prototype behavior. Proven behavior becomes code. Code becomes the system. 
 ### 4. Sovereignty by Default
 Your data lives on your infrastructure. Servetus orchestrates — it doesn't own.
 
-### 5. Artifacts Over Assertions
-If there is no artifact, it is not memory. It is confabulation.
+### 5. Artifacts Are Memory
+A photo, recording, or document is memory without explanation. It stands alone as evidence of a moment. Spoken or written thoughts become memories the moment they're captured. The artifact doesn't validate the memory — it *is* the memory. What changes with corroboration is not the memory's existence but its weight: one witness is testimony, two is established, three or more is confirmed.
 
 ### 6. Code Over Prompts
 Proven behaviors become scripts. Scripts become the system. Prompts are scaffolding.
@@ -214,7 +224,6 @@ Servetus (the system) ensures the interpretation layer is never controlled by a 
 - ✅ Toolkit specs (bootloader, export rules, schema, time, spelling, routing)
 
 **In Progress:**
-- ⏳ Folder rename: `01-witnesses/` → `01-artifacts/`, `02-daily-logs/` → `02-memories/`
 - ⏳ Session-close script (`.jsonl` → artifact markdown, cross-platform)
 - ⏳ Frontmatter migration script (v0.1 nested → v0.2 flat)
 - ⏳ Corroboration score implementation

@@ -2,7 +2,7 @@
 type: system
 purpose: OS identity and status
 ---
-[[]]
+
 # Servetus System Info
 
 ## Identity
@@ -16,19 +16,50 @@ purpose: OS identity and status
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                   USER INTERFACE                     │
-│              (conversation / terminal)               │
+│                  I/O ADAPTERS                        │
+│   CLI  │  Obsidian Plugin  │  NC Talk  │  Sys Tray  │
 ├─────────────────────────────────────────────────────┤
 │                      SHELL                           │
-│           (Claude interprets commands)               │
+│           (interprets commands via Toolkit)           │
 ├─────────────────────────────────────────────────────┤
 │                     KERNEL                           │
-│         (Claude processes instructions)              │
+│    (AI processes instructions — same interpreter)    │
 ├──────────────────┬──────────────────────────────────┤
 │   SYSTEM LIBS    │         USER SPACE               │
 │    (Toolkit/)    │         (config/)                │
 ├──────────────────┴──────────────────────────────────┤
 │                   FILE SYSTEM                        │
+│  00-system/  01-artifacts/  02-memories/ ...        │
+├─────────────────────────────────────────────────────┤
+│         STORAGE + SYNC (trust-tiered)                │
+│  Local disk ──→ Nextcloud (Sovereign)               │
+│                 Git (Controlled/Public)               │
+└─────────────────────────────────────────────────────┘
+```
+
+### I/O Adapters
+
+The kernel is one interpreter. These are different mouths and ears:
+
+| Adapter | Interface | Status | Code |
+|---------|-----------|--------|------|
+| **CLI** | Terminal commands | Active | `00-system/servetus_cli.py` |
+| **Obsidian Plugin** | Vault UI + graph | Planned | — |
+| **Nextcloud Talk** | Chat room listener | Scaffolded | `00-system/nextcloud/talk.py` |
+| **System Tray** | Desktop assist tray | Planned | — |
+
+All adapters share: same Toolkit specs, same vault filesystem, same kernel logic.
+The adapter only handles I/O — receiving input and delivering output.
+
+### Destination Trust Tiers
+
+| Tier | Destination | Clearance |
+|------|------------|-----------|
+| **Sovereign** | Nextcloud / self-hosted | Everything |
+| **Controlled** | Private Git repo | Code + specs only |
+| **Public** | Public Git repo | Standards only |
+| **Transient** | Ephemeral LLM session | Processing only |
+
 │  00-system/  01-artifacts/  02-memories/ ...      │
 ├─────────────────────────────────────────────────────┤
 │                  STORAGE LAYER                       │
@@ -55,5 +86,8 @@ See `CHANGELOG.md` for full release notes.
 | Version | `00-system/VERSION` |
 | Changelog | `CHANGELOG.md` |
 | System specs | `Toolkit/` |
-| User config | `config/` |
+| User config | `config/` (gitignored) |
 | Preload script | `CLAUDE.md` |
+| Voice pipeline | `00-system/voice/` |
+| Nextcloud adapter | `00-system/nextcloud/` |
+| NC config template | `00-system/nextcloud/nextcloud.yaml.example` |

@@ -1,0 +1,37 @@
+# Nextcloud connection configuration
+# Copy this file to nextcloud.yaml and fill in your values.
+# This file is gitignored — credentials never leave Sovereign tier.
+
+server:
+  url: "https://your-nextcloud.example.com"
+  username: "your-username"
+  # Use an App Password — NOT your main password.
+  # Generate one at: Settings → Security → Devices & Sessions
+  app_password: "xxxxx-xxxxx-xxxxx-xxxxx-xxxxx"
+
+# Where in Nextcloud the vault syncs to
+vault:
+  # WebDAV path relative to your Nextcloud root
+  remote_root: "/Servetus"
+
+# Trust tier enforcement
+# These paths sync to Nextcloud (Sovereign tier = everything is allowed)
+# Paths NOT listed here will not be synced even if present in the vault
+sync_paths:
+  - "01-artifacts/"
+  - "02-memories/"
+  - "03-events/"
+  - "04-projects/"
+  - "05-arcs/"
+  - "06-radar/"
+  - "07-storymap/"
+  - "08-witnesses/"
+  - "09-shared/"
+
+# Nextcloud Talk integration (same kernel, chat adapter)
+talk:
+  enabled: false
+  # Room token from Nextcloud Talk URL (the part after /call/)
+  room_token: ""
+  # Poll interval in seconds for new messages
+  poll_interval: 5
