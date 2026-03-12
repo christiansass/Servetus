@@ -30,13 +30,8 @@ from pathlib import Path
 
 VAULT_ROOT = Path(__file__).resolve().parent.parent
 INBOX_DIR  = VAULT_ROOT / "00-inbox"
+CLAUDE_DIR = INBOX_DIR / "claude"
 CONFIG_DIR = VAULT_ROOT / "config"
-
-MONTH_NAMES = {
-    1: "01-January", 2: "02-February", 3: "03-March", 4: "04-April",
-    5: "05-May", 6: "06-June", 7: "07-July", 8: "08-August",
-    9: "09-September", 10: "10-October", 11: "11-November", 12: "12-December",
-}
 
 
 # ---------------------------------------------------------------------------
@@ -156,35 +151,39 @@ def parse_jsonl(path: Path) -> list:
     return turns
 
 
+def extract_content(raw) -> str:
+    """Extract text from a content field — handles string, list of blocks, or nested message dict."""
+    if isinstance(raw, dict):
+        raw = raw.get("content", "")
+    if isinstance(raw, list):
+        return "\n".join(
+            block.get("text", "") for block in raw
+            if isinstance(block, dict) and block.get("type") == "text"
+        )
+    return str(raw) if raw else ""
+
+
 def extract_messages(turns: list) -> list:
-    """Extract human/assistant message pairs from raw turns."""
+    """Extract human/assistant message pairs from raw turns.
+
+    Claude Code .jsonl format:
+      {"type": "user",      "message": {"role": "user",      "content": "..."}}
+      {"type": "assistant", "message": {"role": "assistant",  "content": [...]}}
+    """
     messages = []
     for turn in turns:
-        # Claude Code jsonl format varies — handle common shapes
         msg_type = turn.get("type", "")
 
-        if msg_type == "human" or turn.get("role") == "user":
-            content = turn.get("message", turn.get("content", ""))
-            if isinstance(content, list):
-                # multi-part content blocks
-                text = "\n".join(
-                    block.get("text", "") for block in content
-                    if isinstance(block, dict) and block.get("type") == "text"
-                )
-            else:
-                text = str(content)
+        if msg_type in ("user", "human"):
+            # Content lives at turn.message.content or turn.content
+            raw = turn.get("message") or turn.get("content", "")
+            text = extract_content(raw)
             if text.strip():
                 messages.append({"role": "user", "content": text.strip()})
 
-        elif msg_type == "assistant" or turn.get("role") == "assistant":
-            content = turn.get("message", turn.get("content", ""))
-            if isinstance(content, list):
-                text = "\n".join(
-                    block.get("text", "") for block in content
-                    if isinstance(block, dict) and block.get("type") == "text"
-                )
-            else:
-                text = str(content)
+        elif msg_type == "assistant":
+            raw = turn.get("message") or turn.get("content", "")
+            text = extract_content(raw)
             if text.strip():
                 messages.append({"role": "assistant", "content": text.strip()})
 
@@ -262,11 +261,8 @@ tags: [artifact, session, claude-code]
 # ---------------------------------------------------------------------------
 
 def write_artifact(date: datetime, filename: str, content: str) -> Path:
-    month_name = MONTH_NAMES[date.month]
-    date_str   = date.strftime("%Y-%m-%d")
-    out_dir    = INBOX_DIR / str(date.year) / month_name / date_str
-    out_dir.mkdir(parents=True, exist_ok=True)
-    out_path   = out_dir / filename
+    CLAUDE_DIR.mkdir(parents=True, exist_ok=True)
+    out_path = CLAUDE_DIR / filename
 
     if out_path.exists():
         print(f"[session-close] Already exists: {out_path}")
