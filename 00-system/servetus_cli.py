@@ -7,7 +7,7 @@ Usage:
 If no text is passed, you'll be dropped into a prompt to type/paste,
 finish with Ctrl-D (Linux/macOS) or Ctrl-Z + Enter (Windows).
 
-This writes a dated daily-log markdown file into `02-daily-logs/`.
+This writes a dated memory file into `02-memories/`.
 """
 
 import sys
@@ -18,7 +18,7 @@ from datetime import datetime
 from pathlib import Path
 
 VAULT_ROOT = Path(__file__).resolve().parent.parent
-LOG_DIR    = VAULT_ROOT / "02-daily-logs"
+LOG_DIR    = VAULT_ROOT / "02-memories"
 
 
 # ---------------------------------------------------------------------------

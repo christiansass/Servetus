@@ -108,6 +108,27 @@ All records are **plain Markdown** with **YAML frontmatter** — readable by hum
 
 ### Frontmatter (v0.2 — flat)
 
+**Artifact** — origin fingerprint lives here, on the raw evidence:
+```yaml
+---
+type: artifact
+title: "Session — 2026-03-11"
+slug: "2026-03-11-session"
+date: 2026-03-11T14:30:00-06:00
+
+origin:
+  machine: "WordInFilm"
+  mac: "30:9c:23:8c:6e:04"
+  ip: "10.0.0.109"
+  os: "Linux Mint 22.3"
+
+circles: []
+published: false
+tags: [session, artifact]
+---
+```
+
+**Memory** — provenance inherited via `source_artifact`, no origin block needed:
 ```yaml
 ---
 type: memory
@@ -116,6 +137,7 @@ slug: "one-idea-atomized"
 date: 2026-03-11
 
 source_artifact: "2026-03-11-session.md"
+source_offset: "00:12:30"
 
 linked_event: null
 linked_project: null
@@ -149,8 +171,8 @@ No binary blobs. No compiled code. No proprietary formats. Just files.
 ### 2. Map vs. Engine
 Servetus is a memory map, not a skill. The map exists independent of whichever AI reads it. Switch engines without losing memory.
 
-### 3. AI as Servant, Not Authority
-LLMs process and assist. They do not determine truth. Artifacts determine truth.
+### 3. AI as Prototyping Layer, Not Authority
+LLMs prototype behavior. Proven behavior becomes code. Code becomes the system. The AI is scaffolding — useful until the structure can stand without it.
 
 ### 4. Sovereignty by Default
 Your data lives on your infrastructure. Servetus orchestrates — it doesn't own.
@@ -160,6 +182,9 @@ If there is no artifact, it is not memory. It is confabulation.
 
 ### 6. Code Over Prompts
 Proven behaviors become scripts. Scripts become the system. Prompts are scaffolding.
+
+### 7. Every Folder Is a Watch Folder
+Servetus must be aware of every file modification. Changes made inside Obsidian, on the command line, or by any tool are system events. A future Servetus daemon monitors all vault folders and notifies the system of modifications — so nothing changes silently.
 
 ---
 
