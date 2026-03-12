@@ -2,7 +2,7 @@
 type: system
 purpose: OS identity and status
 ---
-
+[[]]
 # Servetus System Info
 
 ## Identity
@@ -29,7 +29,7 @@ purpose: OS identity and status
 │    (Toolkit/)    │         (config/)                │
 ├──────────────────┴──────────────────────────────────┤
 │                   FILE SYSTEM                        │
-│  00-system/  01-witnesses/  02-daily-logs/ ...      │
+│  00-system/  01-artifacts/  02-memories/ ...      │
 ├─────────────────────────────────────────────────────┤
 │                  STORAGE LAYER                       │
 │         (Obsidian vault on local disk)              │
