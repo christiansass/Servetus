@@ -76,17 +76,37 @@ inside the record, not in the filename.
 
 **Naming pattern:** `lastname-firstname-identifier.md`
 
-The identifier is required — it makes the record unique when names collide:
+The identifier is required — it makes the record unique and immediately human-readable.
+It should reflect **what matters most to you about this person in your vault** — not
+their title, not their org chart position, but their role in your life. The same person
+may have a different identifier in a different vault owner's records. That is correct.
+Witness records are relative to the vault owner.
 
-| Preferred identifier | Format | Example |
-|---------------------|--------|---------|
-| Email domain (custom) | full domain | `smith-john-binaryranch.com.md` |
-| Email domain (common provider) | strip TLD | `smith-john-gmail.md`, `smith-john-icloud.md` |
-| Context (no email) | how you know them | `smith-john-church.md`, `smith-john-contractor.md` |
+**Full four-field pattern:** `lastname-firstname-organization-role.md`
 
-The identifier is the domain portion of their email address — non-PII, human-readable,
-and unique enough for disambiguation. Full contact details (email, phone) belong in
-the frontmatter, not the filename. This file is sovereign — PII is safe here.
+| Field | Purpose |
+|-------|---------|
+| lastname | Sorts alphabetically by surname |
+| firstname | Disambiguates within surname |
+| organization | Current operational context (company, family, community) |
+| role | Their position in that context — as it matters to you |
+
+| Situation | Example |
+|-----------|---------|
+| Professional context | `doe-jane-acmecorp-cto.md` |
+| Family context | `doe-john-family-husband.md` |
+| Public figure | `smith-robert-statename-governor.md` |
+| Username only (unresolved identity) | `x-handle42-unknown-unknown.md` |
+
+The `x-` prefix flags unresolved identity — you know the person, not their name.
+When identity is revealed, rename the file. Git tracks the rename. The moment of
+revelation is in the history.
+
+The identifier serves your memory, not a database. When their context changes,
+rename the file. The rename is the record of the relationship evolving.
+
+Full contact details (email, phone) belong in the frontmatter, not the filename.
+This file is sovereign — PII is safe here.
 
 ---
 
