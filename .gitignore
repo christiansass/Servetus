@@ -14,13 +14,17 @@ config/
 # Altitude folders: track specs, ignore content
 # ======================
 
-# Witnesses (ground truth)
-01-witnesses/**
-!01-witnesses/_witnesses-spec.md
+# Inbox (unsorted captures)
+00-inbox/**
+!00-inbox/_inbox-spec.md
 
-# Daily logs (stream capture)
-02-daily-logs/**
-!02-daily-logs/_daily-logs-spec.md
+# Artifacts (ground truth)
+01-artifacts/**
+!01-artifacts/_artifacts-spec.md
+
+# Memories (atomized thoughts)
+02-memories/**
+!02-memories/_memories-spec.md
 
 # Events (discrete moments)
 03-events/**
@@ -41,3 +45,11 @@ config/
 # Storymap (30,000ft view)
 07-storymap/**
 !07-storymap/_storymap-spec.md
+
+# Witnesses (people, private intel)
+08-witnesses/**
+!08-witnesses/_witnesses-spec.md
+
+# Shared (publication layer)
+09-shared/**
+!09-shared/_shared-spec.md
