@@ -20,10 +20,12 @@ config/
 
 # Artifacts (ground truth)
 01-artifacts/**
+!01-artifacts/.gitkeep
 !01-artifacts/_artifacts-spec.md
 
 # Memories (atomized thoughts)
 02-memories/**
+!02-memories/.gitkeep
 !02-memories/_memories-spec.md
 
 # Events (discrete moments)
