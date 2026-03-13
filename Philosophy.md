@@ -276,21 +276,21 @@ This project has a co-architect who doesn't know he is one.
 
 Joshua Matrisciana is a builder, an early web developer, a man who runs toward new technology the way some people run toward a fight — without a helmet, on purpose, because he trusts his own reflexes more than the guardrails. While Christian was building the armor, Joshua was already on the mechanical bull.
 
-They met in the early web, where they were the same kind of person: creative, empathetic, convinced that what they were building could be shared with the world. Then they found out the world couldn't be trusted with it.
+They lived parallel lives before they met in the early web, where they were the same kind of person: creative, empathetic, convinced that what they were building could be shared with the world. Then they found out the world couldn't be trusted with it.
 
-From late 2022, they built Revolution Harbor together — a sovereign social network with fediverse principles and revolutionary symbolism. The Gadsden Flag. The Medina Navy. 1776 as digital metaphor. The second American revolution wouldn't be fought with muskets. It would be fought with architecture.
+From late 2022, they built Revolution Harbor together — a sovereign social network with fediverse principles and revolutionary symbolism. The Gadsden Flag. The Medina Navy. 1776 as digital metaphor. The second American revolution would be digital.
 
 Revolution Harbor didn't get finished. But it finished something in Christian.
 
 Watching Joshua work — brilliant, fast, bare-backing AI tools without a trust framework, making them do things they weren't supposed to do, running toward every wall to see if it would hold — was both inspiring and terrifying. Here was someone who understood the technology intuitively and was deploying it without armor. And here was the thing that needed to exist: not a faster horse, but a suit of armor that let you ride safely.
 
-> *"I feel like I'm creating seat belts and helmets because you're just fucking wild."*
+> *"I feel like I'm creating seat belts and helmets while you're just running wild."*
 
 Joshua told Christian on March 12, 2026, during the first call after Servetus v0.2 went live on GitHub: *"You're going too slow. You need to speed it up."* That's his voice in this project. It always has been.
 
 Every idea in this document that touches sovereignty, federation, trust, and the right to own your own context — those ideas were born in the conversations and experiments that made up Revolution Harbor. Joshua Matrisciana is named here because he was there at the beginning, because he earned it, and because he gave his explicit consent on the record, in a call that is now filed as an artifact in the vault this document describes.
 
-*"All of these ideas, all of these things I can't get my teeth out of, that I stay up at night, that I get up in the morning, that I freak out about every fucking day — they were birthed during that experiment called Revolution Harbor."*
+*"All of these ideas, all of these things I can't get my teeth out of, that I stay up at night, that I get up in the morning, that I freak out about every day — they were birthed during that experiment called Revolution Harbor."*
 
 The experiment didn't fail. It just became something bigger than one project.
 
