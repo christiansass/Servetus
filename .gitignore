@@ -18,7 +18,7 @@ config/
 00-Artifacts/**
 !00-Artifacts/_artifact-source-spec.md
 
-# Legacy name — physical folder not yet renamed on disk
+# Legacy name — kept until all references are migrated
 00-inbox/**
 
 # Records (Markdown field records of artifacts)
