@@ -14,55 +14,58 @@ config/
 # Altitude folders: track specs, ignore content
 # ======================
 
-# Source (evidence locker — copied originals)
-00-source/**
-!00-source/_source-spec.md
+# Artifacts (original evidence locker — copied originals, date-sorted)
+00-Artifacts/**
+!00-Artifacts/_artifact-source-spec.md
 
-# Artifacts (ground truth)
-01-artifacts/**
-!01-artifacts/.gitkeep
-!01-artifacts/_artifact-spec.md
-!01-artifacts/_artifact-template.md
+# Legacy name — physical folder not yet renamed on disk
+00-inbox/**
+
+# Records (Markdown field records of artifacts)
+01-Records/**
+!01-Records/.gitkeep
+!01-Records/_record-spec.md
+!01-Records/_record-template.md
 
 # Memories (atomized thoughts)
-02-memories/**
-!02-memories/.gitkeep
-!02-memories/_memory-spec.md
-!02-memories/_memory-template.md
+02-Memories/**
+!02-Memories/.gitkeep
+!02-Memories/_memory-spec.md
+!02-Memories/_memory-template.md
 
 # Events (discrete moments)
-03-events/**
-!03-events/_event-spec.md
-!03-events/_event-template.md
+03-Events/**
+!03-Events/_event-spec.md
+!03-Events/_event-template.md
 
 # Projects (work clusters)
-04-projects/**
-!04-projects/_project-spec.md
-!04-projects/_project-template.md
+04-Projects/**
+!04-Projects/_project-spec.md
+!04-Projects/_project-template.md
 
 # Arcs (narrative threads)
-05-arcs/**
-!05-arcs/_arc-spec.md
-!05-arcs/_arc-template.md
+05-Arcs/**
+!05-Arcs/_arc-spec.md
+!05-Arcs/_arc-template.md
 
 # Radar (situational awareness)
-06-radar/**
-!06-radar/_radar-spec.md
-!06-radar/_radar-template.md
+06-Radar/**
+!06-Radar/_radar-spec.md
+!06-Radar/_radar-template.md
 
-# Storymap (30,000ft view)
-07-storymap/**
-!07-storymap/_storymap-spec.md
-!07-storymap/_storymap-template.md
+# StoryMap (30,000ft view)
+07-StoryMap/**
+!07-StoryMap/_storymap-spec.md
+!07-StoryMap/_storymap-template.md
 
 # Witnesses (people, private intel)
-08-witnesses/**
-!08-witnesses/.gitkeep
-!08-witnesses/_witness-spec.md
-!08-witnesses/_witness-template.md
+08-Witnesses/**
+!08-Witnesses/.gitkeep
+!08-Witnesses/_witness-spec.md
+!08-Witnesses/_witness-template.md
 
 # Shared (publication layer)
-09-shared/**
-!09-shared/.gitkeep
-!09-shared/_shared-spec.md
-!09-shared/_shared-template.md
+09-Shared/**
+!09-Shared/.gitkeep
+!09-Shared/_shared-spec.md
+!09-Shared/_shared-template.md
