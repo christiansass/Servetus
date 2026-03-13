@@ -109,7 +109,7 @@ Servetus/
 ├── 07-StoryMap/          # 30,000ft view — your full testimony
 ├── 08-Witnesses/         # People whose stories touch yours (private intelligence)
 ├── 09-Shared/            # What you publish, federate, or release
-├── 00-System/            # Config, templates, specs, CLI
+├── 10-System/            # Config, templates, specs, CLI
 ├── Toolkit/              # System specs (the instruction set)
 └── config/               # User settings (gitignored for privacy)
 ```
