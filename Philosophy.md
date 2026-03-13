@@ -348,6 +348,32 @@ This is the architectural consequence of separating map from engine. The memory 
 
 Servetus doesn't compete with any AI platform. It runs on top of all of them — vendor-agnostically — the same way POSIX doesn't compete with Linux or BSD. It defines what any compliant kernel must be able to do.
 
+The three-layer separation makes this concrete:
+
+```
+┌─────────────────────────────────────┐
+│           YOUR RULES                │
+│   (Toolkit: specs, protocols)       │
+│   Independent. Portable. Yours.     │
+└──────────────┬──────────────────────┘
+               │  governs behavior
+               ▼
+┌─────────────────────────────────────┐
+│         YOUR CONTEXT                │
+│   (vault: history, projects, life)  │
+│   Local. Structured. Sovereign.     │
+└──────────────┬──────────────────────┘
+               │  loaded as needed
+               ▼
+┌─────────────────────────────────────┐
+│          ANY LLM                    │
+│   (just the processor)              │
+│   Interchangeable. Disposable.      │
+└─────────────────────────────────────┘
+```
+
+You own the rules. You own the context. The LLM is a guest.
+
 ---
 
 ## LLMs as Prototyping Environment
@@ -478,6 +504,30 @@ If the lights go out, the files are still there.
 
 ---
 
+## The Exile
+
+When a platform bans you, most people think: the data is gone.
+
+It isn't.
+
+They don't delete your data. They take you away from it. Your profile still exists. Your messages, your photos, your years of documented history — all archived on their servers. They keep your digital shadow. They could restore it with a keystroke. But they don't. And no one can tell you who to talk to — no employee, no support channel, no appeal.
+
+You're exiled from your own life while they keep the records.
+
+This is not deletion. It is separation. You lose access to your history. They keep the intelligence.
+
+The data wasn't destroyed. It was confiscated.
+
+The people who build Servetus have watched this happen. Not to political accounts. Not to controversial voices. Just... gone. And everyone scrambling to find a human — *any* human — who could flip the switch. No one could. Or no one would.
+
+Servetus exists so that can never happen to your memory. They can exile you from the platform. They cannot exile you from your own files.
+
+> *"If you're not afraid to delete your accounts, you're free."*
+
+That is the test. Not whether you use the platforms — but whether you depend on them. Build your vault. Own your history. Then use every platform you want, because you can walk away from any of them without losing anything that matters.
+
+---
+
 ## StoryMap and the Sovereign Social Network
 
 Every existing social network made the same foundational decision: the platform owns the graph.
@@ -493,6 +543,12 @@ You own what goes up. You own what comes down. You own the commentary. You own t
 When someone responds to your StoryMap, their response arrives in your vault as a witness event — corroboration from an external source, stored on your infrastructure, linked to the artifact it references. The conversation is yours. The record is yours. The history is yours.
 
 And because the vault is git-versioned, your entire social history is auditable, branchable, and rollback-capable. Not just "what did I post" — but what did you know, when did you know it, and what changed. Forensic autobiography. The ability to `git blame` your own past.
+
+But federation requires a standard.
+
+If everyone's context is structured differently, the result is isolated vaults — useful individually, but not connectable. Interoperability requires a consistent way of attaching meaning to artifacts: metadata that travels with the file, relationships that can be expressed and queried, identities that don't depend on any central registry.
+
+When your graph and another person's graph use the same schema, you can share specific nodes without exposing everything, merge timelines where they overlap, and corroborate witnesses across independent sources — without a central platform brokering the connection. The standard is the protocol. The permissions are yours.
 
 This is what social networking looks like when it's built around the user. Not as a product decision. As an architecture.
 
