@@ -99,7 +99,7 @@ Folders are numbered by zoom level — ground truth at the bottom, big picture a
 
 ```
 Servetus/
-├── 00-inbox/             # Originals — untouched source files, permanent evidence locker
+├── 00-source/            # Evidence locker — copied originals, date-sorted, source-differentiated
 ├── 01-artifacts/         # Markdown records — faithful transcription + provenance frontmatter
 ├── 02-memories/          # Atomized thoughts extracted from artifacts
 ├── 03-events/            # Discrete moments in time — the manila folder for each event
@@ -118,8 +118,8 @@ Servetus/
 
 ### The Originals / Records Distinction
 
-**`00-inbox/` — The Evidence Locker**
-Original files in their original format, original filenames, organized by date. Nothing is renamed here. Nothing is deleted. These are the negatives — the physical artifacts as they arrived. Organized by source: `00-inbox/otter/`, `00-inbox/apple/`, `00-inbox/claude/`, etc.
+**`00-source/` — The Evidence Locker**
+Copied originals in their original format, original filenames. Date is the primary sort; source is the final differentiator within the date: `00-source/2026/03-Mar/12/otter/`. Nothing is renamed. The root Inbox (`Nextcloud/Obsidian/Inbox/`) holds the true originals permanently — `00-source` holds the vault's working copy.
 
 **`01-artifacts/` — The Field Records**
 Markdown representations of the originals. Faithful transcription of content, Servetus naming convention, full provenance frontmatter. The artifact record points back to its source in `00-inbox/` by original filename and hash. Each artifact may have its own subfolder when multiple file types belong to the same capture event.
@@ -129,14 +129,16 @@ The binary file never leaves the inbox. The artifact folder is pure Markdown —
 ### The Processing Pipeline
 
 ```
-00-inbox/source/YYYY/MM-Mon/DD/     ← original file, untouched, permanent
-        ↓ Servetus reads and processes
-01-artifacts/YYYY/MM-Mon/           ← Markdown record, Servetus naming, provenance hash
+Nextcloud/Obsidian/Inbox/<source>/          ← permanent originals, never touched
+        ↓ Servetus COPIES (never moves)
+00-source/YYYY/MM-Mon/DD/<source>/          ← evidence locker, original names, date-sorted
+        ↓ Servetus processes
+01-artifacts/YYYY/MM-Mon/                   ← Markdown record, Servetus naming, provenance hash
         +
-02-memories/YYYY/MM-Mon/            ← atomic thoughts extracted from the artifact
+02-memories/YYYY/MM-Mon/                    ← atomic thoughts extracted from the artifact
 ```
 
-The inbox is never cleared. The artifact is a processed copy, not a moved original.
+The root Inbox is never cleared. `00-source` is the vault's working copy of the originals.
 
 ---
 
