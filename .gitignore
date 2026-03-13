@@ -1,3 +1,6 @@
+# macOS metadata
+.DS_Store
+
 # Obsidian internals
 .obsidian/
 
@@ -16,7 +19,9 @@ config/
 
 # Artifacts (original evidence locker — copied originals, date-sorted)
 00-Artifacts/**
-!00-Artifacts/_artifact-source-spec.md
+!00-Artifacts/.gitkeep
+!00-Artifacts/_artifact-spec.md
+!00-Artifacts/_artifact-template.md
 
 # Legacy name — kept until all references are migrated
 00-inbox/**
