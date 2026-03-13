@@ -47,16 +47,16 @@ Run a Servetus-friendly session and export vault-ready Markdown assets.
 ## GitHub Commit Notes (manual)
 1) Create repo folder and add files.
 2) Commit with a message like:
-   - `feat: add Servetus MVP kit S00.01`
+   - `feat: add Servetus Toolkit`
 
 ## Links / References
-- [[S00.01-00-00-servetus-bootloader]]
-- [[S00.01-01-00-servetus-export-rules]]
-- [[S00.01-02-00-servetus-frontmatter-schema]]
-- [[S00.01-02-10-servetus-time-rules]]
-- [[S00.01-02-20-servetus-spelling-rules]]
-- [[S00.01-01-10-servetus-topic-segmentation]]
-- [[S00.01-01-20-servetus-sorting-and-placement-protocol]]
+- [[bootloader]]
+- [[export-rules]]
+- [[frontmatter-schema]]
+- [[time-rules]]
+- [[spelling-rules]]
+- [[topic-segmentation]]
+- [[sorting-and-placement]]
 - [[config/projects]]
 - [[config/tags]]
 - [[config/overrides]]

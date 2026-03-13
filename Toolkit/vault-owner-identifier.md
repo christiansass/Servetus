@@ -2,7 +2,6 @@
 type: toolkit-spec
 title: "Vault Owner Identifier (VOI)"
 slug: "servetus-vault-owner-identifier"
-spec_id: "S00.01-02-30"
 date: 2026-03-12T00:00:00-06:00
 status: draft
 version: "0.1"
