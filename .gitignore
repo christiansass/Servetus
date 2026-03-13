@@ -14,9 +14,9 @@ config/
 # Altitude folders: track specs, ignore content
 # ======================
 
-# Inbox (unsorted captures)
-00-inbox/**
-!00-inbox/_inbox-spec.md
+# Source (evidence locker — copied originals)
+00-source/**
+!00-source/_source-spec.md
 
 # Artifacts (ground truth)
 01-artifacts/**
