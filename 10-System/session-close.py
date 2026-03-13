@@ -120,14 +120,42 @@ def find_servetus_project_dir() -> Path:
 
 
 def find_most_recent_jsonl() -> Path:
-    """Find the most recently modified .jsonl in the Servetus project directory only."""
-    project_dir = find_servetus_project_dir()
-    candidates = list(project_dir.glob("*.jsonl"))
+    """Find the most recently modified .jsonl for this Servetus session.
+
+    Claude Code stores sessions in the project dir matching the CWD at launch.
+    If Claude drifts to a parent dir during a session, the file lands in the
+    parent project dir instead. Search both and return the most recent >10KB file.
+    """
+    import getpass
+    home = Path.home()
+    projects = home / ".claude" / "projects"
+
+    candidate_dirs = []
+
+    # 1. Servetus-specific project dir
+    try:
+        candidate_dirs.append(find_servetus_project_dir())
+    except FileNotFoundError:
+        pass
+
+    # 2. Default user project dir (fallback when CWD drifts to home)
+    default_dir = projects / f"-Users-{getpass.getuser()}"
+    if default_dir.exists() and default_dir not in candidate_dirs:
+        candidate_dirs.append(default_dir)
+
+    # Collect all candidates with meaningful content (>10KB filters stub sessions)
+    candidates = [
+        p for d in candidate_dirs
+        for p in d.glob("*.jsonl")
+        if p.stat().st_size > 10_000
+    ]
+
     if not candidates:
         raise FileNotFoundError(
-            f"No .jsonl session files found in {project_dir}\n"
-            f"Make sure you launched this session using 'sc' from the Servetus vault."
+            f"No session files found in: {[str(d) for d in candidate_dirs]}\n"
+            f"Launch Claude Code from the Servetus vault using 'sc'."
         )
+
     return max(candidates, key=lambda p: p.stat().st_mtime)
 
 
