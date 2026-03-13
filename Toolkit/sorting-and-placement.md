@@ -157,4 +157,4 @@ Confidence behavior:
 - [[config/projects]]
 - [[config/tags]]
 - Canonical calendar and date rules: [[README]] — "Canonical Rules" section
-- Timestamp format and timezone: [[S00.01-02-10-servetus-time-rules]]
+- Timestamp format and timezone: [[time-rules]]

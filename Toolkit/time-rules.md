@@ -50,6 +50,6 @@ If `unknown` is used:
 - add a note in `## Links / References` explaining what is missing.
 
 ## Links / References
-- [[S00.01-02-00-servetus-frontmatter-schema]]
+- [[frontmatter-schema]]
 - Canonical calendar and timestamp authority: [[README]] — "Canonical Rules" section
-- Folder date naming convention: [[S00.01-01-20-servetus-sorting-and-placement-protocol]]
+- Folder date naming convention: [[sorting-and-placement]]
