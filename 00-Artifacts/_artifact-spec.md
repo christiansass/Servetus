@@ -12,7 +12,7 @@ tags: [spec, artifacts]
 # Artifacts Spec
 
 ## Altitude
-**Level 01** — Ground truth. Most zoomed in.
+**Level 00** — Ground truth. Most zoomed in.
 
 ## Purpose
 
@@ -27,7 +27,7 @@ Artifacts are the immutable evidence layer. An artifact captures *what actually 
 Artifacts are stored in a date-based hierarchy modeled on how Lightroom organizes photo libraries:
 
 ```
-01-artifacts/
+00-Artifacts/
   YYYY/
     MM-MonthName/
       YYYY-MM-DD/
@@ -38,7 +38,7 @@ Artifacts are stored in a date-based hierarchy modeled on how Lightroom organize
 
 Example:
 ```
-01-artifacts/
+00-Artifacts/
   2026/
     02-February/
       2026-02-28/
@@ -143,14 +143,17 @@ tags: [artifact, audio]   # or transcript, photo, session, etc.
 
 ## Ingestion Pipeline
 
-Files land in `00-inbox/` (the drop zone). After processing:
+```
+Nextcloud/Obsidian/Inbox/<source>/     ← permanent originals, never touched
+        ↓ Servetus COPIES (never moves)
+00-Artifacts/YYYY/MM-Mon/DD/<source>/  ← evidence locker, original names
+        ↓ Servetus processes
+01-Records/YYYY/MM-Mon/                ← Markdown field record, provenance hash
+        +
+02-Memories/YYYY/MM-Mon/               ← atomic thoughts extracted
+```
 
-1. `.docx` is extracted → text extracted → `.md` artifact written
-2. Memories extracted → written to `02-memories/`
-3. All files (`.docx`, `.m4a`, `.md`) move to `01-artifacts/YYYY/MM-Month/YYYY-MM-DD/`
-4. Inbox drop zone is cleared
-
-Audio (`.m4a`) is retrieved separately from Otter.ai (requires API or manual download) and added to the artifact folder once available.
+The original stays in the Inbox permanently. `00-Artifacts` is the vault's working copy. The `.md` record and extracted memories go up the altitude stack from there.
 
 ---
 
@@ -158,12 +161,12 @@ Audio (`.m4a`) is retrieved separately from Otter.ai (requires API or manual dow
 
 Every artifact `.md` should include a `## Processing Notes` section at the bottom flagging:
 - Whether audio has been retrieved
-- Whether memories have been extracted (link to `02-memories/`)
+- Whether memories have been extracted (link to `02-Memories/`)
 - Any transcription quality issues (misheard words, speaker misidentification)
 - Whether the session was complete or cut off
 
 ---
 
 ## Related Specs
-- [[_memories-spec]] — the atomic layer derived from artifacts
-- [[S00.01-02-00-servetus-frontmatter-schema]]
+- [[02-Memories/_memory-spec]] — the atomic layer derived from artifacts
+- [[Toolkit/frontmatter-schema]]
