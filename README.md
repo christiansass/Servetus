@@ -88,8 +88,8 @@ Date-based folders use the format: `YYYY/MM-Mon/DD/`
 This ensures no folder can be mistaken for another regardless of manual sorting or accidental moves.
 
 **Canonical specs:**
-- Time format and timezone: [[Toolkit/S00.01-02-10-servetus-time-rules]]
-- Folder naming and placement: [[Toolkit/S00.01-01-20-servetus-sorting-and-placement-protocol]]
+- Time format and timezone: [[Toolkit/time-rules]]
+- Folder naming and placement: [[Toolkit/sorting-and-placement]]
 
 ---
 
@@ -271,7 +271,7 @@ Servetus (the system) ensures the interpretation layer is never controlled by a 
 - ⏳ Corroboration score implementation
 - ⏳ Voice capture pipeline
 - ⏳ StoryMap visualization
-- ⏳ Vault Owner Identifier (VOI) implementation — see [[Toolkit/S00.01-02-30-servetus-vault-owner-identifier]]
+- ⏳ Vault Owner Identifier (VOI) implementation — see [[Toolkit/vault-owner-identifier]]
 - ⏳ Artifact ingestion pipeline — source-based inbox → dated folders → Markdown records
 
 ---
@@ -293,7 +293,7 @@ Servetus works with:
 1. Clone this repo into your Obsidian vault location
 2. Open in Obsidian
 3. Run `bash Toolkit/local/install.sh` to deploy the local router
-4. Read `Toolkit/S00.01-00-00-servetus-bootloader*` to understand the system
+4. Read `Toolkit/bootloader.md` to understand the system
 5. Customize `config/` with your projects and tags
 6. Start capturing — drop artifacts in `01-Records/`, extract memories to `02-Memories/`
 
