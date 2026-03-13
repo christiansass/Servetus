@@ -99,17 +99,17 @@ Folders are numbered by zoom level — ground truth at the bottom, big picture a
 
 ```
 Servetus/
-├── 00-source/            # Evidence locker — copied originals, date-sorted, source-differentiated
-├── 01-artifacts/         # Markdown records — faithful transcription + provenance frontmatter
-├── 02-memories/          # Atomized thoughts extracted from artifacts
-├── 03-events/            # Discrete moments in time — the manila folder for each event
-├── 04-projects/          # Work clusters with deliverables
-├── 05-arcs/              # Long-running narrative threads
-├── 06-radar/             # Current viewport — what you're tracking now
-├── 07-storymap/          # 30,000ft view — your full testimony
-├── 08-witnesses/         # People whose stories touch yours (private intelligence)
-├── 09-shared/            # What you publish, federate, or release
-├── 00-system/            # Config, templates, specs, CLI
+├── 00-Artifacts/         # Evidence locker — copied originals, date-sorted, source-differentiated
+├── 01-Records/           # Markdown field records — faithful transcription + provenance frontmatter
+├── 02-Memories/          # Atomized thoughts extracted from artifacts
+├── 03-Events/            # Discrete moments in time — the manila folder for each event
+├── 04-Projects/          # Work clusters with deliverables
+├── 05-Arcs/              # Long-running narrative threads
+├── 06-Radar/             # Current viewport — what you're tracking now
+├── 07-StoryMap/          # 30,000ft view — your full testimony
+├── 08-Witnesses/         # People whose stories touch yours (private intelligence)
+├── 09-Shared/            # What you publish, federate, or release
+├── 00-System/            # Config, templates, specs, CLI
 ├── Toolkit/              # System specs (the instruction set)
 └── config/               # User settings (gitignored for privacy)
 ```
@@ -118,11 +118,11 @@ Servetus/
 
 ### The Originals / Records Distinction
 
-**`00-source/` — The Evidence Locker**
-Copied originals in their original format, original filenames. Date is the primary sort; source is the final differentiator within the date: `00-source/2026/03-Mar/12/otter/`. Nothing is renamed. The root Inbox (`Nextcloud/Obsidian/Inbox/`) holds the true originals permanently — `00-source` holds the vault's working copy.
+**`00-Artifacts/` — The Evidence Locker**
+Copied originals in their original format, original filenames. Date is the primary sort; source is the final differentiator within the date: `00-Artifacts/2026/03-Mar/12/otter/`. Nothing is renamed. The root Inbox (`Nextcloud/Obsidian/Inbox/`) holds the true originals permanently — `00-source` holds the vault's working copy.
 
-**`01-artifacts/` — The Field Records**
-Markdown representations of the originals. Faithful transcription of content, Servetus naming convention, full provenance frontmatter. The artifact record points back to its source in `00-inbox/` by original filename and hash. Each artifact may have its own subfolder when multiple file types belong to the same capture event.
+**`01-Records/` — The Field Records**
+Markdown representations of the originals. Faithful transcription of content, Servetus naming convention, full provenance frontmatter. The artifact record points back to its source in `00-Artifacts/` by original filename and hash. Each artifact may have its own subfolder when multiple file types belong to the same capture event.
 
 The binary file never leaves the inbox. The artifact folder is pure Markdown — human-readable, git-trackable, auditable without proprietary software.
 
@@ -131,14 +131,14 @@ The binary file never leaves the inbox. The artifact folder is pure Markdown —
 ```
 Nextcloud/Obsidian/Inbox/<source>/          ← permanent originals, never touched
         ↓ Servetus COPIES (never moves)
-00-source/YYYY/MM-Mon/DD/<source>/          ← evidence locker, original names, date-sorted
+00-Artifacts/YYYY/MM-Mon/DD/<source>/          ← evidence locker, original names, date-sorted
         ↓ Servetus processes
-01-artifacts/YYYY/MM-Mon/                   ← Markdown record, Servetus naming, provenance hash
+01-Records/YYYY/MM-Mon/                   ← Markdown record, Servetus naming, provenance hash
         +
-02-memories/YYYY/MM-Mon/                    ← atomic thoughts extracted from the artifact
+02-Memories/YYYY/MM-Mon/                    ← atomic thoughts extracted from the artifact
 ```
 
-The root Inbox is never cleared. `00-source` is the vault's working copy of the originals.
+The root Inbox is never cleared. `00-Artifacts` is the vault's working copy of the originals.
 
 ---
 
@@ -146,8 +146,9 @@ The root Inbox is never cleared. `00-source` is the vault's working copy of the 
 
 | Type | Purpose | Folder |
 |------|---------|--------|
-| **Artifact** | Raw evidence — the tape (audio, photo, transcript, export) | 01 |
-| **Memory** | One atomized thought extracted from an artifact | 02 |
+| **Artifact** | Original source file — the physical evidence, untouched | 00 |
+| **Record** | Markdown field record of an artifact — faithful transcription + provenance | 01 |
+| **Memory** | One atomized thought extracted from a record | 02 |
 | **Event** | A discrete moment in time | 03 |
 | **Project** | Mid-length goal with deliverables | 04 |
 | **Arc** | A long-running storyline (relationship, chapter, thread) | 05 |
@@ -294,7 +295,7 @@ Servetus works with:
 3. Run `bash Toolkit/local/install.sh` to deploy the local router
 4. Read `Toolkit/S00.01-00-00-servetus-bootloader*` to understand the system
 5. Customize `config/` with your projects and tags
-6. Start capturing — drop artifacts in `01-artifacts/`, extract memories to `02-memories/`
+6. Start capturing — drop artifacts in `01-Records/`, extract memories to `02-Memories/`
 
 For AI assistants: Read `CLAUDE.md` first (create locally from `SETUP.md` — gitignored).
 
