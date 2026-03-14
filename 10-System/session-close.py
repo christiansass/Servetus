@@ -207,12 +207,13 @@ def extract_content(raw) -> str:
 
 
 def format_ts(ts_str: str) -> str:
-    """Convert ISO timestamp string to local time display."""
+    """Convert ISO timestamp string to local time with millisecond precision."""
     if not ts_str:
         return ""
     try:
         dt = datetime.fromisoformat(ts_str.replace("Z", "+00:00")).astimezone()
-        return dt.strftime("%Y-%m-%d %H:%M:%S %Z")
+        ms = dt.strftime("%f")[:3]  # microseconds → milliseconds
+        return dt.strftime(f"%Y-%m-%d %H:%M:%S.{ms} %Z")
     except Exception:
         return ts_str
 
@@ -258,11 +259,21 @@ def extract_messages(turns: list) -> list:
 def build_artifact(jsonl_path: Path, messages: list, origin: dict) -> tuple:
     """Returns (filename, markdown_content)."""
     stat = jsonl_path.stat()
-    created  = datetime.fromtimestamp(stat.st_ctime, tz=timezone.utc).astimezone()
-    modified = datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).astimezone()
+
+    # Prefer message timestamps from the JSONL (more accurate than file ctime/mtime)
+    msg_timestamps = [m["timestamp"] for m in messages if m.get("timestamp")]
+    if msg_timestamps:
+        first_ts = msg_timestamps[0].replace("Z", "+00:00")
+        last_ts  = msg_timestamps[-1].replace("Z", "+00:00")
+        created  = datetime.fromisoformat(first_ts).astimezone()
+        modified = datetime.fromisoformat(last_ts).astimezone()
+    else:
+        created  = datetime.fromtimestamp(stat.st_ctime, tz=timezone.utc).astimezone()
+        modified = datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).astimezone()
 
     date_str     = created.strftime("%Y-%m-%d")
-    datetime_str = created.strftime("%Y-%m-%dT%H:%M:%S%z")
+    datetime_str = created.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + created.strftime("%z")
+    closed_str   = modified.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + modified.strftime("%z")
     short_id     = jsonl_path.stem[:8]
     slug         = f"{date_str}-claude-session-{short_id}"
     title        = f"Claude Code Session — {created.strftime('%B %d, %Y')}"
@@ -277,7 +288,7 @@ title: "{title}"
 slug: "{slug}"
 
 date: {datetime_str}
-closed: {modified.strftime("%Y-%m-%dT%H:%M:%S%z")}
+closed: {closed_str}
 timezone: "America/Chicago"
 
 origin:
@@ -296,9 +307,17 @@ published: false
 tags: [artifact, session, claude-code]
 ---"""
 
+    duration_secs = int((modified - created).total_seconds())
+    duration_str  = f"{duration_secs // 3600}h {(duration_secs % 3600) // 60}m {duration_secs % 60}s" \
+                    if duration_secs >= 3600 else \
+                    f"{duration_secs // 60}m {duration_secs % 60}s"
+
     # Build transcript body
     lines = [f"# {title}\n"]
     lines.append(f"**Session file:** `{jsonl_path.name}`  ")
+    lines.append(f"**Opened:** {format_ts(msg_timestamps[0]) if msg_timestamps else created.strftime('%Y-%m-%d %H:%M:%S %Z')}  ")
+    lines.append(f"**Closed:** {format_ts(msg_timestamps[-1]) if msg_timestamps else modified.strftime('%Y-%m-%d %H:%M:%S %Z')}  ")
+    lines.append(f"**Duration:** {duration_str}  ")
     lines.append(f"**Turns:** {user_turns} user / {assistant_turns} assistant  ")
     lines.append(f"**Machine:** {origin['machine']} | {origin['os']}\n")
     lines.append("---\n")
