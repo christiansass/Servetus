@@ -28,10 +28,25 @@ import platform
 from datetime import datetime, timezone
 from pathlib import Path
 
-VAULT_ROOT = Path(__file__).resolve().parent.parent
-INBOX_DIR  = VAULT_ROOT / "00-inbox"
-CLAUDE_DIR = INBOX_DIR / "claude"
-CONFIG_DIR = VAULT_ROOT / "config"
+VAULT_ROOT    = Path(__file__).resolve().parent.parent
+CONFIG_DIR    = VAULT_ROOT / "config"
+
+# Session artifacts land in the sibling Inbox vault (multi-vault Obsidian layout):
+#   Obsidian/
+#   ├── Servetus/   ← this vault
+#   └── Inbox/
+#       └── Claude/ ← artifacts land here
+_sibling_claude = VAULT_ROOT.parent / "Inbox" / "Claude"
+_fallback_claude = VAULT_ROOT / "00-inbox" / "claude"
+
+if _sibling_claude.parent.exists():
+    CLAUDE_DIR = _sibling_claude
+else:
+    CLAUDE_DIR = _fallback_claude
+    print(
+        f"[session-close] Warning: sibling Inbox vault not found at "
+        f"{_sibling_claude.parent} — falling back to {_fallback_claude}"
+    )
 
 
 # ---------------------------------------------------------------------------
