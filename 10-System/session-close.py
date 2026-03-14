@@ -206,29 +206,47 @@ def extract_content(raw) -> str:
     return str(raw) if raw else ""
 
 
+def format_ts(ts_str: str) -> str:
+    """Convert ISO timestamp string to local time display."""
+    if not ts_str:
+        return ""
+    try:
+        dt = datetime.fromisoformat(ts_str.replace("Z", "+00:00")).astimezone()
+        return dt.strftime("%Y-%m-%d %H:%M:%S %Z")
+    except Exception:
+        return ts_str
+
+
 def extract_messages(turns: list) -> list:
     """Extract human/assistant message pairs from raw turns.
 
     Claude Code .jsonl format:
-      {"type": "user",      "message": {"role": "user",      "content": "..."}}
-      {"type": "assistant", "message": {"role": "assistant",  "content": [...]}}
+      {"type": "user",      "message": {"role": "user",      "content": "..."}, "timestamp": "..."}
+      {"type": "assistant", "message": {"role": "assistant",  "content": [...]}, "timestamp": "..."}
     """
     messages = []
     for turn in turns:
         msg_type = turn.get("type", "")
 
         if msg_type in ("user", "human"):
-            # Content lives at turn.message.content or turn.content
             raw = turn.get("message") or turn.get("content", "")
             text = extract_content(raw)
             if text.strip():
-                messages.append({"role": "user", "content": text.strip()})
+                messages.append({
+                    "role": "user",
+                    "content": text.strip(),
+                    "timestamp": turn.get("timestamp", ""),
+                })
 
         elif msg_type == "assistant":
             raw = turn.get("message") or turn.get("content", "")
             text = extract_content(raw)
             if text.strip():
-                messages.append({"role": "assistant", "content": text.strip()})
+                messages.append({
+                    "role": "assistant",
+                    "content": text.strip(),
+                    "timestamp": turn.get("timestamp", ""),
+                })
 
     return messages
 
@@ -288,7 +306,9 @@ tags: [artifact, session, claude-code]
 
     for i, msg in enumerate(messages, 1):
         role_label = "**User**" if msg["role"] == "user" else "**Servetus**"
-        lines.append(f"### {role_label}\n")
+        ts = format_ts(msg.get("timestamp", ""))
+        ts_suffix = f" `{ts}`" if ts else ""
+        lines.append(f"### {role_label}{ts_suffix}\n")
         lines.append(msg["content"])
         lines.append("\n---\n")
 
