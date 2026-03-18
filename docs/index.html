@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Servetus — Evidence-Grade Memory Architecture</title>
+  <style>
+    :root {
+      --bg:       #0d0d0d;
+      --surface:  #141414;
+      --border:   #222;
+      --green:    #00ff88;
+      --yellow:   #ffd700;
+      --red:      #ff4444;
+      --dim:      #666;
+      --text:     #e0e0e0;
+      --muted:    #999;
+      --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Courier New', monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      line-height: 1.65;
+      font-size: 16px;
+    }
+
+    a { color: var(--green); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .mono { font-family: var(--font-mono); }
+
+    /* ── Layout ── */
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      padding: 80px 0 60px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .hero-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 20px;
+    }
+
+    .hero h1 {
+      font-size: clamp(28px, 5vw, 48px);
+      font-weight: 700;
+      line-height: 1.15;
+      margin-bottom: 20px;
+      letter-spacing: -0.02em;
+    }
+
+    .hero h1 em {
+      font-style: normal;
+      color: var(--green);
+    }
+
+    .hero-quote {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      color: var(--muted);
+      border-left: 2px solid var(--green);
+      padding-left: 16px;
+      margin: 28px 0;
+      line-height: 1.6;
+    }
+
+    .hero-sub {
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 600px;
+      margin-bottom: 36px;
+    }
+
+    .hero-badges {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .badge.green { border-color: var(--green); color: var(--green); }
+
+    /* ── Sections ── */
+    section {
+      padding: 60px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    section:last-of-type { border-bottom: none; }
+
+    h2 {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 24px;
+      letter-spacing: -0.01em;
+    }
+
+    h2 .accent { color: var(--green); }
+
+    p { margin-bottom: 16px; color: var(--muted); }
+    p strong { color: var(--text); }
+
+    /* ── Terminal Block ── */
+    .terminal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      margin: 28px 0;
+    }
+
+    .terminal-bar {
+      background: #1a1a1a;
+      padding: 10px 16px;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+    }
+    .dot-r { background: #ff5f57; }
+    .dot-y { background: #febc2e; }
+    .dot-g { background: #28c840; }
+
+    .terminal-body {
+      padding: 20px 20px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.8;
+      overflow-x: auto;
+    }
+
+    .t-dim    { color: var(--dim); }
+    .t-green  { color: var(--green); }
+    .t-yellow { color: var(--yellow); }
+    .t-red    { color: var(--red); }
+    .t-white  { color: var(--text); }
+    .t-muted  { color: var(--muted); }
+
+    /* ── Chain diagram ── */
+    .chain {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 2;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 24px 28px;
+      margin: 28px 0;
+    }
+
+    .chain .step       { color: var(--text); font-weight: 600; }
+    .chain .arrow      { color: var(--dim); }
+    .chain .note       { color: var(--dim); font-size: 11px; }
+    .chain .ai-step    { color: var(--yellow); }
+    .chain .human-step { color: var(--green); }
+
+    /* ── Feature grid ── */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+      margin-top: 28px;
+    }
+
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 20px;
+    }
+
+    .feature-card .icon {
+      font-family: var(--font-mono);
+      font-size: 18px;
+      margin-bottom: 10px;
+      color: var(--green);
+    }
+
+    .feature-card h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    .feature-card p {
+      font-size: 13px;
+      margin: 0;
+    }
+
+    /* ── Status list ── */
+    .status-list {
+      list-style: none;
+      margin-top: 20px;
+    }
+
+    .status-list li {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+      color: var(--muted);
+      display: flex;
+      gap: 10px;
+    }
+
+    .status-list li:last-child { border-bottom: none; }
+    .status-list .check  { color: var(--green); min-width: 18px; }
+    .status-list .pending{ color: var(--yellow); min-width: 18px; }
+
+    /* ── Install block ── */
+    .install-block {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    @media (max-width: 560px) {
+      .install-block { grid-template-columns: 1fr; }
+    }
+
+    .install-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 20px;
+    }
+
+    .install-card .platform {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--dim);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .install-card code {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      color: var(--green);
+    }
+
+    /* ── Footer ── */
+    footer {
+      padding: 40px 0;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--dim);
+      border-top: 1px solid var(--border);
+    }
+
+    footer a { color: var(--dim); }
+    footer a:hover { color: var(--green); }
+  </style>
+</head>
+<body>
+
+<!-- ── Hero ── -->
+<div class="hero">
+  <div class="container">
+    <div class="hero-label">v0.3.0 — open standard</div>
+    <h1>The memory architecture<br>AI should write to — <em>and you can audit.</em></h1>
+    <blockquote class="hero-quote">
+      "There is no trust without truth.<br>
+      And there is no assistant without trust."
+    </blockquote>
+    <p class="hero-sub">
+      Servetus is an evidence-grade personal knowledge architecture.
+      Plain text. Plain Python. No vendor lock-in. Every claim traces back to an artifact.
+    </p>
+    <div class="hero-badges">
+      <span class="badge green">v0.3.0</span>
+      <span class="badge">MIT License</span>
+      <span class="badge">Plain Markdown + Python</span>
+      <span class="badge">Vendor-agnostic</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── The Problem ── -->
+<section>
+  <div class="container">
+    <h2>The <span class="accent">problem</span> with AI memory</h2>
+    <p>
+      Modern AI tools store your life in opaque databases, process it through black-box models,
+      and return interpretations you cannot verify.
+    </p>
+    <p>
+      <strong>When the AI says "you discussed X with Y on Z date" — how do you know that's true?</strong>
+    </p>
+    <p>
+      You don't. You trust the model. And models hallucinate.
+    </p>
+    <p>
+      Servetus solves this with a simple principle: <strong>every claim traces back to an artifact.</strong>
+      The artifact is the evidence. The AI is the interpreter. You are the authority.
+    </p>
+  </div>
+</section>
+
+<!-- ── The Artifact Chain ── -->
+<section>
+  <div class="container">
+    <h2>The <span class="accent">artifact chain</span></h2>
+    <div class="chain">
+      <div><span class="step">Reality</span> <span class="note">— what actually happened</span></div>
+      <div class="arrow">    ↓</div>
+      <div><span class="step">Artifacts</span> <span class="note">— photos, audio, transcripts, screenshots. The tape.</span></div>
+      <div class="arrow">    ↓</div>
+      <div><span class="step">Memories</span> <span class="note">— atomized thoughts extracted from artifacts</span></div>
+      <div class="arrow">    ↓</div>
+      <div><span class="step">Events / Projects / Arcs</span> <span class="note">— structured, organized, linked</span></div>
+      <div class="arrow">    ↓</div>
+      <div><span class="ai-step">AI Processing</span> <span class="note">— interpretation, assistance, synthesis</span></div>
+      <div class="arrow">    ↓</div>
+      <div><span class="human-step">Human Review</span> <span class="note">— you correct what's wrong</span></div>
+      <div class="arrow">    ↓</div>
+      <div><span class="step">Reality Check</span> <span class="note">— you can always go back to the artifact</span></div>
+    </div>
+    <p>
+      The AI sits <strong>in the middle of the stack, not at the top.</strong>
+      It serves the system. It does not rule it.
+    </p>
+  </div>
+</section>
+
+<!-- ── The Session Bracket ── -->
+<section>
+  <div class="container">
+    <h2>The <span class="accent">session bracket</span></h2>
+    <p>
+      Every Claude Code session is a bracketed work unit — opened with context,
+      closed with a full-fidelity artifact. Nothing is lost.
+    </p>
+    <div class="terminal">
+      <div class="terminal-bar">
+        <div class="dot dot-r"></div>
+        <div class="dot dot-y"></div>
+        <div class="dot dot-g"></div>
+      </div>
+      <div class="terminal-body">
+        <div><span class="t-green">$</span> <span class="t-white">sc</span>  <span class="t-dim"># open bracketed session</span></div>
+        <div>&nbsp;</div>
+        <div><span class="t-yellow">┌─────────────────────────────────────────────────┐</span></div>
+        <div><span class="t-yellow">│</span> <span class="t-green">SESSION</span>  <span class="t-muted">12% filled · 47 turns · active 2h 14m</span>   <span class="t-yellow">│</span></div>
+        <div><span class="t-yellow">│</span> <span class="t-green">LAST</span>     <span class="t-muted">3h 22m ago · today 04:41 · Servetus Dev</span>  <span class="t-yellow">│</span></div>
+        <div><span class="t-yellow">│</span> <span class="t-green">MEMORY</span>   <span class="t-muted">CLAUDE.md 12kb · 8 specs loaded</span>           <span class="t-yellow">│</span></div>
+        <div><span class="t-yellow">│</span> <span class="t-green">ARCS</span>     <span class="t-muted">binary-ranch · seven-talents · the-inklings</span>  <span class="t-yellow">│</span></div>
+        <div><span class="t-yellow">│</span> <span class="t-green">SYSTEM</span>   <span class="t-muted">session-close ✓  statusline ✓  git clean</span>   <span class="t-yellow">│</span></div>
+        <div><span class="t-yellow">└─────────────────────────────────────────────────┘</span></div>
+        <div>&nbsp;</div>
+        <div><span class="t-dim"># ... work happens ...</span></div>
+        <div>&nbsp;</div>
+        <div><span class="t-green">$</span> <span class="t-white">session-close</span></div>
+        <div><span class="t-dim">[session-close] Artifact: Inbox/Claude/2026-03-18-claude-session-604ab0e7/</span></div>
+        <div><span class="t-dim">[session-close] Turns:    67 user / 80 assistant</span></div>
+        <div><span class="t-dim">[session-close] Brief:    10-System/last-session-brief.md</span></div>
+        <div><span class="t-green">[session-close] Registry: session marked closed</span></div>
+      </div>
+    </div>
+    <p>
+      The JSONL is the tape. The Markdown artifact is the record. The brief is the memory.
+      All three are plain files — no database, no API, no black box.
+    </p>
+  </div>
+</section>
+
+<!-- ── What's Shipped ── -->
+<section>
+  <div class="container">
+    <h2>What's <span class="accent">shipped</span> in v0.3.0</h2>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="icon">◈</div>
+        <h3>KITT Statusline</h3>
+        <p>Running clock ticking every second. Session age. Room label. Red bouncing scanner on AI thinking.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">▤</div>
+        <h3>Launch Brief</h3>
+        <p>Session-opening intelligence dashboard — last session, open threads, memory load, radar, arc status.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">⇄</div>
+        <h3>Hopper Pipeline</h3>
+        <p>Background file watcher + triage + two-stage filer. New files announced to terminal without touching the LLM.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">◉</div>
+        <h3>Full-Fidelity Artifacts</h3>
+        <p>Every session: JSONL raw witness + rich Markdown transcript + extracted images, co-located in one folder.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">⚠</div>
+        <h3>Orphan Scanner</h3>
+        <p>Detects real sessions closed without artifacts. Surfaces them in the launch brief at next open.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">⌚</div>
+        <h3>Timecode, Not Timestamps</h3>
+        <p>Per-turn timestamps with millisecond precision. Local time always. Seconds pattern distinguishes human vs automated.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Status ── -->
+<section>
+  <div class="container">
+    <h2>Build <span class="accent">status</span></h2>
+    <ul class="status-list">
+      <li><span class="check">✓</span> Altitude folder structure (00-Artifacts → 10-System)</li>
+      <li><span class="check">✓</span> Session bracket — sc open / session-close</li>
+      <li><span class="check">✓</span> Full-fidelity artifacts — JSONL + Markdown + images</li>
+      <li><span class="check">✓</span> Inbox pipeline — triage, file, finalize</li>
+      <li><span class="check">✓</span> Background Hopper daemon</li>
+      <li><span class="check">✓</span> Launch brief dashboard</li>
+      <li><span class="check">✓</span> KITT statusline with running clock</li>
+      <li><span class="check">✓</span> Orphan session scanner</li>
+      <li><span class="check">✓</span> Cross-platform installers</li>
+      <li><span class="pending">⏳</span> Session context injection (last-session-brief → LLM)</li>
+      <li><span class="pending">⏳</span> StoryMap visualization</li>
+      <li><span class="pending">⏳</span> Voice capture pipeline</li>
+      <li><span class="pending">⏳</span> Conversational Traffic Controller</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ── Install ── -->
+<section>
+  <div class="container">
+    <h2><span class="accent">Install</span></h2>
+    <p>Clone into your Obsidian vault location, then run the installer for your platform.</p>
+    <div class="install-block">
+      <div class="install-card">
+        <div class="platform">macOS / Linux</div>
+        <code>bash install.sh</code>
+      </div>
+      <div class="install-card">
+        <div class="platform">Windows (PowerShell)</div>
+        <code>./install.ps1</code>
+      </div>
+    </div>
+    <p style="margin-top:20px;">
+      Then type <code class="mono" style="color:var(--green);font-size:14px;">sc</code> to open a bracketed session.
+      Read <code class="mono" style="color:var(--muted);font-size:13px;">Toolkit/bootloader.md</code> to understand the system.
+    </p>
+    <p>
+      <a href="https://github.com/christiansass/Servetus">github.com/christiansass/Servetus</a>
+    </p>
+  </div>
+</section>
+
+<!-- ── The Name ── -->
+<section>
+  <div class="container">
+    <h2>The <span class="accent">name</span></h2>
+    <p>
+      <a href="https://en.wikipedia.org/wiki/Michael_Servetus" target="_blank">Michael Servetus</a>
+      (1511–1553) was burned at the stake in Geneva.
+      His crime: reading the biblical text and arriving at conclusions that contradicted the institutional interpretation.
+    </p>
+    <p>
+      <strong>When it's one man's word against another, whoever controls the interpretation layer wins.</strong>
+    </p>
+    <p>
+      Servetus (the system) ensures the interpretation layer is never controlled by a single authority —
+      AI, institution, or otherwise. Artifacts are the check. Corroboration is the standard.
+    </p>
+    <p style="margin-top:24px; font-style:italic; color:var(--dim);">
+      A servant, not a master. A witness, not an authority.
+    </p>
+  </div>
+</section>
+
+<!-- ── Footer ── -->
+<footer>
+  <div class="container">
+    <p>
+      <a href="https://github.com/christiansass/Servetus">GitHub</a>
+      &nbsp;·&nbsp;
+      <a href="https://github.com/christiansass/Servetus/blob/main/Philosophy.md">Philosophy</a>
+      &nbsp;·&nbsp;
+      <a href="https://github.com/christiansass/Servetus/blob/main/CHANGELOG.md">Changelog</a>
+      &nbsp;·&nbsp;
+      MIT License
+    </p>
+    <p style="margin-top:8px; color:#444;">
+      Named after Miguel Servetus (1511–1553) · v0.3.0
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>

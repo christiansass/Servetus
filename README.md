@@ -4,7 +4,7 @@
 
 > *"There is no trust without truth, and there is no assistant without trust."*
 
-**Current Version: 0.2.1** · [Changelog](CHANGELOG.md) · [Philosophy](Philosophy.md)
+**Current Version: 0.3.0** · [Changelog](CHANGELOG.md) · [Philosophy](Philosophy.md)
 
 ---
 
@@ -129,16 +129,18 @@ The binary file never leaves the inbox. The artifact folder is pure Markdown —
 ### The Processing Pipeline
 
 ```
-Nextcloud/Obsidian/Inbox/<source>/          ← permanent originals, never touched
-        ↓ Servetus COPIES (never moves)
-00-Artifacts/YYYY/MM-Mon/DD/<source>/          ← evidence locker, original names, date-sorted
-        ↓ Servetus processes
-01-Records/YYYY/MM-Mon/                   ← Markdown record, Servetus naming, provenance hash
+Nextcloud/Obsidian/Inbox/<source>/          ← Hopper (transit zone — empty = healthy)
+        ↓ inbox-triage.py identifies + inbox-file.py processes
+Inbox/Claude/<date>-claude-session-<id>/    ← session package (artifact + JSONL witness + images)
+        ↓ inbox-file.py finalize — MOVES on completion
+00-Artifacts/YYYY/MM-Mon/DD/<source>/       ← evidence locker, original names, date-sorted
+        ↓ session-close.py / pipeline
+01-Records/YYYY/MM-Mon/                     ← Markdown record, Servetus naming, provenance hash
         +
 02-Memories/YYYY/MM-Mon/                    ← atomic thoughts extracted from the artifact
 ```
 
-The root Inbox is never cleared. `00-Artifacts` is the vault's working copy of the originals.
+The root Inbox is a Hopper — a transit zone. Files arrive, get triaged, and MOVE to `00-Artifacts/` when filed. Empty Hopper = healthy system.
 
 ---
 
@@ -252,27 +254,31 @@ Servetus (the system) ensures the interpretation layer is never controlled by a 
 
 ---
 
-## Current Status: v0.2.1
+## Current Status: v0.3.0
 
 **Implemented:**
-- ✅ Altitude-based folder structure
-- ✅ Artifact chain (every claim traces to evidence)
+- ✅ Altitude-based folder structure (00-Artifacts → 10-System)
+- ✅ Artifact chain — every claim traces to evidence
 - ✅ Machine origin fingerprint on all records (machine/mac/ip/os)
-- ✅ Local AI router (Ollama kernel + auto-escalation to Claude)
-- ✅ PII scrub/rehydrate on external escalations
-- ✅ Session logging (Q&A pairs auto-written to vault)
-- ✅ Frontmatter schema (v0.2 flat format)
+- ✅ Session bracket — `sc` opens a bracketed session, `session-close.py` closes it
+- ✅ Full-fidelity session artifacts — JSONL witness + rich Markdown transcript + images
+- ✅ Per-turn timestamps with millisecond precision
+- ✅ Inbox pipeline — triage (`inbox-triage.py`), file, finalize (`inbox-file.py`)
+- ✅ Background Hopper daemon (`inbox-watcher.py`) — announces new files to terminal
+- ✅ Launch brief (`launch-brief.py`) — session-opening intelligence dashboard
+- ✅ Statusline (`statusline.sh`) — KITT edition: running clock, room label, red scanner
+- ✅ Orphan session scanner — detects and surfaces unarchived sessions at next launch
+- ✅ Frontmatter schema with file naming convention (`subject_type.md`)
+- ✅ Cross-platform installers (`install.sh` / `install.ps1`)
 - ✅ Philosophy.md — fully merged and expanded
 - ✅ Toolkit specs (bootloader, export rules, schema, time, spelling, routing)
 
 **In Progress:**
-- ⏳ Session-close script (`.jsonl` → artifact markdown, cross-platform)
-- ⏳ Frontmatter migration script (v0.1 nested → v0.2 flat)
+- ⏳ Session context injection — `last-session-brief.md` written at close, read at open
 - ⏳ Corroboration score implementation
-- ⏳ Voice capture pipeline
 - ⏳ StoryMap visualization
-- ⏳ Vault Owner Identifier (VOI) implementation — see [[Toolkit/vault-owner-identifier]]
-- ⏳ Artifact ingestion pipeline — source-based inbox → dated folders → Markdown records
+- ⏳ Voice capture pipeline
+- ⏳ Conversational Traffic Controller — real-time topic detection, session routing
 
 ---
 
@@ -290,16 +296,22 @@ Servetus works with:
 
 ## Quick Start
 
+```bash
+# macOS / Linux
+bash install.sh
+
+# Windows (PowerShell)
+./install.ps1
+```
+
 1. Clone this repo into your Obsidian vault location
 2. Open in Obsidian
-3. Run `bash Toolkit/local/install.sh` to deploy the local router
+3. Run `bash install.sh` — deploys `sc` launcher, statusline, and session bracket
 4. Read `Toolkit/bootloader.md` to understand the system
 5. Customize `config/` with your projects and tags
-6. Start capturing — drop artifacts in `01-Records/`, extract memories to `02-Memories/`
+6. Type `sc` to open a bracketed session
 
-For AI assistants: Read `CLAUDE.md` first (create locally from `SETUP.md` — gitignored).
-
-Full setup guide: [SETUP.md](SETUP.md)
+For AI assistants: Read `CLAUDE.md` first — it's gitignored, stays local to your machine.
 
 ---
 

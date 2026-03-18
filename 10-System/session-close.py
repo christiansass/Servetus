@@ -853,6 +853,90 @@ def close_session_in_registry(vault: str, started_ts: str, session_id: str, room
 
 
 # ---------------------------------------------------------------------------
+# Session Brief (LLM context injection at next open)
+# ---------------------------------------------------------------------------
+
+def write_session_brief(ctx: dict, duration_secs: float, room: str,
+                        files_touched: list, brief_path: Path) -> None:
+    """Write 10-System/last-session-brief.md for LLM context at next session open.
+
+    Structural extraction only — no LLM API call. Pulls closing exchange verbatim
+    plus mechanical metadata. Overwritten each session; always reflects most recent close.
+    """
+    now = datetime.now().astimezone()
+    closed_str = now.strftime("%Y-%m-%dT%H:%M:%S%z")
+    closed_human = now.strftime("%Y-%m-%d %H:%M")
+
+    session_id = ctx["session_meta"].get("sessionId", "")[:8]
+    turns = sum(1 for m in ctx["messages"] if m["role"] == "user")
+    dur = fmt_ms(duration_secs * 1000)
+
+    # Pull last 3 user turns + last assistant response
+    user_turns = [m for m in ctx["messages"] if m["role"] == "user"]
+    asst_turns = [m for m in ctx["messages"] if m["role"] == "assistant"]
+    last_user_msgs = user_turns[-3:] if len(user_turns) >= 3 else user_turns
+    last_asst = asst_turns[-1] if asst_turns else None
+
+    # Closing exchange
+    exchange_lines = []
+    for msg in last_user_msgs:
+        text = msg.get("content", "")
+        if isinstance(text, list):
+            text = " ".join(b.get("text", "") for b in text if b.get("type") == "text")
+        exchange_lines.append(f"**You:** {text.strip()[:400]}")
+    if last_asst:
+        content = last_asst.get("content", "")
+        if isinstance(content, list):
+            content = " ".join(b.get("text", "") for b in content if b.get("type") == "text")
+        exchange_lines.append(f"\n**Servetus:** {content.strip()[:600]}")
+
+    # Tool summary
+    tool_log = ctx.get("tool_log", [])
+    tool_counts: dict = {}
+    for t in tool_log:
+        name = t.get("name", "unknown")
+        tool_counts[name] = tool_counts.get(name, 0) + 1
+    tool_summary = "  ".join(
+        f"{v}× {k}" for k, v in sorted(tool_counts.items(), key=lambda x: -x[1])
+    )
+
+    files_section = "\n".join(f"- {f}" for f in files_touched) if files_touched else "- (none recorded)"
+
+    fm_lines = [
+        "---",
+        f"session_id: {session_id}",
+        f'closed_at: "{closed_str}"',
+        f'room: "{room or "unset"}"',
+        f'duration: "{dur}"',
+        f"turns: {turns}",
+        "---",
+    ]
+    body_lines = [
+        "",
+        "# Last Session Brief",
+        "",
+        f"**Room:** {room or 'unset'}  ",
+        f"**Closed:** {closed_human}  ·  {dur}  ·  {turns} turns",
+        "",
+        "## Closing Exchange",
+        "",
+        "\n\n".join(exchange_lines),
+        "",
+        "## Files Touched",
+        "",
+        files_section,
+        "",
+        "## Tool Activity",
+        "",
+        tool_summary or "(none)",
+        "",
+    ]
+
+    brief_path.write_text("\n".join(fm_lines + body_lines), encoding="utf-8")
+    print(f"[session-close] Brief:    {brief_path}")
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -944,6 +1028,11 @@ def main():
     # Scan for orphaned sessions (real content, no artifact) and report for next launch
     orphans = scan_orphans(jsonl_path)
     write_orphan_report(orphans)
+
+    # Write brief for LLM context injection at next session open
+    brief_path = VAULT_ROOT / "10-System" / "last-session-brief.md"
+    write_session_brief(ctx, duration_secs, os.environ.get("SERVETUS_ROOM", ""),
+                        files_touched, brief_path)
 
 
 if __name__ == "__main__":
