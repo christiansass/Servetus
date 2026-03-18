@@ -974,6 +974,23 @@ def main():
         print("[session-close] No assistant responses — session was empty (head in the door). Skipping.")
         sys.exit(0)
 
+    # A launch-only session (open → pick room → close) passes the above check because
+    # the room picker generates an assistant text response. Guard against it:
+    # Every session has at least 2 user typed turns (system init + room selection).
+    # A real session has 3+ typed turns OR at least one work tool was invoked.
+    user_typed_turns = sum(
+        1 for m in ctx["messages"]
+        if m["role"] == "user" and m.get("content", "").strip()
+    )
+    work_tools_used = sum(
+        1 for t in ctx["tool_log"]
+        if t["name"] in {"Edit", "Write", "Bash", "Read", "Glob", "Grep", "Agent"}
+    )
+    if user_typed_turns < 3 and work_tools_used == 0:
+        print(f"[session-close] Launch/room-selection only "
+              f"(typed turns: {user_typed_turns}, work tools: {work_tools_used}). Skipping.")
+        sys.exit(0)
+
     origin = get_origin()
 
     all_ts  = [m["timestamp"] for m in ctx["messages"] if m.get("timestamp")]

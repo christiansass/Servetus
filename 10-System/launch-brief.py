@@ -394,9 +394,11 @@ def main():
     room  = os.environ.get("SERVETUS_ROOM", "")
     room_suffix = f"  ·  {YELLOW}{room}{RESET}" if room else ""
     title = f"{BOLD}SERVETUS{RESET}  ●  Memory Architecture Layer{room_suffix}"
-    right = f"v{ver}  {now.strftime('%Y-%m-%d %H:%M')}"
-    gap   = C - len(_plain(title)) - len(right)
-    out.append(row(title + " " * max(1, gap) + right))
+    out.append(row(title))
+    ts_str = now.strftime("%Y-%m-%d  %H:%M:%S")
+    ver_ts = f"v{ver}  ·  {ts_str}"
+    pad    = C - len(ver_ts)
+    out.append(row(f"{DIM}{' ' * max(0, pad)}{ver_ts}{RESET}"))
 
     # SESSION
     out.append(div())
