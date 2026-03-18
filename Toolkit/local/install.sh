@@ -185,22 +185,72 @@ exec python3 "$ROUTER_DEST" "\$@"
 LAUNCHER
 chmod 755 "$INSTALL_TARGET"
 
-# Write the Claude Code launcher — runs claude, then session-close on exit
+# Write the Claude Code launcher — shows launch brief, runs claude, captures session on exit
 SC_TARGET="$INSTALL_DIR/sc"
 cat > "$SC_TARGET" <<SCLAUNCHER
 #!/usr/bin/env bash
-# Servetus Claude — launch Claude Code and capture session on exit
+# Servetus Claude — context picker, launch brief, Claude Code, session capture
+#
+# Usage:
+#   sc                     — interactive room picker
+#   sc "T-Mobile Arc"      — skip picker, set room directly
+#   sc "Dev" --resume xyz  — room label + claude args
 cd "$VAULT_ROOT" || exit 1
-claude "\$@"
+
+RESUME_ID=""
+
+# If a room arg was passed explicitly (non-flag), use it and skip the menu.
+# Otherwise, launch the interactive context picker.
+if [[ -n "\$1" && "\${1:0:2}" != "--" ]]; then
+    export SERVETUS_ROOM="\$1"
+    shift
+else
+    # launch-menu.py writes display to /dev/tty, outputs two lines to stdout:
+    #   line 1: room label (may be empty)
+    #   line 2: resume session ID (may be empty)
+    MENU_OUTPUT=\$(python3 "$VAULT_ROOT/10-System/launch-menu.py" "$VAULT_ROOT")
+    export SERVETUS_ROOM=\$(printf '%s' "\$MENU_OUTPUT" | head -1)
+    RESUME_ID=\$(printf '%s' "\$MENU_OUTPUT" | sed -n '2p')
+fi
+
+# Show gauge cluster + write ~/.servetus_session.json (includes room)
+python3 "$VAULT_ROOT/10-System/launch-brief.py" "$VAULT_ROOT"
+
+# Start inbox watcher in background — announces new files as they arrive
+python3 "$VAULT_ROOT/10-System/inbox-watcher.py" &
+WATCHER_PID=\$!
+trap "kill \$WATCHER_PID 2>/dev/null" EXIT INT TERM
+
+# Launch Claude Code — resume prior session if one was selected
+if [[ -n "\$RESUME_ID" ]]; then
+    claude --resume "\$RESUME_ID" "\$@"
+else
+    claude "\$@"
+fi
+
+# Stop watcher
+kill "\$WATCHER_PID" 2>/dev/null
+wait "\$WATCHER_PID" 2>/dev/null
+
+# Capture artifact (session-close reads SERVETUS_ROOM from env)
 echo ""
 echo "[servetus] Session ended. Capturing artifact..."
-python3 "$VAULT_ROOT/00-system/session-close.py"
+python3 "$VAULT_ROOT/10-System/session-close.py"
+
+# Clear session state
+rm -f "\$HOME/.servetus_session.json"
 SCLAUNCHER
 chmod 755 "$SC_TARGET"
 
-echo -e "  router   → ${GREEN}$ROUTER_DEST${NC}"
-echo -e "  launcher → ${GREEN}$INSTALL_TARGET${NC}"
-echo -e "  claude   → ${GREEN}$SC_TARGET${NC}  (use 'sc' to launch Claude Code with auto-capture)"
+# Also install servetus-claude as a named alias for sc (keeps sc for backwards compat)
+SC_NAMED_TARGET="$INSTALL_DIR/servetus-claude"
+ln -sf "$SC_TARGET" "$SC_NAMED_TARGET" 2>/dev/null || cp "$SC_TARGET" "$SC_NAMED_TARGET"
+chmod 755 "$SC_NAMED_TARGET"
+
+echo -e "  router          → ${GREEN}$ROUTER_DEST${NC}"
+echo -e "  launcher        → ${GREEN}$INSTALL_TARGET${NC}"
+echo -e "  claude (sc)     → ${GREEN}$SC_TARGET${NC}  (auto-captures session on exit)"
+echo -e "  claude (named)  → ${GREEN}$SC_NAMED_TARGET${NC}  (same as sc)"
 
 # ---------------------------------------------------------------------------
 # 5. Ensure ~/bin is on PATH
@@ -245,7 +295,41 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 6. Copy config templates if not already present
+# 6. Install Servetus statusline for Claude Code
+# ---------------------------------------------------------------------------
+echo ""
+echo -e "${BOLD}Setting up Servetus statusline...${NC}"
+
+STATUSLINE_SRC="$VAULT_ROOT/10-System/statusline.sh"
+STATUSLINE_DEST="$HOME/.claude/statusline.sh"
+
+if [[ -f "$STATUSLINE_SRC" ]]; then
+    cp "$STATUSLINE_SRC" "$STATUSLINE_DEST"
+    chmod +x "$STATUSLINE_DEST"
+
+    # Write statusLine into ~/.claude/settings.json (statusLine object format required)
+    CLAUDE_SETTINGS="$HOME/.claude/settings.json"
+    python3 - <<PYEOF
+import json, pathlib
+p = pathlib.Path("$CLAUDE_SETTINGS")
+try:
+    s = json.loads(p.read_text()) if p.exists() and p.stat().st_size > 2 else {}
+except Exception:
+    s = {}
+s.pop("statusCommand", None)  # remove deprecated key if present
+s["statusLine"] = {"type": "command", "command": "$STATUSLINE_DEST"}
+p.parent.mkdir(parents=True, exist_ok=True)
+p.write_text(json.dumps(s, indent=2) + "\n")
+PYEOF
+
+    echo -e "  statusline → ${GREEN}$STATUSLINE_DEST${NC}"
+    echo -e "  settings   → ${GREEN}$CLAUDE_SETTINGS${NC}  (statusLine set)"
+else
+    echo -e "  ${YELLOW}statusline.sh not found at $STATUSLINE_SRC — skipping${NC}"
+fi
+
+# ---------------------------------------------------------------------------
+# 8. Copy config templates if not already present
 # ---------------------------------------------------------------------------
 CONFIG_DIR="$VAULT_ROOT/config"
 mkdir -p "$CONFIG_DIR"
@@ -260,7 +344,7 @@ for tpl in pii_map.json router_config.json; do
 done
 
 # ---------------------------------------------------------------------------
-# 7. Deploy guardrails hook
+# 9. Deploy guardrails hook
 # ---------------------------------------------------------------------------
 echo ""
 echo -e "${BOLD}Deploying guardrails hook...${NC}"

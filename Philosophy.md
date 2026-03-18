@@ -1,5 +1,7 @@
 # The Philosophy of Servetus
 
+> *Your life now has a timecode.*
+
 ## Why "Servetus"
 
 In 1553, Michael Servetus was burned at the stake in Geneva. His crime: disagreeing with John Calvin's interpretation of scripture.
@@ -621,3 +623,5 @@ And in the end, we let God be the judge — not the LLM.
 ---
 
 *Servetus: A servant, not a master. A witness, not an authority.*
+
+*Your life now has a timecode.*

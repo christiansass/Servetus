@@ -7,6 +7,12 @@
 # Claude Code local settings
 .claude/
 
+# Runtime files — generated, not committed
+10-System/orphan-sessions.json
+10-System/inbox-queue.md
+10-System/morning-reminder-*.md
+10-System/memory/
+
 # Local AI preload (personal)
 CLAUDE.md
 
