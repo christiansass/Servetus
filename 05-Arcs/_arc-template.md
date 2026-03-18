@@ -1,7 +1,7 @@
 ---
 type: arc
 title: "Arc Name — the ongoing thread"
-slug: "arc-slug"
+slug: "subject-slug"
 date: YYYY-MM-DDTHH:MM:SS-06:00
 
 status: active                          # active | dormant | resolved | abandoned

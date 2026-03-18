@@ -33,21 +33,23 @@ tags:
 
 ## Principle
 
-Every file has a permanent home. The root Inbox is the entry point — Servetus monitors it and copies files into the vault. Files are never moved from the root Inbox; the original stays there permanently.
+Every file has a permanent home. The Hopper (Inbox/) is the entry point — Servetus monitors it and moves files into the vault. Files are moved, not copied. The Hopper empties as files are filed. Hopper empty = healthy.
 
 ---
 
 ## The Two-Inbox / Source Pipeline
 
 ```
-Nextcloud/Obsidian/Inbox/<source>/          ← root inbox, permanent originals, never touched
-        ↓ Servetus COPIES (never moves)
-Servetus/00-Artifacts/YYYY/MM-Mon/DD/<source>/ ← evidence locker, original names, date-sorted
-        ↓ Servetus processes
+Nextcloud/Obsidian/Inbox/<source>/          ← Hopper (transit only — should tend toward empty)
+        ↓ Servetus PROCESSES first
 Servetus/01-Records/YYYY/MM-Mon/          ← Markdown field record, Servetus naming
         +
 Servetus/02-Memories/YYYY/MM-Mon/           ← atomic thoughts extracted from artifact
+        ↓ THEN moves (move = completion signal)
+Servetus/00-Artifacts/YYYY/MM-Mon/DD/<source>/ ← evidence locker, original names, date-sorted
 ```
+
+**Order matters:** Process first, move last. The move out of the Hopper is the signal that all processing is complete. If it's still in the Hopper, it's not done.
 
 ### 00-source folder structure
 
