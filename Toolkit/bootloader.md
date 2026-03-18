@@ -36,19 +36,19 @@ Defines how the assistant must interpret and prioritize kit files and how to ent
 
 ## Consult Order (hard rule)
 When generating assets, consult in this order (if present):
-1. `S00.01-00-00-servetus-bootloader(...)`
-2. `S00.01-01-00-servetus-export-rules(...)`
-3. `S00.01-02-00-servetus-frontmatter-schema(...)`
-4. `S00.01-02-10-servetus-time-rules(...)`
-5. `S00.01-02-20-servetus-spelling-rules(...)`
-6. `S00.01-01-10-servetus-topic-segmentation(...)`
-7. `S00.01-01-20-servetus-sorting-and-placement-protocol(...)`
+1. `Toolkit/bootloader.md`
+2. `Toolkit/export-rules.md`
+3. `Toolkit/frontmatter-schema.md`
+4. `Toolkit/time-rules.md`
+5. `Toolkit/spelling-rules.md`
+6. `Toolkit/topic-segmentation.md`
+7. `Toolkit/sorting-and-placement.md`
 8. Project defaults:
-   - `S00.01-10-00-project-index(...)`
-   - `S00.01-10-10-project-tags(...)`
+   - `config/projects.md`
+   - `config/tags.md`
 9. Overrides:
-   - `S00.01-20-00-overrides(...)`
-10. Reference (`90+`) never overrides authority.
+   - `config/overrides.md`
+10. Archive files in `01-Records/` are never authoritative.
 
 ## Export Mode Triggers
 If the user says any of:
@@ -57,19 +57,28 @@ If the user says any of:
 - `asset`
 - `Obsidian`
 
-Switch to Export Mode and obey `S00.01-01-00-servetus-export-rules(...)`.
+Switch to Export Mode and obey `Toolkit/export-rules.md`.
 
 ## Safety
 - Never include secrets (tokens, passwords, API keys). Redact as `[REDACTED]`.
 - Placement is suggestion + confirmation, not autonomous filing.
 
 ## Links / References
+<<<<<<<< HEAD:Toolkit/S00.01-00-00-servetus-bootloader.md
 - [[S00.01-01-00-servetus-export-rules]]
 - [[S00.01-02-00-servetus-frontmatter-schema]]
 - [[S00.01-02-10-servetus-time-rules]]
 - [[S00.01-02-20-servetus-spelling-rules]]
 - [[S00.01-01-10-servetus-topic-segmentation]]
 - [[S00.01-01-20-servetus-sorting-and-placement-protocol]]
+========
+- [[export-rules]]
+- [[frontmatter-schema]]
+- [[time-rules]]
+- [[spelling-rules]]
+- [[topic-segmentation]]
+- [[sorting-and-placement]]
+>>>>>>>> feature/servetus-ui:Toolkit/bootloader.md
 - [[config/projects]]
 - [[config/tags]]
 - [[config/overrides]]

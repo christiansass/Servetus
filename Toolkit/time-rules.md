@@ -50,4 +50,10 @@ If `unknown` is used:
 - add a note in `## Links / References` explaining what is missing.
 
 ## Links / References
+<<<<<<<< HEAD:Toolkit/S00.01-02-10-servetus-time-rules.md
 - [[S00.01-02-00-servetus-frontmatter-schema]]
+========
+- [[frontmatter-schema]]
+- Canonical calendar and timestamp authority: [[README]] — "Canonical Rules" section
+- Folder date naming convention: [[sorting-and-placement]]
+>>>>>>>> feature/servetus-ui:Toolkit/time-rules.md

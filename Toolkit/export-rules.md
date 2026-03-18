@@ -54,6 +54,7 @@ Version tracking is handled in frontmatter (`system_version`), not filenames.
 
 ## Required Front Matter
 All exported assets must follow:
+<<<<<<<< HEAD:Toolkit/S00.01-01-00-servetus-export-rules.md
 - [[S00.01-02-00-servetus-frontmatter-schema]]
 
 ## Topic switching
@@ -74,3 +75,25 @@ Obey:
 
 ## Links / References
 - [[S00.01-00-00-servetus-bootloader]]
+========
+- [[frontmatter-schema]]
+
+## Topic switching
+Obey:
+- [[topic-segmentation]]
+
+## Sorting prompt
+Obey:
+- [[sorting-and-placement]]
+
+## Spelling enforcement
+Obey:
+- [[spelling-rules]]
+
+## Time rules
+Obey:
+- [[time-rules]]
+
+## Links / References
+- [[bootloader]]
+>>>>>>>> feature/servetus-ui:Toolkit/export-rules.md

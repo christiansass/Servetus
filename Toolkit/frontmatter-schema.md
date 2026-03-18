@@ -31,6 +31,44 @@ tags:
 
 # Servetus Front Matter Schema (MVP)
 
+## File Naming Convention
+
+All Servetus content files use a `subject_type.md` underscore-separator pattern:
+
+```
+{subject}_{layer-type}.md
+```
+
+The layer type is the **full singular word** for the altitude layer:
+
+| Layer | Type word | Example |
+|-------|-----------|---------|
+| `00-Artifacts/` | `artifact` | `phone-purchase-stream_artifact.md` |
+| `01-Records/` | `record` | `tmobile-call-2026-03_record.md` |
+| `02-Memories/` | `memory` | `verbal-processor-insight_memory.md` |
+| `03-Events/` | `event` | `2026-03-16-vault-launch_event.md` |
+| `04-Projects/` | `project` | `muxpilot_project.md` |
+| `05-Arcs/` | `arc` | `binary-ranch_arc.md` |
+| `06-Radar/` | `radar` | `tmobile-status_radar.md` |
+| `07-StoryMap/` | `storymap` | `lifestream-lane_storymap.md` |
+| `08-Witnesses/` | `witness` | `christian-sass_witness.md` |
+| `09-Shared/` | `shared` | `servetus-overview_shared.md` |
+| `10-System/` | `system` | `session-close_system.md` |
+| `Toolkit/` | `spec` | `frontmatter-schema_spec.md` |
+
+**Why underscore, not dot:** The folder already encodes the type. The underscore makes the type suffix visible as a label — not an extension — in every tool, script, and file manager. `os.path.splitext("binary-ranch_arc.md")` returns `.md` cleanly. Finder with extensions hidden shows `binary-ranch_arc`, which is unambiguously a name.
+
+**Meta files** (templates, specs within a folder) keep their leading underscore prefixes: `_arc-template.md`, `_arc-spec.md`.
+
+**The `slug` field** contains only the subject portion — no type suffix:
+```yaml
+identity:
+  slug: "binary-ranch"   # ✓ correct
+  slug: "arc-binary-ranch"  # ✗ redundant
+```
+
+---
+
 ## Required keys (minimum viable)
 ```yaml
 ---
