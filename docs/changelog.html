@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Changelog — Servetus</title>
+  <style>
+    :root {
+      --bg:       #0d0d0d;
+      --surface:  #141414;
+      --border:   #222;
+      --green:    #00ff88;
+      --yellow:   #ffd700;
+      --dim:      #666;
+      --text:     #e0e0e0;
+      --muted:    #999;
+      --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Courier New', monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      line-height: 1.7;
+      font-size: 16px;
+    }
+
+    a { color: var(--green); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    nav {
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+    }
+
+    nav .home  { color: var(--muted); }
+    nav .home:hover { color: var(--green); }
+    nav .sep   { color: var(--dim); }
+    nav .current { color: var(--text); }
+
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 60px 24px 100px;
+    }
+
+    #loading {
+      text-align: center;
+      padding: 80px 0;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--dim);
+    }
+
+    #error {
+      display: none;
+      text-align: center;
+      padding: 80px 0;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #ff4444;
+    }
+
+    #content h1 {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 32px;
+    }
+
+    #content h2 {
+      font-family: var(--font-mono);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--green);
+      margin: 44px 0 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    #content h3 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin: 22px 0 8px;
+    }
+
+    #content p { color: var(--muted); margin-bottom: 14px; }
+    #content p strong { color: var(--text); }
+
+    #content ul, #content ol {
+      padding-left: 22px;
+      margin-bottom: 14px;
+    }
+
+    #content li { color: var(--muted); margin-bottom: 5px; font-size: 14px; }
+    #content li strong { color: var(--text); }
+
+    #content hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 36px 0;
+    }
+
+    #content code {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: var(--green);
+      background: var(--surface);
+      padding: 2px 5px;
+      border-radius: 3px;
+    }
+
+    #content pre {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px 20px;
+      overflow-x: auto;
+      margin: 16px 0;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    #content pre code {
+      color: var(--muted);
+      background: none;
+      padding: 0;
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="home" href="index.html">Servetus</a>
+  <span class="sep">/</span>
+  <span class="current">Changelog</span>
+</nav>
+
+<div class="container">
+  <div id="loading">loading changelog…</div>
+  <div id="error">failed to load CHANGELOG.md</div>
+  <div id="content"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+  (async function () {
+    const loading = document.getElementById('loading');
+    const error   = document.getElementById('error');
+    const content = document.getElementById('content');
+
+    try {
+      const res = await fetch('../CHANGELOG.md');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const md = await res.text();
+      loading.style.display = 'none';
+      content.innerHTML = marked.parse(md);
+    } catch (e) {
+      loading.style.display = 'none';
+      error.style.display   = 'block';
+      console.error('Failed to load CHANGELOG.md:', e);
+    }
+  })();
+</script>
+
+</body>
+</html>
