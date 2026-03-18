@@ -47,13 +47,23 @@
       border-bottom: 1px solid var(--border);
     }
 
+    .hero-wordmark {
+      font-family: var(--font-mono);
+      font-size: clamp(42px, 8vw, 72px);
+      font-weight: 700;
+      color: var(--green);
+      letter-spacing: -0.03em;
+      line-height: 1;
+      margin-bottom: 14px;
+    }
+
     .hero-label {
       font-family: var(--font-mono);
       font-size: 11px;
-      letter-spacing: 0.15em;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: var(--green);
-      margin-bottom: 20px;
+      color: var(--dim);
+      margin-bottom: 24px;
     }
 
     .hero h1 {
@@ -290,21 +300,22 @@
 <!-- ── Hero ── -->
 <div class="hero">
   <div class="container">
-    <div class="hero-label">v0.3.0 — open standard</div>
-    <h1>The memory architecture<br>AI should write to — <em>and you can audit.</em></h1>
+    <div class="hero-wordmark">Servetus</div>
+    <div class="hero-label">v0.3.0 — open standard · built on Claude Code · extending to all LLMs</div>
+    <h1>Give your AI a memory<br>it can't lie about.</h1>
     <blockquote class="hero-quote">
       "There is no trust without truth.<br>
       And there is no assistant without trust."
     </blockquote>
     <p class="hero-sub">
-      Servetus is an evidence-grade personal knowledge architecture.
-      Plain text. Plain Python. No vendor lock-in. Every claim traces back to an artifact.
+      Plain text. Plain Python. Every claim traces back to an artifact you own.
+      Built today on Claude Code — designed from day one to run on any LLM.
     </p>
     <div class="hero-badges">
       <span class="badge green">v0.3.0</span>
       <span class="badge">MIT License</span>
-      <span class="badge">Plain Markdown + Python</span>
-      <span class="badge">Vendor-agnostic</span>
+      <span class="badge">Claude Code · Anthropic</span>
+      <span class="badge">All LLMs — planned</span>
     </div>
   </div>
 </div>
