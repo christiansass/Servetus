@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Philosophy — Servetus</title>
+  <style>
+    :root {
+      --bg:       #0d0d0d;
+      --surface:  #141414;
+      --border:   #222;
+      --green:    #00ff88;
+      --yellow:   #ffd700;
+      --dim:      #666;
+      --text:     #e0e0e0;
+      --muted:    #999;
+      --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Courier New', monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      line-height: 1.7;
+      font-size: 16px;
+    }
+
+    a { color: var(--green); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Nav bar ── */
+    nav {
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+    }
+
+    nav .home { color: var(--muted); }
+    nav .home:hover { color: var(--green); }
+    nav .sep { color: var(--dim); }
+    nav .current { color: var(--text); }
+
+    /* ── Main layout ── */
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 60px 24px 100px;
+    }
+
+    /* ── Loading state ── */
+    #loading {
+      text-align: center;
+      padding: 80px 0;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--dim);
+    }
+
+    /* ── Rendered Markdown styles ── */
+    #content h1 {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+      line-height: 1.2;
+    }
+
+    #content h1 + blockquote {
+      border-left: 2px solid var(--green);
+      padding-left: 16px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 14px;
+      margin: 20px 0 40px;
+    }
+
+    #content h2 {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      margin: 52px 0 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    #content h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--green);
+      margin: 28px 0 10px;
+      font-family: var(--font-mono);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    #content p {
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    #content p strong {
+      color: var(--text);
+    }
+
+    #content blockquote {
+      border-left: 2px solid var(--border);
+      padding: 4px 0 4px 20px;
+      margin: 20px 0;
+      color: var(--dim);
+      font-style: italic;
+    }
+
+    #content blockquote p { color: var(--dim); margin: 0; }
+
+    #content hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 40px 0;
+    }
+
+    #content pre {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 20px 24px;
+      overflow-x: auto;
+      margin: 20px 0;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      line-height: 1.8;
+      color: var(--muted);
+    }
+
+    #content code {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--green);
+      background: var(--surface);
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    #content pre code {
+      color: var(--muted);
+      background: none;
+      padding: 0;
+      font-size: 12.5px;
+    }
+
+    #content ol, #content ul {
+      padding-left: 24px;
+      margin-bottom: 16px;
+    }
+
+    #content li {
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    #content li strong { color: var(--text); }
+
+    /* Pull out the closing line as a footer coda */
+    #content em:only-child {
+      display: block;
+      font-style: italic;
+      color: var(--dim);
+      font-size: 14px;
+    }
+
+    /* ── Error state ── */
+    #error {
+      display: none;
+      text-align: center;
+      padding: 80px 0;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #ff4444;
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="home" href="index.html">Servetus</a>
+  <span class="sep">/</span>
+  <span class="current">Philosophy</span>
+</nav>
+
+<div class="container">
+  <div id="loading">loading philosophy.md…</div>
+  <div id="error">failed to load Philosophy.md</div>
+  <div id="content"></div>
+</div>
+
+<!--
+  Marked.js — lightweight Markdown parser, MIT license.
+  Loaded from a CDN for convenience. If you prefer no external deps,
+  vendor it: curl https://cdn.jsdelivr.net/npm/marked/marked.min.js > docs/marked.min.js
+  and change the src below to "./marked.min.js"
+-->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+  (async function () {
+    const loading = document.getElementById('loading');
+    const error   = document.getElementById('error');
+    const content = document.getElementById('content');
+
+    // Philosophy.md lives at the repo root, one level above docs/
+    const url = '../Philosophy.md';
+
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const md = await res.text();
+
+      loading.style.display = 'none';
+      content.innerHTML = marked.parse(md);
+    } catch (e) {
+      loading.style.display = 'none';
+      error.style.display   = 'block';
+      console.error('Failed to load Philosophy.md:', e);
+    }
+  })();
+</script>
+
+</body>
+</html>
