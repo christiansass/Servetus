@@ -66,28 +66,79 @@ External verification (journalism, court records) gets a separate badge. Three w
 
 ---
 
+## Canonical Rules
+
+These rules govern all time, date, location, and folder decisions across the entire vault. Every spec that touches these domains must reference this section rather than define its own interpretation.
+
+### Calendar
+Servetus operates on the **Gregorian calendar**. Day boundaries are **midnight local time**. Weeks begin on Sunday.
+
+### Authoritative Timestamp
+The authoritative timestamp for any artifact is the **recording device's clock at the moment of capture** — not the upload time, not the server time, not UTC unless the device was set to UTC. If the device timezone differs from the vault owner's home timezone, both are recorded. The device-local time is authoritative; CST is the display convention.
+
+### Authoritative Location
+The authoritative location for any artifact is the **recording device's physical location at the moment of capture** — derived from GPS if available, falling back to BSSID triangulation, then known location anchors, then manual entry.
+
+### Folder Date Naming
+Date-based folders use the format: `YYYY/MM-Mon/DD/`
+- Year: four digits
+- Month: two-digit number with three-letter name — e.g. `03-Mar`
+- Day: two digits with leading zero
+
+This ensures no folder can be mistaken for another regardless of manual sorting or accidental moves.
+
+**Canonical specs:**
+- Time format and timezone: [[Toolkit/time-rules]]
+- Folder naming and placement: [[Toolkit/sorting-and-placement]]
+
+---
+
 ## File System (Altitude Model)
 
 Folders are numbered by zoom level — ground truth at the bottom, big picture at the top:
 
 ```
 Servetus/
-├── 00-inbox/             # Unsorted input — drop zone only
-├── 01-artifacts/         # Raw proof — the tape (photos, audio, transcripts)
-├── 02-memories/          # Atomized thoughts extracted from artifacts
-├── 03-events/            # Discrete moments in time
-├── 04-projects/          # Work clusters with deliverables
-├── 05-arcs/              # Long-running narrative threads
-├── 06-radar/             # Current viewport — what you're tracking now
-├── 07-storymap/          # 30,000ft view — your full testimony
-├── 08-witnesses/         # People whose stories touch yours (private intelligence)
-├── 09-shared/            # What you publish, federate, or release
-├── 10-system/            # Config, templates, specs, CLI
+├── 00-Artifacts/         # Evidence locker — copied originals, date-sorted, source-differentiated
+├── 01-Records/           # Markdown field records — faithful transcription + provenance frontmatter
+├── 02-Memories/          # Atomized thoughts extracted from artifacts
+├── 03-Events/            # Discrete moments in time — the manila folder for each event
+├── 04-Projects/          # Work clusters with deliverables
+├── 05-Arcs/              # Long-running narrative threads
+├── 06-Radar/             # Current viewport — what you're tracking now
+├── 07-StoryMap/          # 30,000ft view — your full testimony
+├── 08-Witnesses/         # People whose stories touch yours (private intelligence)
+├── 09-Shared/            # What you publish, federate, or release
+├── 10-System/            # Config, templates, specs, CLI
 ├── Toolkit/              # System specs (the instruction set)
 └── config/               # User settings (gitignored for privacy)
 ```
 
 **Altitude principle:** Artifacts anchor reality. Memories distill artifacts. Events aggregate memories. Arcs thread events. StoryMap renders everything.
+
+### The Originals / Records Distinction
+
+**`00-Artifacts/` — The Evidence Locker**
+Copied originals in their original format, original filenames. Date is the primary sort; source is the final differentiator within the date: `00-Artifacts/2026/03-Mar/12/otter/`. Nothing is renamed. The root Inbox (`Nextcloud/Obsidian/Inbox/`) holds the true originals permanently — `00-source` holds the vault's working copy.
+
+**`01-Records/` — The Field Records**
+Markdown representations of the originals. Faithful transcription of content, Servetus naming convention, full provenance frontmatter. The artifact record points back to its source in `00-Artifacts/` by original filename and hash. Each artifact may have its own subfolder when multiple file types belong to the same capture event.
+
+The binary file never leaves the inbox. The artifact folder is pure Markdown — human-readable, git-trackable, auditable without proprietary software.
+
+### The Processing Pipeline
+
+```
+Nextcloud/Obsidian/Inbox/<source>/          ← permanent originals, never touched
+        ↓ Servetus COPIES (never moves)
+00-Artifacts/YYYY/MM-Mon/DD/<source>/          ← evidence locker, original names, date-sorted
+        ↓ Servetus processes
+01-Records/YYYY/MM-Mon/                   ← Markdown record, Servetus naming, provenance hash
+        +
+02-Memories/YYYY/MM-Mon/                    ← atomic thoughts extracted from the artifact
+```
+
+The root Inbox is never cleared. `00-Artifacts` is the vault's working copy of the originals.
 
 ---
 
@@ -95,8 +146,9 @@ Servetus/
 
 | Type | Purpose | Folder |
 |------|---------|--------|
-| **Artifact** | Raw evidence — the tape (audio, photo, transcript, export) | 01 |
-| **Memory** | One atomized thought extracted from an artifact | 02 |
+| **Artifact** | Original source file — the physical evidence, untouched | 00 |
+| **Record** | Markdown field record of an artifact — faithful transcription + provenance | 01 |
+| **Memory** | One atomized thought extracted from a record | 02 |
 | **Event** | A discrete moment in time | 03 |
 | **Project** | Mid-length goal with deliverables | 04 |
 | **Arc** | A long-running storyline (relationship, chapter, thread) | 05 |
@@ -214,12 +266,13 @@ Servetus (the system) ensures the interpretation layer is never controlled by a 
 - ✅ Toolkit specs (bootloader, export rules, schema, time, spelling, routing)
 
 **In Progress:**
-- ⏳ Folder rename: `01-witnesses/` → `01-artifacts/`, `02-daily-logs/` → `02-memories/`
 - ⏳ Session-close script (`.jsonl` → artifact markdown, cross-platform)
 - ⏳ Frontmatter migration script (v0.1 nested → v0.2 flat)
 - ⏳ Corroboration score implementation
 - ⏳ Voice capture pipeline
 - ⏳ StoryMap visualization
+- ⏳ Vault Owner Identifier (VOI) implementation — see [[Toolkit/vault-owner-identifier]]
+- ⏳ Artifact ingestion pipeline — source-based inbox → dated folders → Markdown records
 
 ---
 
@@ -240,9 +293,9 @@ Servetus works with:
 1. Clone this repo into your Obsidian vault location
 2. Open in Obsidian
 3. Run `bash Toolkit/local/install.sh` to deploy the local router
-4. Read `Toolkit/S00.01-00-00-servetus-bootloader*` to understand the system
+4. Read `Toolkit/bootloader.md` to understand the system
 5. Customize `config/` with your projects and tags
-6. Start capturing — drop artifacts in `01-artifacts/`, extract memories to `02-memories/`
+6. Start capturing — drop artifacts in `01-Records/`, extract memories to `02-Memories/`
 
 For AI assistants: Read `CLAUDE.md` first (create locally from `SETUP.md` — gitignored).
 
