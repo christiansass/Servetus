@@ -1,0 +1,7 @@
+{
+  "local_model": "llama3.1:8b",
+  "default_target": "local",
+  "escalation_target": "claude",
+  "grok_api_key": null,
+  "gemini_api_key": null
+}

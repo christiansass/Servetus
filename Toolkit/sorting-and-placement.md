@@ -1,0 +1,162 @@
+---
+servitus:
+  schema_version: 1
+  system_version: 0.2.1
+  record_type: spec
+  pipeline_stage: canon
+  status: active
+  intent: template
+
+identity:
+  title: "Servetus Sorting & Placement Protocol"
+  slug: "servetus-sorting-and-placement-protocol"
+  record_id: "SV-20260116-NOW-CST-SORT"
+
+time:
+  created_at: "2026-01-16"
+  updated_at: "2026-03-02"
+  timezone: "America/Chicago"
+
+keywords:
+  - sorting
+  - placement
+  - routing
+  - pipeline
+
+tags:
+  - servetus
+  - sorting
+  - placement
+---
+
+# Servetus Sorting & Placement Protocol
+
+## Principle
+
+Every file has a permanent home. The Hopper (Inbox/) is the entry point — Servetus monitors it and moves files into the vault. Files are moved, not copied. The Hopper empties as files are filed. Hopper empty = healthy.
+
+---
+
+## The Two-Inbox / Source Pipeline
+
+```
+Nextcloud/Obsidian/Inbox/<source>/          ← Hopper (transit only — should tend toward empty)
+        ↓ Servetus PROCESSES first
+Servetus/01-Records/YYYY/MM-Mon/          ← Markdown field record, Servetus naming
+        +
+Servetus/02-Memories/YYYY/MM-Mon/           ← atomic thoughts extracted from artifact
+        ↓ THEN moves (move = completion signal)
+Servetus/00-Artifacts/YYYY/MM-Mon/DD/<source>/ ← evidence locker, original names, date-sorted
+```
+
+**Order matters:** Process first, move last. The move out of the Hopper is the signal that all processing is complete. If it's still in the Hopper, it's not done.
+
+### 00-source folder structure
+
+Date is the primary sort. Source is the final differentiator within the date.
+
+```
+00-Artifacts/
+└── 2026/
+    └── 03-Mar/
+        └── 12/
+            ├── otter/       ← files from Otter.ai, original names preserved
+            ├── apple/       ← files from Apple (Voice Memos, Notes), original names
+            ├── claude/      ← Claude Code session .jsonl files
+            └── wispr/       ← files from Wispr Flow
+```
+
+**Rule:** You navigate by time first, source second. The date folder is the forensic container. The source subfolder differentiates origin within that moment.
+
+---
+
+## Placement Table — Where Things Land
+
+| Content Type | Destination | Notes |
+|---|---|---|
+| Raw source file (any format) | `00-Artifacts/YYYY/MM-Mon/DD/<source>/` | Original name, copied from root Inbox |
+| Artifact field record (.md) | `01-Records/YYYY/MM-Mon/` | Servetus naming, processed from 00-source |
+| Atomic concept note | `02-Memories/YYYY/MM-Mon/` | One idea per file |
+| Daily/session log | `02-Memories/YYYY/MM-Mon/` | `YYYY-MM-DD-servetus-log.md` |
+| Discrete event record | `03-Events/YYYY/MM-Mon/` | |
+| Project/topic atom | `04-Projects/<topic>/` | |
+| Arc index file | `05-Arcs/` | `arc-<slug>.md` only |
+| Spec file | Inside its own folder | `_<folder>-spec.md` |
+
+---
+
+## Witness Folder Structure
+
+```
+01-Records/
+  YYYY/
+    MM-MonthName/          e.g. 02-February
+      YYYY-MM-DD/
+        YYYY-MM-DD-slug.md
+        YYYY-MM-DD-slug.m4a    (when available)
+        YYYY-MM-DD-slug.docx   (when available)
+```
+
+All three files share the same base filename. Never use the Inbox as a holding
+folder for witness pairs.
+
+---
+
+## Daily Logs — Flat Atomic Layer
+
+```
+02-Memories/
+  YYYY-MM-DD-slug.md        ← atom or session log
+  YYYY-MM-DD-slug.md        ← atom
+  ...
+```
+
+No subfolders. All files at root. Naming: single dashes throughout, no type suffix.
+
+---
+
+## Naming Convention
+
+```
+YYYY-MM-DD-<descriptive-slug>.md
+```
+
+- Single dashes only (not double dashes)
+- No type suffix in the filename (`--thread_export`, `--meta_dump` are legacy)
+- Record type is declared in frontmatter `record_type`, not the filename
+
+---
+
+## Pipeline Stage — What It Means
+
+| Stage | Meaning | Action |
+|---|---|---|
+| `staged` | Processed but placement unconfirmed | Move to correct folder ASAP — this is a temporary state |
+| `distilled` | Placed and active | Normal operating state |
+| `canon` | System/spec file | Do not reprocess |
+
+`pipeline_stage: inbox` should be rare and short-lived. It is not a resting state.
+
+---
+
+## Placement Confidence
+
+1. **Check `config/projects.md`** if present — use explicit project routing
+2. **Check `config/tags.md`** if present — use tag-based routing
+3. **Match by content** — name overlap, tag overlap (≥2 tags), recently active topics
+4. **If still uncertain** — use the Placement Table above as the default; ask user only if the content type itself is ambiguous
+
+Confidence behavior:
+- High: place directly, report what was done
+- Medium: place in most likely location, flag it
+- Low: use `pipeline_stage: inbox` **temporarily**, immediately surface to user for confirmation
+
+---
+
+## Links / References
+- [[_witnesses-spec]] — witness folder structure detail
+- [[_daily-logs-spec]] — atomic layer detail
+- [[config/projects]]
+- [[config/tags]]
+- Canonical calendar and date rules: [[README]] — "Canonical Rules" section
+- Timestamp format and timezone: [[time-rules]]

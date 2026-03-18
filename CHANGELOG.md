@@ -7,6 +7,43 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [0.3.0] - 2026-03-18
+
+### Added
+- **`10-System/launch-brief.py`** — session-opening intelligence dashboard: last session, open sessions, memory load, radar, arcs, projects, write path, system health, orphan warnings
+- **`10-System/statusline.sh`** — KITT edition running clock: local timecode ticking every second, session age counter, room label (`$SERVETUS_ROOM`), KITT red bouncing scanner on THINKING state
+- **`10-System/inbox-triage.py`** — intelligent Hopper triage: scans `Inbox/Claude/`, presents numbered list, arc-match suggestions, action options
+- **`10-System/inbox-watcher.py`** — background Hopper daemon: watches `Inbox/` for new files, announces to terminal with yellow `[HOPPER]` banner, wired into sc launcher so LLM is no longer doing Hopper checks
+- **`10-System/inbox-file.py`** — two-stage filing pipeline: `process` (creates record, file stays in Hopper) → `finalize` (moves to `00-Artifacts/`, marks `distilled: true`)
+- **`10-System/inbox-scan.py`** — standalone Hopper scanner
+- **`10-System/list-active-arcs.py`** — active arc listing utility
+- **`10-System/launch-menu.py`** — interactive session launch menu
+- **`10-System/claude-web-export.js`** — Claude.ai web export bookmarklet
+- **`Toolkit/servetus-ui-spec.md`** — formal specification for all UI components
+- **`Toolkit/test-checklist.md`** — acceptance criteria for launch-brief, session-close, session registry, statusline timecode (includes Lewis's three criteria: rollover stability, sync with saved records, interruption/restart behavior)
+- **`install.sh`** / **`install.ps1`** — cross-platform installers
+- **Orphan session scanner** in `session-close.py` — detects real sessions without artifacts at close time, writes `10-System/orphan-sessions.json`, surfaced in launch-brief on next open
+- **File Naming Convention** section in `Toolkit/frontmatter-schema.md` — `subject_type.md` underscore-separator pattern, slug contains subject only
+
+### Changed
+- **`10-System/session-close.py`** — major overhaul:
+  - Full-fidelity capture: JSONL raw witness co-located with artifact in session folder
+  - Per-turn timestamps on every message in transcript
+  - Millisecond precision throughout
+  - Hardcoded `America/Chicago` → `local_timezone_name()` (reads `/etc/localtime` symlink)
+  - Removed `_fallback_claude` (was pointing to retired `00-inbox/claude/`); exits cleanly with error if sibling Inbox not found
+- **`Toolkit/local/install.sh`** — `sc` launcher wires `inbox-watcher.py` as background daemon (killed on exit), runs `session-close.py` at close
+- **`05-Arcs/_arc-template.md`** — `slug` now contains subject only, no type suffix
+- **`Toolkit/sorting-and-placement.md`** — updated placement rules
+- **`Philosophy.md`** — additions
+
+### Fixed
+- Timezone hardcoding in session artifact frontmatter
+- Fallback path pointing to retired `00-inbox/claude/` directory
+- Orphan sessions from prior development work retroactively archived (`2bba5ce2`, Feb 26, 302 lines)
+
+---
+
 ## [0.2.2] - 2026-03-11
 
 ### Changed
