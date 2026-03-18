@@ -3,11 +3,16 @@
 Servetus Session Close
 ----------------------
 Converts the most recent Claude Code session (.jsonl) for the Servetus vault
-into a full-fidelity artifact markdown file and preserves the raw JSONL as a witness.
+into a full-fidelity artifact package and drops it into the Hopper (Inbox/Claude/).
 
-Two outputs per session:
-  1. Raw JSONL → 00-Artifacts/claude-sessions/YYYY/<session-id>.jsonl  (witness / ground truth)
-  2. Markdown  → Inbox/Claude/<date>-claude-session-<id>.md             (human-readable artifact)
+One folder per session — everything co-located:
+  Inbox/Claude/<date>-claude-session-<id>/
+      <date>-claude-session-<id>.md   (human-readable artifact)
+      <id>-img-001.png                (pasted images, if any)
+      <session-id>.jsonl              (raw tape / ground truth witness)
+
+Hopper is a transit zone. Empty = healthy. Once memories are extracted the
+whole folder moves to 00-Artifacts/YYYY/ — the move is the completion signal.
 
 Only captures sessions from the Servetus project directory in ~/.claude/projects/.
 
@@ -16,6 +21,7 @@ Usage:
     python3 session-close.py <path/to/file.jsonl> # explicit file
 """
 
+import os
 import sys
 import json
 import uuid
@@ -28,25 +34,50 @@ from pathlib import Path
 VAULT_ROOT = Path(__file__).resolve().parent.parent
 CONFIG_DIR = VAULT_ROOT / "config"
 
+
+def local_timezone_name() -> str:
+    """Return the system's IANA timezone name (e.g. America/Chicago)."""
+    try:
+        import os as _os
+        lt = _os.readlink("/etc/localtime")
+        if "zoneinfo/" in lt:
+            return lt.split("zoneinfo/", 1)[1]
+    except Exception:
+        pass
+    try:
+        import subprocess
+        result = subprocess.check_output(
+            ["timedatectl", "show", "--property=Timezone", "--value"],
+            stderr=subprocess.DEVNULL
+        ).decode().strip()
+        if result:
+            return result
+    except Exception:
+        pass
+    dt = datetime.now().astimezone()
+    return dt.strftime("UTC%z")
+
+
+LOCAL_TZ = local_timezone_name()
+
 # Session artifacts land in the sibling Inbox vault (multi-vault Obsidian layout):
 #   Obsidian/
 #   ├── Servetus/   ← this vault
 #   └── Inbox/
 #       └── Claude/ ← artifacts land here
 _sibling_claude = VAULT_ROOT.parent / "Inbox" / "Claude"
-_fallback_claude = VAULT_ROOT / "00-inbox" / "claude"
 
 if _sibling_claude.parent.exists():
     CLAUDE_DIR = _sibling_claude
 else:
-    CLAUDE_DIR = _fallback_claude
     print(
-        f"[session-close] Warning: sibling Inbox vault not found at "
-        f"{_sibling_claude.parent} — falling back to {_fallback_claude}"
+        f"[session-close] Error: sibling Inbox vault not found at "
+        f"{_sibling_claude.parent}\n"
+        f"Expected layout: Obsidian/Inbox/Claude/ alongside Obsidian/Servetus/\n"
+        f"Create the folder or run the installer to set it up."
     )
+    sys.exit(1)
 
-# Raw JSONL witnesses land in 00-Artifacts (sovereign, ground truth, never edited)
-WITNESS_DIR = VAULT_ROOT / "00-Artifacts" / "claude-sessions"
 
 
 # ---------------------------------------------------------------------------
@@ -245,6 +276,7 @@ def extract_full_context(turns: list) -> dict:
     turn_durations = []  # {timestamp, duration_ms}
     token_totals  = {"input": 0, "output": 0, "cache_read": 0, "cache_created": 0}
     image_count   = 0
+    images        = []   # {index, media_type, data, source_type, url}
     messages      = []   # structured conversation turns
 
     last_cwd    = None
@@ -296,6 +328,15 @@ def extract_full_context(turns: list) -> dict:
                         text_parts.append(block.get("text", ""))
                     elif btype == "image":
                         image_count += 1
+                        src = block.get("source", {})
+                        images.append({
+                            "index":       image_count,
+                            "media_type":  src.get("media_type", "image/png"),
+                            "data":        src.get("data", ""),
+                            "url":         src.get("url", ""),
+                            "source_type": src.get("type", "base64"),
+                        })
+                        text_parts.append(f"__IMAGE_{image_count}__")
                     elif btype == "tool_result":
                         res_content = block.get("content", "")
                         if isinstance(res_content, list):
@@ -385,6 +426,7 @@ def extract_full_context(turns: list) -> dict:
         "turn_durations": turn_durations,
         "token_totals":  token_totals,
         "image_count":   image_count,
+        "images":        images,
         "messages":      messages,
     }
 
@@ -393,8 +435,32 @@ def extract_full_context(turns: list) -> dict:
 # Build artifact markdown
 # ---------------------------------------------------------------------------
 
+_MEDIA_EXT = {
+    "image/png":  ".png",
+    "image/jpeg": ".jpg",
+    "image/jpg":  ".jpg",
+    "image/gif":  ".gif",
+    "image/webp": ".webp",
+}
+
+
+def image_filename(short_id: str, img: dict) -> str:
+    """Stable, session-scoped filename for a pasted image.
+
+    Pattern: {short_id}-img-{n:03d}{ext}
+    The session short_id is embedded so the image traces back to its artifact
+    even if the file is ever separated from its folder.
+    """
+    ext = _MEDIA_EXT.get(img["media_type"], ".png")
+    return f"{short_id}-img-{img['index']:03d}{ext}"
+
+
 def build_artifact(jsonl_path: Path, ctx: dict, origin: dict, witness_path: Path) -> tuple:
-    """Returns (filename, markdown_content)."""
+    """Returns (filename, markdown_content, image_files).
+
+    image_files is a list of (relative_path_str, bytes) — caller writes them
+    into a subfolder named after the session slug.
+    """
     meta     = ctx["session_meta"]
     messages = ctx["messages"]
 
@@ -413,6 +479,7 @@ def build_artifact(jsonl_path: Path, ctx: dict, origin: dict, witness_path: Path
     closed_str   = modified.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + modified.strftime("%z")
     short_id     = jsonl_path.stem[:8]
     file_slug    = f"{date_str}-claude-session-{short_id}"
+    room         = os.environ.get("SERVETUS_ROOM", "")
     title        = f"Claude Code Session — {created.strftime('%B %d, %Y')}"
 
     duration_secs = int((modified - created).total_seconds())
@@ -433,11 +500,12 @@ title: "{title}"
 slug: "{file_slug}"
 session-name: "{meta.get('slug', '')}"
 session-id: "{meta.get('sessionId', jsonl_path.stem)}"
+session-room: "{room}"
 
 date: {datetime_str}
 closed: {closed_str}
 duration: "{duration_str}"
-timezone: "America/Chicago"
+timezone: "{LOCAL_TZ}"
 
 model: "{meta.get('model', '')}"
 claude-version: "{meta.get('version', '')}"
@@ -577,36 +645,211 @@ tags: [artifact, session, claude-code]
 
         lines.append("\n---\n")
 
-    body    = "\n".join(lines)
+    # ---- Resolve image placeholders in transcript ----
+    # Replace __IMAGE_N__ with markdown image refs pointing to the session subfolder.
+    # The session short_id is embedded in every filename so images trace back to
+    # this artifact even if separated from their folder.
+    import base64 as _b64
+    image_files = []  # (relative_filename, raw_bytes)
+    body = "\n".join(lines)
+
+    for img in ctx.get("images", []):
+        fname = image_filename(short_id, img)
+        md_ref = f"![{fname}]({fname})"
+        body = body.replace(f"__IMAGE_{img['index']}__", md_ref)
+
+        # Images are in the same folder as the .md — just fname, no subfolder prefix
+        if img["source_type"] == "base64" and img["data"]:
+            try:
+                raw = _b64.b64decode(img["data"])
+                image_files.append((fname, raw))
+            except Exception:
+                pass
+        # URL-sourced images: reference only, no local copy
+
     content = frontmatter + "\n\n" + body
-    return f"{file_slug}.md", content
+    return f"{file_slug}.md", content, image_files
 
 
 # ---------------------------------------------------------------------------
 # Write outputs
 # ---------------------------------------------------------------------------
 
-def copy_witness(jsonl_path: Path, created: datetime) -> Path:
-    """Copy raw JSONL to 00-Artifacts/claude-sessions/YYYY/ as the ground-truth witness."""
-    year_dir = WITNESS_DIR / created.strftime("%Y")
-    year_dir.mkdir(parents=True, exist_ok=True)
-    dest = year_dir / jsonl_path.name
-    if not dest.exists():
-        shutil.copy2(jsonl_path, dest)
-        print(f"[session-close] Witness:  {dest}")
+def write_session_package(filename: str, content: str, jsonl_path: Path,
+                          image_files: list) -> Path:
+    """Write all session artifacts into one folder in the Hopper (Inbox/Claude/).
+
+    Everything lands together:
+        Inbox/Claude/<file_slug>/
+            <file_slug>.md
+            <session-id>.jsonl   ← raw tape / witness
+            <short_id>-img-NNN.* ← pasted images
+    """
+    stem = filename.rsplit(".", 1)[0]   # file_slug
+    session_dir = CLAUDE_DIR / stem
+    session_dir.mkdir(parents=True, exist_ok=True)
+
+    # Markdown
+    md_path = session_dir / filename
+    if md_path.exists():
+        print(f"[session-close] Already exists: {md_path}")
     else:
-        print(f"[session-close] Witness already exists: {dest}")
-    return dest
+        md_path.write_text(content, encoding="utf-8")
+
+    # JSONL witness — raw tape, co-located with artifact
+    jsonl_dest = session_dir / jsonl_path.name
+    if not jsonl_dest.exists():
+        shutil.copy2(jsonl_path, jsonl_dest)
+        print(f"[session-close] Witness:  {jsonl_dest}")
+    else:
+        print(f"[session-close] Witness already exists: {jsonl_dest}")
+
+    # Images
+    for img_fname, img_bytes in image_files:
+        img_path = session_dir / img_fname
+        if not img_path.exists():
+            img_path.write_bytes(img_bytes)
+            print(f"[session-close] Image:    {img_path}")
+        else:
+            print(f"[session-close] Image already exists: {img_path}")
+
+    return md_path
 
 
-def write_artifact(filename: str, content: str) -> Path:
-    CLAUDE_DIR.mkdir(parents=True, exist_ok=True)
-    out_path = CLAUDE_DIR / filename
-    if out_path.exists():
-        print(f"[session-close] Already exists: {out_path}")
-        return out_path
-    out_path.write_text(content, encoding="utf-8")
-    return out_path
+# ---------------------------------------------------------------------------
+# Orphan scanner — find JSONLs with real content but no artifact
+# ---------------------------------------------------------------------------
+
+ORPHAN_FILE = VAULT_ROOT / "10-System" / "orphan-sessions.json"
+
+
+def is_real_session(jsonl_path: Path) -> bool:
+    """Return True if the JSONL contains at least one assistant text response.
+    An empty session is: file-history-snapshot + caveat + /exit + goodbye = 4 lines.
+    Anything with an actual assistant reply is real and deserves an artifact."""
+    try:
+        for line in jsonl_path.read_text(encoding="utf-8", errors="replace").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                obj = json.loads(line)
+            except Exception:
+                continue
+            if obj.get("type") != "assistant":
+                continue
+            msg = obj.get("message", {})
+            if not isinstance(msg, dict):
+                continue
+            for block in msg.get("content", []):
+                if isinstance(block, dict) and block.get("type") == "text":
+                    if block.get("text", "").strip():
+                        return True
+    except Exception:
+        pass
+    return False
+
+
+def artifact_exists(jsonl_path: Path) -> bool:
+    """Return True if an artifact folder already exists for this session."""
+    short_id = jsonl_path.stem[:8]
+    for item in CLAUDE_DIR.iterdir() if CLAUDE_DIR.exists() else []:
+        if short_id in item.name:
+            return True
+    return False
+
+
+def scan_orphans(current_jsonl: Path) -> list:
+    """Scan project dir for real sessions without artifacts. Exclude current session."""
+    try:
+        project_dir = find_servetus_project_dir()
+    except FileNotFoundError:
+        return []
+
+    orphans = []
+    for jsonl in sorted(project_dir.glob("*.jsonl"), key=lambda p: p.stat().st_mtime):
+        if jsonl == current_jsonl:
+            continue
+        if "subagent" in jsonl.name:
+            continue
+        if artifact_exists(jsonl):
+            continue
+        if not is_real_session(jsonl):
+            continue
+        try:
+            mtime = datetime.fromtimestamp(jsonl.stat().st_mtime).astimezone()
+            orphans.append({
+                "jsonl": str(jsonl),
+                "short_id": jsonl.stem[:8],
+                "mtime": mtime.isoformat(timespec="seconds"),
+                "date": mtime.strftime("%Y-%m-%d"),
+            })
+        except Exception:
+            pass
+    return orphans
+
+
+def write_orphan_report(orphans: list):
+    """Write orphan list to 10-System/orphan-sessions.json for launch-brief to surface."""
+    try:
+        ORPHAN_FILE.write_text(json.dumps(orphans, indent=2))
+        if orphans:
+            print(f"[session-close] Orphans:  {len(orphans)} unarchived session(s) flagged → {ORPHAN_FILE.name}")
+    except Exception as e:
+        print(f"[session-close] Orphan scan: could not write report ({e})")
+
+
+# ---------------------------------------------------------------------------
+# Session registry — mark session closed
+# ---------------------------------------------------------------------------
+
+def close_session_in_registry(vault: str, started_ts: str, session_id: str, room: str,
+                              summary: dict = None):
+    """Find the most recent open entry for this vault and mark it closed."""
+    registry_path = Path.home() / ".servetus_sessions.json"
+    try:
+        sessions = json.loads(registry_path.read_text()) if registry_path.exists() else []
+    except Exception:
+        return
+
+    now_str = datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
+
+    # Find the most recent open entry for this vault (match by vault path)
+    target_idx = None
+    for i in range(len(sessions) - 1, -1, -1):
+        s = sessions[i]
+        if s.get("status") == "open" and s.get("vault", "") == vault:
+            target_idx = i
+            break
+
+    if target_idx is not None:
+        sessions[target_idx]["status"]     = "closed"
+        sessions[target_idx]["closed"]     = now_str
+        sessions[target_idx]["session_id"] = session_id
+        if room and not sessions[target_idx].get("room"):
+            sessions[target_idx]["room"] = room
+        if summary:
+            sessions[target_idx].update(summary)
+    else:
+        # No open entry found — append a closed record so history is preserved
+        entry = {
+            "room":       room,
+            "started":    started_ts,
+            "machine":    socket.gethostname(),
+            "vault":      vault,
+            "status":     "closed",
+            "session_id": session_id,
+            "closed":     now_str,
+        }
+        if summary:
+            entry.update(summary)
+        sessions.append(entry)
+
+    try:
+        registry_path.write_text(json.dumps(sessions, indent=2))
+        print(f"[session-close] Registry: session marked closed")
+    except Exception as e:
+        print(f"[session-close] Registry: could not update ({e})")
 
 
 # ---------------------------------------------------------------------------
@@ -635,16 +878,32 @@ def main():
         print("[session-close] No messages found in session file. Nothing to write.")
         sys.exit(0)
 
+    # A real session requires the human to have typed something AND me to have replied.
+    # Claude Code auto-injects initialization context as a user turn, so user_turns > 0
+    # is not sufficient — it's always true even when you open and immediately exit.
+    # The definitive signal: did I (the assistant) actually produce text in response?
+    assistant_text_turns = sum(
+        1 for m in ctx["messages"]
+        if m["role"] == "assistant" and m.get("content", "").strip()
+    )
+    if assistant_text_turns == 0:
+        print("[session-close] No assistant responses — session was empty (head in the door). Skipping.")
+        sys.exit(0)
+
     origin = get_origin()
 
-    # Determine session start for witness folder
     all_ts  = [m["timestamp"] for m in ctx["messages"] if m.get("timestamp")]
     created = parse_ts(all_ts[0]) if all_ts else \
               datetime.fromtimestamp(jsonl_path.stat().st_ctime, tz=timezone.utc).astimezone()
 
-    witness_path          = copy_witness(jsonl_path, created)
-    filename, content     = build_artifact(jsonl_path, ctx, origin, witness_path)
-    out_path              = write_artifact(filename, content)
+    # Compute session folder path so frontmatter can reference the witness location
+    short_id     = jsonl_path.stem[:8]
+    date_str     = created.strftime("%Y-%m-%d")
+    file_slug    = f"{date_str}-claude-session-{short_id}"
+    witness_path = CLAUDE_DIR / file_slug / jsonl_path.name
+
+    filename, content, image_files = build_artifact(jsonl_path, ctx, origin, witness_path)
+    out_path = write_session_package(filename, content, jsonl_path, image_files)
 
     tok = ctx["token_totals"]
     print(f"[session-close] Artifact: {out_path}")
@@ -653,6 +912,38 @@ def main():
     print(f"[session-close] Tools:    {len(ctx['tool_log'])}")
     print(f"[session-close] Tokens:   {tok['input']:,} in / {tok['output']:,} out "
           f"({tok['cache_read']:,} cache read)")
+
+    # Build compact summary for the registry (surfaced in next launch brief)
+    all_ts   = [m["timestamp"] for m in ctx["messages"] if m.get("timestamp")]
+    modified = parse_ts(all_ts[-1]) if all_ts else \
+               datetime.fromtimestamp(jsonl_path.stat().st_mtime, tz=timezone.utc).astimezone()
+    duration_secs = int((modified - created).total_seconds())
+    files_touched = sorted(set(
+        t["input_summary"] for t in ctx["tool_log"]
+        if t["name"] in ("Edit", "Write", "NotebookEdit") and t["input_summary"]
+    ))
+    # Keep just basenames so the registry stays readable
+    files_touched = [os.path.basename(f) for f in files_touched]
+
+    summary = {
+        "turns":         sum(1 for m in ctx["messages"] if m["role"] == "user"),
+        "tool_calls":    len(ctx["tool_log"]),
+        "duration":      fmt_ms(duration_secs * 1000),
+        "files_touched": files_touched,
+    }
+
+    # Mark this session closed in the registry (~/.servetus_sessions.json)
+    close_session_in_registry(
+        vault      = str(VAULT_ROOT),
+        started_ts = created.isoformat(),
+        session_id = ctx["session_meta"].get("sessionId", jsonl_path.stem),
+        room       = os.environ.get("SERVETUS_ROOM", ""),
+        summary    = summary,
+    )
+
+    # Scan for orphaned sessions (real content, no artifact) and report for next launch
+    orphans = scan_orphans(jsonl_path)
+    write_orphan_report(orphans)
 
 
 if __name__ == "__main__":

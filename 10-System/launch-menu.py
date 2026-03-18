@@ -1,0 +1,376 @@
+#!/usr/bin/env python3
+"""
+Servetus Launch Menu
+--------------------
+Interactive context picker shown at the start of every sc session.
+
+Displays:
+  - Open sessions     (with ↺ resume if a matching JSONL is found)
+  - Recent sessions   (last 4 closed, with ↺ resume if session_id known)
+  - Active arcs       (from 05-Arcs/ — status: active)
+  - Recent projects   (from 04-Projects/ — sorted by mtime)
+
+User picks a number, types N for a new label, or presses Enter to skip.
+
+Side effects:
+  - Writes selected room + resume_id into ~/.servetus_session.json
+  - Appends a new "open" entry to ~/.servetus_sessions.json (session registry)
+
+Output (stdout, two lines — for sc to capture):
+  line 1: room label  (may be empty)
+  line 2: resume_id   (may be empty)
+
+Display and input go to /dev/tty directly so stdout capture in sc is clean.
+
+Usage:
+    python3 launch-menu.py [vault_path]
+"""
+
+import json, pathlib, re, socket, sys
+from datetime import datetime
+
+VAULT        = pathlib.Path(sys.argv[1]).resolve() if len(sys.argv) > 1 \
+               else pathlib.Path(__file__).resolve().parent.parent
+HOME         = pathlib.Path.home()
+SESSION_F    = HOME / ".servetus_session.json"    # single current session
+REGISTRY_F   = HOME / ".servetus_sessions.json"  # registry of all sessions
+PROJECTS_DIR = HOME / ".claude" / "projects"
+
+W = 72
+C = W - 4
+
+BOLD   = "\033[1m"
+DIM    = "\033[2m"
+GREEN  = "\033[32m"
+YELLOW = "\033[33m"
+CYAN   = "\033[36m"
+RESET  = "\033[0m"
+
+
+# ── Box drawing ───────────────────────────────────────────────────────────────
+
+def _plain(s):
+    return re.sub(r'\033\[[0-9;]*m', '', s)
+
+def top():   return "╔" + "═" * (W - 2) + "╗"
+def bot():   return "╚" + "═" * (W - 2) + "╝"
+def div():   return "╠" + "═" * (W - 2) + "╣"
+def blank(): return "║" + " " * (W - 2) + "║"
+
+def row(content, indent=2):
+    plain  = _plain(content)
+    prefix = " " * indent
+    avail  = C - len(prefix)
+    if len(plain) > avail:
+        content = plain[:avail - 1] + "…"
+    pad = C - len(_plain(content)) - indent
+    return f"║{prefix}{content}{' ' * max(0, pad)}  ║"
+
+def item_row(n, label, detail="", marker=""):
+    num   = f"{CYAN}{n:>2}.{RESET} "
+    lbl   = f"{BOLD}{label[:30]:<30}{RESET}"
+    det   = f"  {DIM}{detail}{RESET}" if detail else ""
+    mrk   = f"  {marker}" if marker else ""
+    return row(f"{num}{lbl}{det}{mrk}", indent=2)
+
+def section(title):
+    return [div(), row(f"{BOLD}{title}{RESET}", indent=2)]
+
+
+# ── Session registry ──────────────────────────────────────────────────────────
+
+def load_registry():
+    try:
+        data = json.loads(REGISTRY_F.read_text()) if REGISTRY_F.exists() else []
+        return [s for s in data if isinstance(s, dict)]
+    except:
+        return []
+
+def save_registry(sessions):
+    try:
+        REGISTRY_F.write_text(json.dumps(sessions, indent=2))
+    except:
+        pass
+
+def register_open(room, resume_id):
+    sessions = load_registry()
+    sessions.append({
+        "room":       room,
+        "started":    datetime.now().isoformat(timespec="seconds"),
+        "machine":    socket.gethostname(),
+        "vault":      str(VAULT),
+        "status":     "open",
+        "session_id": resume_id,
+        "closed":     None,
+    })
+    save_registry(sessions)
+
+
+# ── Time formatting ───────────────────────────────────────────────────────────
+
+def relative_time(iso_str):
+    if not iso_str:
+        return ""
+    try:
+        dt   = datetime.fromisoformat(iso_str).astimezone()
+        diff = int((datetime.now().astimezone() - dt).total_seconds())
+        if diff < 60:     return "just now"
+        if diff < 3600:   return f"{diff // 60}m ago"
+        if diff < 86400:  return f"{diff // 3600}h {(diff % 3600) // 60}m ago"
+        if diff < 172800: return "yesterday"
+        return f"{diff // 86400}d ago"
+    except:
+        return ""
+
+
+# ── JSONL / resume detection ──────────────────────────────────────────────────
+
+def find_project_dir():
+    if not PROJECTS_DIR.exists():
+        return None
+    slug = str(VAULT).replace("/", "-").replace("\\", "-")
+    d    = PROJECTS_DIR / slug
+    if d.exists():
+        return d
+    parts = [p for p in VAULT.parts if p not in ("", "/")]
+    for d in PROJECTS_DIR.iterdir():
+        if d.is_dir() and all(p in d.name for p in parts[-2:]):
+            return d
+    return None
+
+def find_jsonl_for_session(started_iso, project_dir):
+    """Return the JSONL stem closest in time to started_iso, or None."""
+    if not project_dir or not project_dir.exists() or not started_iso:
+        return None
+    try:
+        started = datetime.fromisoformat(started_iso).astimezone()
+    except:
+        return None
+    best, best_diff = None, float("inf")
+    for jf in project_dir.glob("*.jsonl"):
+        if "subagent" in jf.name:
+            continue
+        try:
+            mtime = datetime.fromtimestamp(jf.stat().st_mtime).astimezone()
+            diff  = abs((mtime - started).total_seconds())
+            if diff < best_diff and diff < 86400:
+                best_diff, best = diff, jf
+        except:
+            pass
+    return best.stem if best else None
+
+
+# ── Vault data ────────────────────────────────────────────────────────────────
+
+def get_active_arcs():
+    d = VAULT / "05-Arcs"
+    if not d.exists():
+        return []
+    out = []
+    for f in sorted(d.glob("*.md"), key=lambda x: x.stat().st_mtime, reverse=True):
+        if f.name.startswith("_"):
+            continue
+        try:
+            text = f.read_text(errors="replace")
+            if not text.startswith("---"):
+                continue
+            end = text.find("\n---", 3)
+            fm  = text[3:end] if end != -1 else text[3:]
+            sm  = re.search(r'^\s*status:\s*(.+)$', fm, re.M)
+            if not sm or sm.group(1).strip().strip("'\"").lower() not in \
+                    ("active", "open", "in-progress", "ongoing"):
+                continue
+            tm    = re.search(r'^\s*title:\s*["\']?(.+?)["\']?\s*$', fm, re.M)
+            title = tm.group(1).strip().strip("'\"") if tm else f.stem
+            # short_name: used as the room label when set — keeps statusline tight
+            sn    = re.search(r'^\s*short_name:\s*["\']?(.+?)["\']?\s*$', fm, re.M)
+            label = sn.group(1).strip().strip("'\"") if sn else title
+            out.append({
+                "title": title,
+                "label": label,   # what becomes SERVETUS_ROOM
+                "mtime": datetime.fromtimestamp(f.stat().st_mtime),
+            })
+        except:
+            pass
+    return out[:6]
+
+def get_recent_projects():
+    d = VAULT / "04-Projects"
+    if not d.exists():
+        return []
+    out = []
+    for sub in d.iterdir():
+        if not sub.is_dir() or sub.name.startswith(("_", ".")):
+            continue
+        mtime = sub.stat().st_mtime
+        for f in sub.rglob("*"):
+            try:
+                mtime = max(mtime, f.stat().st_mtime)
+            except:
+                pass
+        out.append({"name": sub.name, "mtime": datetime.fromtimestamp(mtime)})
+    return sorted(out, key=lambda x: x["mtime"], reverse=True)[:5]
+
+
+# ── Interactive menu ──────────────────────────────────────────────────────────
+
+def show_menu():
+    registry    = load_registry()
+    open_sess   = [s for s in registry if s.get("status") == "open"]
+    closed_sess = sorted(
+        [s for s in registry if s.get("status") == "closed"],
+        key=lambda s: s.get("closed", ""),
+        reverse=True,
+    )[:4]
+    arcs        = get_active_arcs()
+    projects    = get_recent_projects()
+    project_dir = find_project_dir()
+
+    now   = datetime.now().astimezone()
+    lines = []
+    items = []  # list of (room_label, resume_id_or_None)
+
+    # Header
+    lines.append(top())
+    lines.append(row(
+        f"{BOLD}SERVETUS{RESET}  ●  What's the context for this window?  "
+        f"{DIM}{now.strftime('%Y-%m-%d  %H:%M')}  ·  {socket.gethostname()}{RESET}",
+        indent=2,
+    ))
+
+    # Open sessions
+    if open_sess:
+        lines.extend(section("OPEN SESSIONS"))
+        for s in open_sess:
+            n      = len(items) + 1
+            resume = s.get("session_id") or \
+                     find_jsonl_for_session(s.get("started"), project_dir)
+            items.append((s.get("room", ""), resume))
+            age    = relative_time(s.get("started", ""))
+            mach   = s.get("machine", "")
+            detail = f"{age}  ·  {mach}" if mach else age
+            marker = f"{GREEN}↺ resume{RESET}" if resume else ""
+            lines.append(item_row(n, s.get("room") or "(no label)", detail, marker))
+
+    # Recent closed sessions
+    if closed_sess:
+        lines.extend(section("RECENT SESSIONS"))
+        for s in closed_sess:
+            n      = len(items) + 1
+            resume = s.get("session_id") or \
+                     find_jsonl_for_session(s.get("started"), project_dir)
+            items.append((s.get("room", ""), resume))
+            age    = relative_time(s.get("closed") or s.get("started", ""))
+            marker = f"{DIM}↺ resume{RESET}" if resume else ""
+            lines.append(item_row(n, s.get("room") or "(no label)", age, marker))
+
+    # Active arcs
+    if arcs:
+        lines.extend(section("ACTIVE ARCS"))
+        for a in arcs:
+            n = len(items) + 1
+            # label = short_name if defined, else title — this becomes SERVETUS_ROOM
+            items.append((a["label"], None))
+            # show full title in menu, label (short_name) in parens if different
+            display = a["title"]
+            if a["label"] != a["title"]:
+                display = f"{a['title']}  {DIM}[{a['label']}]{RESET}"
+            lines.append(item_row(n, display, relative_time(a["mtime"].isoformat())))
+
+    # Recent projects
+    if projects:
+        lines.extend(section("PROJECTS"))
+        for p in projects:
+            n = len(items) + 1
+            items.append((p["name"], None))
+            lines.append(item_row(n, p["name"], relative_time(p["mtime"].isoformat())))
+
+    if not items:
+        lines.append(blank())
+        lines.append(row(f"{DIM}No sessions, arcs, or projects found yet.{RESET}", indent=4))
+
+    # Footer
+    n_hint = f"1–{len(items)}" if items else "—"
+    lines.append(div())
+    lines.append(row(
+        f"  {CYAN}[{n_hint}]{RESET} continue   "
+        f"  {CYAN}[N]{RESET} new label   "
+        f"  {CYAN}[Enter]{RESET} no context",
+        indent=2,
+    ))
+    lines.append(bot())
+    lines.append("")
+
+    # Write display to /dev/tty so stdout capture in sc stays clean
+    try:
+        tty = open("/dev/tty", "w")
+        tty.write("\n".join(lines) + "\n")
+        tty.write("  Context: ")
+        tty.flush()
+        tty_in = open("/dev/tty", "r")
+        raw    = tty_in.readline().strip()
+        tty.write("\n")
+        tty.flush()
+    except (OSError, IOError):
+        # Fallback if /dev/tty unavailable (e.g. non-interactive)
+        return "", None
+
+    room, resume_id = "", None
+
+    if raw.isdigit():
+        idx = int(raw) - 1
+        if 0 <= idx < len(items):
+            room, resume_id = items[idx]
+        # else treat as invalid → no context
+    elif raw.upper() == "N":
+        try:
+            tty.write("  Label: ")
+            tty.flush()
+            room = tty_in.readline().strip()
+            tty.write("\n")
+            tty.flush()
+        except:
+            room = ""
+    elif raw:
+        # Typed a name directly instead of a number
+        room = raw
+
+    try:
+        tty.close()
+        tty_in.close()
+    except:
+        pass
+
+    return room, resume_id
+
+
+# ── Main ──────────────────────────────────────────────────────────────────────
+
+def main():
+    room, resume_id = show_menu()
+
+    # Write into ~/.servetus_session.json so launch-brief.py reads the room
+    # and sc can read resume_id before brief runs
+    try:
+        existing = {}
+        if SESSION_F.exists():
+            try:
+                existing = json.loads(SESSION_F.read_text())
+            except:
+                pass
+        existing["room"]      = room
+        existing["resume_id"] = resume_id or ""
+        SESSION_F.write_text(json.dumps(existing, indent=2))
+    except:
+        pass
+
+    # Register this session as open
+    register_open(room, resume_id)
+
+    # Output for sc: room on line 1, resume_id on line 2
+    print(room)
+    print(resume_id or "")
+
+
+if __name__ == "__main__":
+    main()
