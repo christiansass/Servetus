@@ -94,10 +94,25 @@ def save_registry(sessions):
 
 def register_open(room, resume_id):
     sessions = load_registry()
+    now_str  = datetime.now().isoformat(timespec="seconds")
+    machine  = socket.gethostname()
+    # Deduplicate: if an open entry for this vault+room+machine already exists
+    # within the last 60 seconds, don't create another one
+    for s in sessions:
+        if (s.get("status") == "open"
+                and s.get("vault") == str(VAULT)
+                and s.get("machine") == machine
+                and s.get("room") == room):
+            try:
+                age = abs((datetime.now() - datetime.fromisoformat(s["started"])).total_seconds())
+                if age < 60:
+                    return  # duplicate within same launch window — skip
+            except Exception:
+                pass
     sessions.append({
         "room":       room,
-        "started":    datetime.now().isoformat(timespec="seconds"),
-        "machine":    socket.gethostname(),
+        "started":    now_str,
+        "machine":    machine,
         "vault":      str(VAULT),
         "status":     "open",
         "session_id": resume_id,
@@ -107,6 +122,16 @@ def register_open(room, resume_id):
 
 
 # ── Time formatting ───────────────────────────────────────────────────────────
+
+def calendar_time(iso_str):
+    """Return a short calendar stamp: 'Mar 17 15:04' — useful when relative time is ambiguous."""
+    if not iso_str:
+        return ""
+    try:
+        dt = datetime.fromisoformat(iso_str).astimezone()
+        return dt.strftime("%b %-d %H:%M")
+    except:
+        return ""
 
 def relative_time(iso_str):
     if not iso_str:
@@ -216,7 +241,8 @@ def get_recent_projects():
 
 def show_menu():
     registry    = load_registry()
-    open_sess   = [s for s in registry if s.get("status") == "open"]
+    open_sess   = [s for s in registry if s.get("status") == "open"
+                   and s.get("vault", "") == str(VAULT)]
     closed_sess = sorted(
         [s for s in registry if s.get("status") == "closed"],
         key=lambda s: s.get("closed", ""),
@@ -243,12 +269,13 @@ def show_menu():
         lines.extend(section("OPEN SESSIONS"))
         for s in open_sess:
             n      = len(items) + 1
-            resume = s.get("session_id") or \
-                     find_jsonl_for_session(s.get("started"), project_dir)
+            sid    = s.get("session_id") or ""
+            resume = sid or find_jsonl_for_session(s.get("started"), project_dir)
             items.append((s.get("room", ""), resume))
             age    = relative_time(s.get("started", ""))
-            mach   = s.get("machine", "")
-            detail = f"{age}  ·  {mach}" if mach else age
+            # Show short ID if available; otherwise fall back to started timestamp
+            id_tag = f"[{sid[:8]}]" if sid else calendar_time(s.get("started", ""))
+            detail = f"{age}  ·  {id_tag}"
             marker = f"{GREEN}↺ resume{RESET}" if resume else ""
             lines.append(item_row(n, s.get("room") or "(no label)", detail, marker))
 
