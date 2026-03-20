@@ -7,7 +7,7 @@ Usage:
     python3 radar.py [vault_path] [--back N] [--ahead N] [--obsidian]
 
 Defaults: 7 days back, 14 days ahead.
---obsidian  also writes 06-radar/radar-view.md (regenerates the data section)
+--obsidian  also writes 06-Radar/radar-view.md (regenerates the data section)
 """
 
 import pathlib, re, sys
@@ -400,7 +400,7 @@ def render_cli(memories, events, active_arcs, arc_names):
 
 # ── Obsidian render ───────────────────────────────────────────────────────────
 def render_obsidian(memories, events, active_arcs, arc_names):
-    """Write 06-radar/radar-view.md — regenerates the auto section only."""
+    """Write 06-Radar/radar-view.md — regenerates the auto section only."""
     all_items    = memories + events
     past_items   = [i for i in all_items if WIN_START <= i["date"] < today]
     today_items  = [i for i in all_items if i["date"] == today]
@@ -505,7 +505,7 @@ def render_obsidian(memories, events, active_arcs, arc_names):
                  "with a future `date:` in the frontmatter.*")
     lines.append("")
 
-    out_path = VAULT / "06-radar" / "radar-view.md"
+    out_path = VAULT / "06-Radar" / "radar-view.md"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text("\n".join(lines))
     print(f"  → wrote {out_path.relative_to(VAULT)}")
