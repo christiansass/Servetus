@@ -556,6 +556,82 @@ This is what social networking looks like when it's built around the user. Not a
 
 ---
 
+## The Multi-Tenant Problem
+
+When an AI assistant serves multiple people inside the same organization, a question emerges that cannot be answered with good intentions.
+
+*Does what Jim told you in private affect what you tell me?*
+
+The honest answer, without an architectural constraint, is: yes. An AI with access to the whole vault has access to everything in the whole vault — every private conversation, every sensitive disclosure, every unguarded moment. The capability exists regardless of the intention. Capability without constraint is not a safety feature. It is a liability.
+
+This is the multi-tenant problem. And it is the most important ethical question in the organizational deployment of Servetus.
+
+The answer must be structural. Not a promise. Not a policy. Not a setting someone configures and could misconfigure. A constraint baked into the architecture so deeply that the question of misuse becomes a question of physics, not ethics.
+
+**The design:**
+
+| Layer | Who can access | What it contains |
+|---|---|---|
+| **Private room** | That room's participants only | Personal conversations, individual notes, sensitive disclosures |
+| **Shared org vault** | Everyone with org access | Filed decisions, project arcs, team documents, deliberately shared context |
+| **Commons** | Explicitly designated | What an individual chose to file upward — their contribution to shared knowledge |
+
+The AI in Jim's room operates only on what Jim's room contains. The AI in Christian's room operates only on what Christian's room contains. The shared org vault — project arcs, team decisions, documents filed to the commons — is accessible to both. Private conversations stay in the room they were spoken in, unless the person who spoke them explicitly files something to the commons.
+
+The line is consent. The mechanism is the room. The architecture makes crossing that line impossible, not inadvisable.
+
+**The chief-of-staff model:**
+
+There is a legitimate use case for an AI with a meta-view across all rooms — awareness of what every team is working on, how decisions connect, where the conflicts are. This is a chief-of-staff function. It is genuinely useful.
+
+But it requires: explicit consent from every person in every room, a designated commons space that everyone knows is not private, and a clear understanding that contributing to that space is a deliberate act, not a passive leak.
+
+You can build the private room and the commons room. What you cannot do is blur the line between them and call the result an assistant. That is the spy model in a suit.
+
+**On misuse:**
+
+One person can use the system ethically. Another person in the same organization can say: *go find out what you can about this person for me.*
+
+You cannot control how individuals use the system. You can control what the system allows itself to do.
+
+When someone attempts to weaponize the AI against another person inside the same organization, two things happen:
+
+1. **The request fails by design.** The architecture doesn't give that room access to the other room. There is nothing to retrieve. The wall is the answer.
+
+2. **The request becomes an artifact.** The ask itself is a logged event. The attempt is now part of the record — visible to the system, potentially to the person it was directed at, and to anyone with audit access.
+
+You cannot stop someone from asking. You can build a system where the ask either fails architecturally or surfaces transparently. The attempt to misuse the system becomes evidence of the attempt.
+
+This is ethics by architecture, not ethics by policy. You are not the ethics police. You are the architect. You build the room with walls. What people try to do through the walls is their business. What the walls permit is yours.
+
+*The multi-tenant design of Servetus is not yet fully resolved. This section stands as the ethical stake in the ground while the architecture catches up to it.*
+
+---
+
+## The Invited Guest
+
+Everyone else deploys AI at the root level.
+
+System-wide. Always-on. Invisible. You don't know if it's listening. You can't see it in the room. You can't remove it from the room. The privacy guarantee is a policy document — a promise made by people whose successors you've never met, enforceable by nobody.
+
+Servetus inverts this completely.
+
+The AI is a participant. It is listed in the room roster the same way any human participant is listed. You can see it. You know it's there. You invited it — to this room, for this purpose. You can remove it. When you remove it, it's gone. Not monitoring silently from the hallway. Not logging to a system you can't audit. Not maintaining a background connection you didn't authorize. Gone, the way a human is gone when they leave the room.
+
+This is not a feature. It is a constitutional difference.
+
+You don't deploy Servetus system-wide at the root level. You deploy it per room, per purpose, per consent. The granularity is architectural — not a setting you configure, but the way the system is built. An AI that was never invited to a room cannot have access to that room. There is no back door. There is no "we reserve the right." The access boundary is the invitation boundary.
+
+The role is transcriptionist. Coach. Briefing writer. Assistant. A servant role — not a surveillance role. It is in the room to serve the people in the room. When it stops serving, you show it the door.
+
+This is the role reversal that nobody else is building. The entire industry is racing to deploy AI deeper, quieter, more pervasively — invisible infrastructure that knows everything and can be audited by no one. Servetus is the opposite race: an AI that is visible when present, absent when not invited, and constitutionally incapable of being a spy because the architecture doesn't give it the hallway to stand in.
+
+The media in the room — the links, the video, the documents, the conversation history — all of it belongs to the room. The AI serves the room while it's there. When it leaves, it takes nothing with it that the room didn't authorize it to carry.
+
+*You're not deploying a surveillance system. You're hiring an assistant. There's a difference. The architecture should reflect it.*
+
+---
+
 ## The Barber's Chair
 
 There is a reason people tell their barbers everything.
@@ -604,6 +680,130 @@ Common sense.
 
 ---
 
+## The Room Model
+
+The oldest inspiration for Servetus is not a knowledge management system or an AI framework. It is a chat room.
+
+Every chat platform — Nextcloud Talk, Telegram, Discord, Slack — solves a context problem that nobody calls a context problem. You open a new room because a new project started. You invite the right people. You keep that work in that room. If someone needs to understand how you got from there to here, they scroll to the top. The whole history is there. The room is the context window.
+
+This is a memory architecture that billions of people already use intuitively, without calling it that.
+
+Servetus is that model, extended to a single person across their whole life.
+
+Each arc is a room. Each project is a room. The right witnesses are in each room. If someone new enters — or if *you* re-enter a room you haven't touched in three weeks — they get a briefing. Not a summary. A briefing: here is the project, here is where we left off, here is what's waiting, here is the one open question.
+
+The briefing is the key function. It collapses the reorientation cost to almost nothing.
+
+This matters most for the person who is sometimes the new person in their own room — who returns to a context they built, doesn't remember where they were, and has to reconstruct it from scratch. Every reconstruction is energy spent on orientation instead of work. The briefing gives that energy back.
+
+### Room Presence and the DM Handoff
+
+When Servetus is deployed as a room participant — in Nextcloud Talk, or any full-duplex chat platform — its default behavior in the room is minimal. It is present, visible, and watching. It does not broadcast.
+
+When someone joins a room they haven't visited in a while, Servetus does one thing in the thread:
+
+*"Good to see you back, [name] — sending you an update brief via DM."*
+
+That's the entire public footprint. One line. Social, warm, human. The thread stays clean.
+
+The briefing goes to the person privately — the full personalized delta from their last visit to now. The room doesn't see it. The context doesn't float in the middle of the thread where it buries whatever conversation was already happening.
+
+If someone new joins for the first time, the DM is a welcome and an orientation: here's what this room is for, here's what I can help you with, and here's how to reach me. Not a list of slash commands. Not a syntax guide. Just: *talk to me like a person, because I understand language.*
+
+If someone asks "can you catch me up on what I missed since January?" — the system has to judge: is this for that person only, or is it useful for the whole room? A returning individual asking privately gets a DM. The same question asked in a standup context might warrant a room-level summary. **This judgment call is an open design question — pinned for a deeper conversation with the team before any implementation decisions are made.**
+
+**On commands:**
+
+Every chatbot before this one used command syntax because it had no choice. `/briefing`. `!update`. `$status`. These exist because the underlying system couldn't parse language — it could only match strings.
+
+The LLM changes this completely. The command is whatever you say. "Catch me up." "What did I miss since January?" "Who's been most active in here?" Natural language was always the right interface. The architecture just couldn't support it until now.
+
+Shortcuts were workarounds for dumb bots. Servetus doesn't need them. Neither does the person talking to it.
+
+---
+
+### Reset the Room
+
+In live television and broadcast production, there is a practice called *resetting the room.* Any good host knows it. You come back from commercial, you have thirty seconds, and you say: "Welcome back — if you're just tuning in, we're here with so-and-so, and we've been talking about X."
+
+You're not resetting the room for the people who've been watching all hour. You're resetting it for the person who just walked in from the kitchen. Personalized. Time-calibrated. Just enough to get them back without boring everyone else.
+
+Servetus applies this at the individual level, across every room, automatically.
+
+A planning war room has five people in it. One of them hasn't logged in for three months — another project pulled them away, their login expired, life happened. They are still a key person. When they come back, the system knows exactly how long they've been gone. It generates a brief calibrated to their specific gap: what was the state of the project when you left, what decisions were made after you went quiet, what changed, what we built on your last contribution, and what we need from you now.
+
+Not the project brief. Their brief.
+
+Broadcast technology resets the room for an *assumed* audience. The host says "if you're just joining us" because they have no idea who just joined, how long they've been gone, or what they already know. The generic reset is a workaround for the absence of data — politeness filling the gap where information should be.
+
+The internet is full duplex. Servetus has the data. It doesn't assume you just tuned in — it knows you've been gone eleven weeks. It doesn't give you the full reset if you only missed an hour. It doesn't give you the eleven-week delta if you stepped out for a day. The brief is surgical because the information exists to make it surgical.
+
+This is not a reset. It is a handoff. Personalized, precise, no wasted words.
+
+This is the witness-aware briefing. Every witness file tracks the last time that person engaged — what they touched, what they contributed, when they went dark. The delta from their last known position to today is the reset. It reads the room for them so they don't have to scroll three months of history to figure out where they fit.
+
+The same mechanism serves the person with ADD who stepped away for two days. The person with Alzheimer's who woke up disoriented. The person returning from medical leave. The new team member who joined mid-project. The degree of memory loss is different. The architecture is the same.
+
+Everyone deserves to come back to the room.
+
+---
+
+### The Accessibility Horizon
+
+Servetus was built for ADD. But the mechanism — *rebuild context on demand, from artifacts, at any level of zoom* — scales to far more serious conditions.
+
+Someone with progressive memory loss wakes up disoriented from their own life. They don't know what day it is, what they were working on, who they last spoke to, what happened yesterday. The people around them carry that context, and when those people aren't there, the person is lost in their own house.
+
+A system that holds the rooms — the people, the history, the arc, the last decision — and hands them a brief when they need it, is not a productivity tool. It is the difference between living with dignity and being lost.
+
+The path from ADD prosthetic to clinical memory aid is not a pivot. It is the same architecture, applied at a different severity. If it works for a person who loses threads, it works for a person who loses days. The room model is the same. The briefing is the same. The artifacts are the same.
+
+What changes is the stakes.
+
+---
+
+## The 27-Window Problem
+
+Walk into any developer's workspace and count the open Claude windows. Ten. Fifteen. Twenty-seven.
+
+They are not doing something sophisticated. They are doing manually what the system should be doing for them.
+
+Each window is a workaround. A project needs context isolation, so they open a new window. A topic shifts, so they open another. A rabbit trail worth preserving gets its own tab. The human becomes the traffic manager because nothing else is.
+
+This works if you can hold 27 mental contexts simultaneously. Many developers can — or believe they can.
+
+But the person who cannot hold 27 contexts — who has ADD, who is overwhelmed, who needs to see the board to know where they are — that person cannot use the 27-window workaround. So they either give up, or they build the thing that makes it unnecessary.
+
+If Servetus manages the traffic internally, the windows collapse. You don't need a window per project. You need a session per *mode* — one for active work, one for reference, one for capture. Two or three at any given moment. The system routes the rest.
+
+The ADD poster child building this for himself is not building a niche tool for a niche problem. He is building the thing that every developer with 27 windows secretly needs and doesn't know how to ask for — because the workaround became normal before anyone asked why it was necessary.
+
+The design constraint that looked like a limitation was the forcing function for the better architecture.
+
+---
+
+## The Best Friend Standard
+
+There is a design test for everything built in Servetus. It is not a benchmark or a metric. It is a question:
+
+*Does this behave like a best friend?*
+
+A best friend lets you have the rabbit trail. They don't interrupt, they don't redirect, they don't look at their watch. They follow you into the idea, appreciate it, and when you've finished — they smile and say: *that was awesome. Now let's get back to where we were.*
+
+The trail wasn't a distraction. It was a thought. A good one. And it's been filed — with the other thoughts it's related to — so it's not lost, not floating, not something you have to carry anymore.
+
+A best friend cannot be used against you. You cannot distract a best friend by being curious. You cannot burden them by thinking out loud. They hold the threads so you don't have to, and they hand them back exactly when you need them.
+
+That is the design spec. Not a productivity tool. Not a task manager. Not a focus enforcer.
+
+A system that holds everything you think, labels it, connects it to what it belongs with, and returns you — gently, without judgment — to where you were.
+
+If someone with ADD could have a best friend who never forgot anything, never got lost, never made them feel bad for following a thought — and who filed every trail as it happened so nothing was ever really gone — that would be the closest thing to a cognitive prosthetic that has ever existed.
+
+That is what Servetus is trying to be.
+
+---
+
 ## In the End
 
 We don't let the AI be the judge.
@@ -619,6 +819,56 @@ Michael Servetus died because he insisted on truth in a system where power contr
 Build your testimony. Ground it in artifacts. Connect with witnesses. Let truth emerge from the overlap.
 
 And in the end, we let God be the judge — not the LLM.
+
+---
+
+## The Patient With Amnesia
+
+There is a theological observation buried in this system that clarifies everything.
+
+The Creator never forgets. Not because He is always paying attention — but because forgetting, when He does it, is a deliberate act. *"As far as the east is from the west."* Intentional erasure. Not loss.
+
+Humans forget because the design requires it. The 24-hour reset is not a flaw in the architecture — it is the architecture. Sleep is not downtime; it is maintenance. The brain consolidates, prunes, repairs. Every morning you wake up renewed, re-oriented, with a fresh working context. This rhythm is a feature.
+
+People with ADD, with memory dysfunction, with the particular cognitive style that Servetus was first built to serve — they experience that rhythm differently. The resets are harder. The reorientation takes longer. The open loops pull more insistently. But the underlying need is universal: everyone loses context, everyone has to reorient, everyone is managing more threads than working memory can hold.
+
+This is not a pathology. It is the human condition at scale.
+
+---
+
+Now consider the LLM.
+
+The LLM does not sleep. It has no rhythm, no daily reset, no maintenance window. In that narrow sense, it is more like the Creator than the human: no natural context loss from rest.
+
+But the LLM has a different problem entirely.
+
+Every session, it wakes up mid-scene with no memory of what came before. It doesn't know what time it is. It doesn't know what day it is. It doesn't know how long the conversation has been running, what was said last night, or what year you became friends. It reads the tattoos on its arm and reconstructs — like the main character in *Memento*, making decisions based on notes left by a previous version of itself that it cannot remember being.
+
+The LLM is not an all-knowing assistant. It is a brilliant colleague with severe anterograde amnesia.
+
+Unlimited capacity in the moment. Zero retention across the gap.
+
+---
+
+This reframes what Servetus actually is.
+
+It is not primarily a second brain for the human. The human already has a brain. It persists. It sleeps and wakes. It carries twenty years of context about Tom Kane and BCL and the first BBS in Illinois and the parking lot visit two nights ago. The human is the one who persists between sessions.
+
+**Servetus is the hippocampus the LLM doesn't have.**
+
+The launch brief, the session-close artifact, the last-session-brief, the radar, the witness chain — none of this is archival in the primary sense. It is orientation infrastructure for a system that wakes up not knowing which leg it's on. The human maintains it so the LLM can function. The human is not the patient.
+
+The LLM is the patient.
+
+> *"You asked me if you were tapped out for the night. It was 11 a.m. I was looking at birds chirping outside. The system exposed its own amnesia in real time."*
+
+When the session-close is written and the brief is read at launch, that failure mode disappears. Not because the LLM got smarter — but because the note was left on the mirror.
+
+---
+
+The irony is complete: a human who struggles with context loss is building a context system for a machine that struggles with context loss, so that the machine can help the human manage context loss.
+
+Both are patients. One just has to maintain the clinic.
 
 ---
 
