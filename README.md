@@ -280,6 +280,9 @@ Servetus (the system) ensures the interpretation layer is never controlled by a 
 - ⏳ Voice capture pipeline
 - ⏳ Conversational Traffic Controller — real-time topic detection, session routing
 
+**Ecosystem (separate repos):**
+- 🔧 [Nextcloud MCP](https://github.com/binaryranch/nextcloud-mcp) *(coming)* — MIT-licensed MCP server for CalDAV, CardDAV, and WebDAV. The sovereignty-respecting alternative to Google Calendar/Gmail MCPs. Servetus uses it for calendar corroboration and witness verification.
+
 ---
 
 ## Integration Points

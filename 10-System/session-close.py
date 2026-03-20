@@ -84,6 +84,39 @@ else:
 # Origin fingerprint
 # ---------------------------------------------------------------------------
 
+def load_scrub_targets() -> list:
+    """Load credential values from config/nextcloud.env to scrub from artifacts.
+
+    Returns a list of (plaintext, replacement) tuples.
+    Any value in nextcloud.env that looks like a credential (password, token, key)
+    is replaced with [REDACTED] in all artifact output.
+    """
+    targets = []
+    env_file = CONFIG_DIR / "nextcloud.env"
+    if not env_file.exists():
+        return targets
+    sensitive_keys = {"app_password", "password", "token", "secret", "key", "credential"}
+    with open(env_file) as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, v = line.split("=", 1)
+            k = k.strip().lower()
+            v = v.strip()
+            if v and any(s in k for s in sensitive_keys):
+                targets.append((v, "[REDACTED]"))
+    return targets
+
+
+def scrub_credentials(text: str, targets: list) -> str:
+    """Replace credential values in text with [REDACTED]."""
+    for plaintext, replacement in targets:
+        if plaintext and plaintext in text:
+            text = text.replace(plaintext, replacement)
+    return text
+
+
 def get_os() -> str:
     system = platform.system()
     if system == "Linux":
@@ -1296,6 +1329,12 @@ def main():
     witness_path = CLAUDE_DIR / file_slug / jsonl_path.name
 
     filename, content, image_files = build_artifact(jsonl_path, ctx, origin, witness_path)
+
+    # Scrub credentials from artifact before writing
+    scrub_targets = load_scrub_targets()
+    if scrub_targets:
+        content = scrub_credentials(content, scrub_targets)
+
     out_path = write_session_package(filename, content, jsonl_path, image_files)
 
     tok = ctx["token_totals"]
