@@ -937,6 +937,298 @@ def write_session_brief(ctx: dict, duration_secs: float, room: str,
 
 
 # ---------------------------------------------------------------------------
+# Context Card — portable situational awareness across LLM interfaces
+# ---------------------------------------------------------------------------
+
+def _parse_frontmatter(text: str) -> dict:
+    """Extract YAML-like frontmatter key: value pairs (single-level only)."""
+    fm = {}
+    in_fm = False
+    for i, line in enumerate(text.splitlines()):
+        if i == 0 and line.strip() == "---":
+            in_fm = True
+            continue
+        if in_fm:
+            if line.strip() == "---":
+                break
+            if ":" in line:
+                key, _, val = line.partition(":")
+                fm[key.strip()] = val.strip().strip('"').strip("'")
+    return fm
+
+
+def _read_md_title(path: Path) -> str:
+    """Return first H1 from a markdown file, or stem as fallback."""
+    try:
+        for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+            if line.startswith("# "):
+                return line[2:].strip()
+    except Exception:
+        pass
+    return path.stem
+
+
+def _collect_active_arcs(vault: Path) -> list:
+    """Return list of {title, slug, status, summary} for active arcs."""
+    arcs_dir = vault / "05-Arcs"
+    results = []
+    if not arcs_dir.exists():
+        return results
+    for f in sorted(arcs_dir.glob("*.md")):
+        if f.stem.startswith("_"):
+            continue
+        try:
+            text = f.read_text(encoding="utf-8", errors="replace")
+            fm = _parse_frontmatter(text)
+            status = fm.get("status", "active")
+            if status not in ("active", ""):
+                continue
+            title = fm.get("title", "") or _read_md_title(f)
+            slug = fm.get("slug", f.stem)
+            # Pull first non-header, non-empty paragraph as summary
+            summary = ""
+            in_body = False
+            for line in text.splitlines():
+                if line.strip() == "---" and not in_body:
+                    continue
+                if line.startswith("## ") or line.startswith("# "):
+                    if in_body and summary:
+                        break
+                    in_body = True
+                    continue
+                if in_body and line.strip() and not line.startswith("#"):
+                    summary = line.strip()[:120]
+                    break
+            results.append({"title": title, "slug": slug, "summary": summary, "file": f.name})
+        except Exception:
+            continue
+    return results
+
+
+def _collect_witnesses(vault: Path) -> list:
+    """Return list of {name, role, org, notes} for witness files."""
+    witnesses_dir = vault / "08-Witnesses"
+    results = []
+    if not witnesses_dir.exists():
+        return results
+    for f in sorted(witnesses_dir.glob("*.md")):
+        if f.stem.startswith("_"):
+            continue
+        try:
+            text = f.read_text(encoding="utf-8", errors="replace")
+            fm = _parse_frontmatter(text)
+            name = fm.get("title", f.stem)
+            role = fm.get("role", "")
+            org = fm.get("organization", "")
+            # Pull first private-notes line if present
+            note = ""
+            in_private = False
+            for line in text.splitlines():
+                if "## Private Notes" in line:
+                    in_private = True
+                    continue
+                if in_private and line.strip() and not line.startswith("#"):
+                    if line.strip().startswith("<!--"):
+                        continue
+                    note = line.strip().lstrip("- ").strip()[:100]
+                    break
+            results.append({"name": name, "role": role, "org": org, "note": note})
+        except Exception:
+            continue
+    return results
+
+
+def _collect_projects(vault: Path) -> list:
+    """Return list of {title, status} for project files."""
+    projects_dir = vault / "04-Projects"
+    results = []
+    if not projects_dir.exists():
+        return results
+    for f in sorted(projects_dir.glob("*.md")):
+        if f.stem.startswith("_"):
+            continue
+        try:
+            text = f.read_text(encoding="utf-8", errors="replace")
+            fm = _parse_frontmatter(text)
+            status = fm.get("status", "active")
+            if status in ("closed", "archived", "complete"):
+                continue
+            title = fm.get("title", "") or _read_md_title(f)
+            results.append({"title": title, "status": status, "file": f.name})
+        except Exception:
+            continue
+    return results
+
+
+def _collect_radar(vault: Path) -> list:
+    """Return list of radar item titles from 06-Radar/."""
+    radar_dir = vault / "06-Radar"
+    results = []
+    if not radar_dir.exists():
+        return results
+    for f in sorted(radar_dir.glob("*.md")):
+        if f.stem.startswith("_"):
+            continue
+        try:
+            text = f.read_text(encoding="utf-8", errors="replace")
+            fm = _parse_frontmatter(text)
+            title = fm.get("title", "") or _read_md_title(f)
+            results.append({"title": title, "file": f.name})
+        except Exception:
+            continue
+    return results
+
+
+def write_context_card(ctx: dict, duration_secs: float, room: str,
+                       vault: Path, card_path: Path) -> None:
+    """Write 10-System/context-card.md — portable situational awareness card.
+
+    Generated at every session close. Human-readable. Designed to be loaded
+    by any LLM interface (Claude.ai web, mobile, API) that lacks direct vault
+    access. When loaded without vault access, the LLM should announce:
+
+      'Working from Servetus context card — last synchronized [date].
+       Vault not connected. Operating on last known state.'
+    """
+    now = datetime.now().astimezone()
+    generated_str = now.strftime("%Y-%m-%d %H:%M %Z")
+    generated_iso = now.strftime("%Y-%m-%dT%H:%M:%S%z")
+    owner = "Christian Sass"
+
+    # --- Gather vault data ---
+    arcs       = _collect_active_arcs(vault)
+    witnesses  = _collect_witnesses(vault)
+    projects   = _collect_projects(vault)
+    radar      = _collect_radar(vault)
+
+    # --- Last session summary (from ctx) ---
+    asst_turns = [m for m in ctx["messages"] if m["role"] == "assistant"]
+    last_asst  = asst_turns[-1] if asst_turns else None
+    session_summary = ""
+    if last_asst:
+        content = last_asst.get("content", "")
+        if isinstance(content, list):
+            content = " ".join(b.get("text","") for b in content if b.get("type")=="text")
+        session_summary = content.strip()[:600]
+
+    session_id  = ctx["session_meta"].get("sessionId", "")[:8]
+    turns_count = sum(1 for m in ctx["messages"] if m["role"] == "user")
+    dur_str     = fmt_ms(duration_secs * 1000)
+
+    lines = []
+
+    # Frontmatter
+    lines += [
+        "---",
+        f'generated_at: "{generated_iso}"',
+        f'generated_human: "{generated_str}"',
+        f'session_id: "{session_id}"',
+        f'room: "{room or "unset"}"',
+        f'vault_version: "0.2.1"',
+        'sync_status: "current"',
+        "---",
+        "",
+    ]
+
+    # Header
+    lines += [
+        "# Servetus Context Card",
+        "",
+        f"**Owner:** {owner}  ",
+        f"**Generated:** {generated_str}  ",
+        f"**Session:** `{session_id}` · {room or 'unset'} · {dur_str} · {turns_count} turns  ",
+        f"**Vault:** `{vault}`",
+        "",
+        "> This card was generated from a sovereign Servetus vault.",
+        "> The vault is the authority. This card is a snapshot.",
+        "> **If vault is not connected:** announce this card's `generated_at` timestamp",
+        "> and note that you are operating on last known state.",
+        "",
+        "---",
+        "",
+    ]
+
+    # Active Arcs
+    lines += ["## Active Arcs", ""]
+    if arcs:
+        for arc in arcs:
+            summary = f" — {arc['summary']}" if arc["summary"] else ""
+            lines.append(f"- **{arc['title']}** (`{arc['file']}`){summary}")
+    else:
+        lines.append("- (none found)")
+    lines.append("")
+
+    # Current Projects
+    lines += ["## Current Projects", ""]
+    if projects:
+        for p in projects:
+            lines.append(f"- **{p['title']}** · status: {p['status']}")
+    else:
+        lines.append("- (none found)")
+    lines.append("")
+
+    # Team / Witnesses
+    lines += ["## Team & Key Contacts", ""]
+    if witnesses:
+        for w in witnesses:
+            parts = [f"**{w['name']}**"]
+            if w["role"]:
+                parts.append(w["role"])
+            if w["org"]:
+                parts.append(w["org"])
+            row = " · ".join(parts)
+            if w["note"]:
+                row += f" — {w['note']}"
+            lines.append(f"- {row}")
+    else:
+        lines.append("- (none found)")
+    lines.append("")
+
+    # Radar
+    lines += ["## Radar (Active Monitoring)", ""]
+    if radar:
+        for r in radar:
+            lines.append(f"- {r['title']}")
+    else:
+        lines.append("- (empty)")
+    lines.append("")
+
+    # Last Session Summary
+    lines += ["## Last Session Summary", ""]
+    if session_summary:
+        lines.append(session_summary)
+    else:
+        lines.append("(no summary available)")
+    lines.append("")
+
+    # Standing Directives
+    lines += [
+        "## Standing Directives",
+        "",
+        "These apply in all sessions regardless of interface:",
+        "",
+        "- **Memory is sovereign.** All persistent memory lives in the vault. "
+          "No black box storage. If disconnected, note items for manual filing.",
+        "- **Nextcloud is the standard.** Treat it as an internet protocol layer, "
+          "not just a product. Binary Ranch builds on top of it.",
+        "- **BinaryRanch tagline:** \"Secure Your Territory.\"",
+        "- **Publishing pipeline:** Servetus (thinking) → Collectives (team) → Web (public)",
+        "- **Memory architecture:** vault-native only. "
+          "`autoMemoryEnabled: false` in settings.json.",
+        "- **AI role:** servant, not authority. Artifacts define truth, not the LLM.",
+        "- **Vault layout:** `05-Arcs/`, `08-Witnesses/`, `04-Projects/`, "
+          "`06-Radar/`, `02-Memories/`, `Collectives (1)/`",
+        "",
+        "---",
+        "",
+        "_Generated by `10-System/session-close.py` · Servetus v0.2.1_",
+    ]
+
+    card_path.write_text("\n".join(lines), encoding="utf-8")
+    print(f"[session-close] Card:     {card_path}")
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -1050,6 +1342,11 @@ def main():
     brief_path = VAULT_ROOT / "10-System" / "last-session-brief.md"
     write_session_brief(ctx, duration_secs, os.environ.get("SERVETUS_ROOM", ""),
                         files_touched, brief_path)
+
+    # Write portable context card — situational awareness across all LLM interfaces
+    card_path = VAULT_ROOT / "10-System" / "context-card.md"
+    write_context_card(ctx, duration_secs, os.environ.get("SERVETUS_ROOM", ""),
+                       VAULT_ROOT, card_path)
 
 
 if __name__ == "__main__":

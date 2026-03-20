@@ -81,3 +81,4 @@ config/
 !09-Shared/.gitkeep
 !09-Shared/_shared-spec.md
 !09-Shared/_shared-template.md
+10-System/context-card.md
