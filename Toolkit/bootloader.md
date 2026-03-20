@@ -64,21 +64,13 @@ Switch to Export Mode and obey `Toolkit/export-rules.md`.
 - Placement is suggestion + confirmation, not autonomous filing.
 
 ## Links / References
-<<<<<<<< HEAD:Toolkit/S00.01-00-00-servetus-bootloader.md
-- [[S00.01-01-00-servetus-export-rules]]
-- [[S00.01-02-00-servetus-frontmatter-schema]]
-- [[S00.01-02-10-servetus-time-rules]]
-- [[S00.01-02-20-servetus-spelling-rules]]
-- [[S00.01-01-10-servetus-topic-segmentation]]
-- [[S00.01-01-20-servetus-sorting-and-placement-protocol]]
-========
 - [[export-rules]]
 - [[frontmatter-schema]]
 - [[time-rules]]
 - [[spelling-rules]]
 - [[topic-segmentation]]
 - [[sorting-and-placement]]
->>>>>>>> feature/servetus-ui:Toolkit/bootloader.md
+- [[context-card-spec]]
 - [[config/projects]]
 - [[config/tags]]
 - [[config/overrides]]
