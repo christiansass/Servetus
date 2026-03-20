@@ -730,9 +730,16 @@ def write_session_package(filename: str, content: str, jsonl_path: Path,
         md_path.write_text(content, encoding="utf-8")
 
     # JSONL witness — raw tape, co-located with artifact
+    # Credentials are scrubbed before writing — the source JSONL is never modified
     jsonl_dest = session_dir / jsonl_path.name
     if not jsonl_dest.exists():
-        shutil.copy2(jsonl_path, jsonl_dest)
+        scrub_targets = load_scrub_targets()
+        if scrub_targets:
+            raw = jsonl_path.read_text(encoding="utf-8", errors="replace")
+            scrubbed = scrub_credentials(raw, scrub_targets)
+            jsonl_dest.write_text(scrubbed, encoding="utf-8")
+        else:
+            shutil.copy2(jsonl_path, jsonl_dest)
         print(f"[session-close] Witness:  {jsonl_dest}")
     else:
         print(f"[session-close] Witness already exists: {jsonl_dest}")
