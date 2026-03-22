@@ -40,7 +40,15 @@ WATCH_DIRS_SHALLOW = [
 ]
 
 QUEUE_FILE = Path(__file__).resolve().parent / "inbox-queue.md"
+LOG_FILE = Path(__file__).resolve().parent / "hopper-events.log"
 POLL_INTERVAL = 5  # seconds
+
+
+def log_event(msg: str):
+    """Write a watcher event to the log file (never stdout — avoids corrupting interactive terminals)."""
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    with open(LOG_FILE, 'a') as f:
+        f.write(f"[{timestamp}] {msg}\n")
 
 
 def parse_date_from_name(name: str):
@@ -79,7 +87,7 @@ def append_to_queue(path: Path, text: str):
 """
     with open(QUEUE_FILE, 'a') as f:
         f.write(entry)
-    print(f"[watcher] queued: {path.name}")
+    log_event(f"[watcher] queued: {path.name}")
 
 
 def init_queue():
@@ -92,8 +100,8 @@ def init_queue():
 
 
 def announce(path: Path):
-    """Print a visible hopper announcement to the terminal."""
-    print(f"\n\033[33m[HOPPER]\033[0m  {path.name}  ←  ready to process", flush=True)
+    """Log a hopper event to file. Never prints to stdout — avoids corrupting interactive terminals."""
+    log_event(f"[HOPPER] {path.name}  ←  ready to process")
 
 
 def watch(cutoff: date):
@@ -112,7 +120,7 @@ def watch(cutoff: date):
                     seen.add(f)
 
     total_dirs = len(WATCH_DIRS_DEEP) + len(WATCH_DIRS_SHALLOW)
-    print(f"[watcher] started — cutoff: {cutoff} | {total_dirs} dirs | {len(seen)} existing files seeded", flush=True)
+    log_event(f"[watcher] started — cutoff: {cutoff} | {total_dirs} dirs | {len(seen)} existing files seeded")
 
     while True:
         time.sleep(POLL_INTERVAL)
