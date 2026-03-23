@@ -1,4 +1,5 @@
 .obsidian/
+__pycache__/
 
 # Personal config (projects, tags, overrides)
 config/
