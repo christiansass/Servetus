@@ -91,8 +91,16 @@ config/
 10-System/context-card.md
 
 # Library — personal content, copyrighted source texts
+Library/
 Library/**
 !Library/.gitkeep
+
+# Attachments — binary files, sovereign-tier
+10-System/attachments/**
+
+# Arc summaries — generated personal arc content, sovereign-tier
+*_ARC_COMPREHENSIVE_SUMMARY.txt
+*_ARC_QUICK_REFERENCE.txt
 
 # Personas — personal, gitignored except default and template
 Toolkit/personas/miguel-servetus_persona/**
