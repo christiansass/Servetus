@@ -16,6 +16,7 @@
 10-System/hopper-events.log
 10-System/hopper-cursor.txt
 10-System/.transcription-queue-state.json
+10-System/.approval-state.json
 10-System/transcription-queue.log
 10-System/talk-listener.log
 10-System/__pycache__/
