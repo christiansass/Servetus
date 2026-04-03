@@ -1,0 +1,169 @@
+# Servetus Node — Docker Compose
+# Spec: Toolkit/S00.01-15-00-servetus-container-architecture.md
+#
+# Usage:
+#   cp config/nextcloud.env.example config/nextcloud.env
+#   # Edit nextcloud.env with credentials
+#   docker compose up -d
+#
+# Requires: Docker + NVIDIA Container Toolkit
+# On first boot: ~5 minutes for model downloads
+
+services:
+
+  # ── Virtual Framebuffer ──────────────────────────────────────────
+  servetus-display:
+    image: ubuntu:24.04
+    container_name: servetus-display
+    command: >
+      bash -c "
+        apt-get update -qq &&
+        apt-get install -y -qq xvfb &&
+        Xvfb :1 -screen 0 1920x1080x24 -ac +extension GLX +render -noreset
+      "
+    environment:
+      - DISPLAY=:1
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    restart: always
+    networks:
+      - servetus-internal
+
+  # ── Persistent Browser ───────────────────────────────────────────
+  servetus-chromium:
+    image: ubuntu:24.04
+    container_name: servetus-chromium
+    depends_on:
+      - servetus-display
+    command: >
+      bash -c "
+        apt-get update -qq &&
+        apt-get install -y -qq chromium-browser &&
+        chromium-browser
+          --no-first-run
+          --disable-gpu
+          --no-sandbox
+          --remote-debugging-port=9222
+          --remote-debugging-address=0.0.0.0
+          --user-data-dir=/home/servetus/.config/chromium
+          --restore-last-session
+      "
+    environment:
+      - DISPLAY=:1
+    volumes:
+      - servetus-chromium-profile:/home/servetus/.config/chromium
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - vault:/vault:ro
+    ports:
+      - "127.0.0.1:9222:9222"     # remote debugging — local only
+    restart: always
+    networks:
+      - servetus-internal
+
+  # ── GPU Transcription Queue ──────────────────────────────────────
+  servetus-whisper:
+    image: pytorch/pytorch:2.2.2-cuda11.8-cudnn8-runtime
+    container_name: servetus-whisper
+    command: >
+      bash -c "
+        pip install --quiet openai-whisper &&
+        python3 /vault/10-System/transcription-queue.py
+      "
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+      - ENV_FILE=/vault/config/nextcloud.env
+    volumes:
+      - vault:/vault
+      - whisper-state:/state
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: always
+    networks:
+      - servetus-internal
+
+  # ── Local LLM Server ─────────────────────────────────────────────
+  servetus-ollama:
+    image: ollama/ollama:latest
+    container_name: servetus-ollama
+    volumes:
+      - ollama-models:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    ports:
+      - "127.0.0.1:11434:11434"   # local only
+    restart: always
+    networks:
+      - servetus-internal
+
+  # ── Talk Listener + Webhook Receiver ────────────────────────────
+  servetus-talk:
+    image: python:3.12-slim
+    container_name: servetus-talk
+    command: >
+      bash -c "
+        pip install --quiet anthropic &&
+        python3 /vault/10-System/talk-listener.py
+      "
+    environment:
+      - ENV_FILE=/vault/config/nextcloud.env
+    volumes:
+      - vault:/vault
+    restart: always
+    networks:
+      - servetus-internal
+
+  # ── Context Assembly (air-gapped) ────────────────────────────────
+  servetus-secretary:
+    image: python:3.12-slim
+    container_name: servetus-secretary
+    command: >
+      bash -c "
+        pip install --quiet anthropic &&
+        python3 /vault/10-System/secretary.py --daemon
+      "
+    volumes:
+      - vault:/vault:ro              # read only — no write access
+    network_mode: none               # completely air-gapped
+    restart: on-failure
+    # NOTE: secretary has no network access by design (Rule 7 / container isolation)
+    # It reads vault files only. Any LLM calls must be pre-staged by the talk service.
+
+
+# ── Networks ─────────────────────────────────────────────────────────────────
+networks:
+  servetus-internal:
+    driver: bridge
+    # All services except secretary can communicate here.
+    # servetus-ollama is only reachable on 127.0.0.1:11434 from the host.
+    # No container can reach another customer's data.
+
+
+# ── Volumes ──────────────────────────────────────────────────────────────────
+volumes:
+  vault:
+    # Nextcloud-synced vault (bind mount to local Nextcloud folder)
+    # Edit VAULT_PATH in .env to match your installation path.
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${VAULT_PATH:-/mnt/Cloud/Nextcloud/Obsidian/Servetus}
+
+  servetus-chromium-profile:
+    # Persistent browser session — survives container restarts
+
+  ollama-models:
+    # Downloaded LLM models — preserved across upgrades
+
+  whisper-state:
+    # Transcription queue state — preserves processing position
