@@ -313,9 +313,12 @@ def process_file(mp3_path: Path, env: dict) -> dict:
     return result
 
 
-def scan_and_process(watch: Path, state: dict, env: dict) -> bool:
+def scan_and_process(watch: Path, state: dict, env: dict,
+                     recent_first: bool = True) -> bool:
     """
     Scan watch_dir for .mp3 files not yet processed.
+    recent_first=True (default) processes newest files first so today's
+    recordings don't wait behind years of backlog.
     Returns True if any files were processed.
     """
     if not watch.exists():
@@ -325,7 +328,14 @@ def scan_and_process(watch: Path, state: dict, env: dict) -> bool:
     processed = state.setdefault("processed", {})
     new_work   = False
 
-    for mp3 in sorted(watch.glob("**/*.mp3")):
+    all_mp3s = list(watch.glob("**/*.mp3"))
+    if recent_first:
+        # Sort by file mtime descending (newest first)
+        all_mp3s.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+    else:
+        all_mp3s.sort()
+
+    for mp3 in all_mp3s:
         key    = str(mp3)
         status = processed.get(key, {}).get("status")
 
@@ -357,6 +367,8 @@ def main():
                         help="Process queue once and exit (no daemon loop)")
     parser.add_argument("--dir", metavar="PATH",
                         help="Override watch directory")
+    parser.add_argument("--oldest-first", action="store_true",
+                        help="Process oldest recordings first (default: newest first)")
     args = parser.parse_args()
 
     print(f"[queue] Starting — vault: {VAULT_ROOT}")
@@ -366,15 +378,17 @@ def main():
     print(f"[queue] Watching: {watch}")
     print(f"[queue] State: {STATE_FILE}")
 
+    recent_first = not getattr(args, "oldest_first", False)
+
     if args.once:
-        scan_and_process(watch, state, env)
+        scan_and_process(watch, state, env, recent_first=recent_first)
         return
 
-    print(f"[queue] Poll interval: {POLL_INTERVAL}s — Ctrl-C to stop")
+    print(f"[queue] Poll interval: {POLL_INTERVAL}s — recent-first={recent_first} — Ctrl-C to stop")
     try:
         while True:
             env = load_env()   # reload credentials on each cycle
-            scan_and_process(watch, state, env)
+            scan_and_process(watch, state, env, recent_first=recent_first)
             time.sleep(POLL_INTERVAL)
     except KeyboardInterrupt:
         print("\n[queue] Stopped.")
