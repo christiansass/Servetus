@@ -326,13 +326,20 @@ def scan_and_process(watch: Path, state: dict, env: dict) -> bool:
     new_work   = False
 
     for mp3 in sorted(watch.glob("**/*.mp3")):
-        key = str(mp3)
-        if key in processed and processed[key].get("status") == "ok":
+        key    = str(mp3)
+        status = processed.get(key, {}).get("status")
+
+        # Skip completed or in-progress files (in-progress = guard against restart races)
+        if status in ("ok", "in-progress"):
             continue
         # Debounce: skip files modified in last 10s (still being written)
         if time.time() - mp3.stat().st_mtime < 10:
             print(f"[queue] Skipping (too fresh): {mp3.name}")
             continue
+
+        # Mark in-progress BEFORE launching — prevents duplicate on restart
+        processed[key] = {"status": "in-progress", "started_at": datetime.now().isoformat()}
+        save_state(state)
 
         result = process_file(mp3, env)
         processed[key] = result
