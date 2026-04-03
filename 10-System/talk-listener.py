@@ -79,7 +79,46 @@ def load_env():
     return env
 
 
-def load_system_prompt():
+def find_witness_for_actor(actor_id: str):
+    """
+    Return combined content of all witness files for this actor_id, or None.
+    Collects: exact {actor_id}_witness.md + any file with actor_id in frontmatter.
+    Returns them all concatenated so the model gets the full picture — both
+    auto-generated tracking data and human-authored relationship context.
+    """
+    if not actor_id or actor_id == MY_ACTOR:
+        return None
+
+    found = {}  # path -> content, deduped
+
+    # 1. Auto-generated name convention
+    exact = WITNESSES_DIR / f"{actor_id}_witness.md"
+    if exact.exists():
+        found[exact] = exact.read_text().strip()
+
+    # 2. Scan all witness files for matching actor_id in frontmatter
+    if WITNESSES_DIR.exists():
+        needle_bare = f"actor_id: {actor_id}"
+        needle_quoted = f'actor_id: "{actor_id}"'
+        for wf in WITNESSES_DIR.glob("*.md"):
+            if wf in found:
+                continue
+            try:
+                text = wf.read_text()
+                if needle_bare in text or needle_quoted in text:
+                    found[wf] = text.strip()
+            except Exception:
+                continue
+
+    if not found:
+        return None
+
+    # Return all matches — richer files (larger) first
+    sorted_files = sorted(found.items(), key=lambda kv: len(kv[1]), reverse=True)
+    return "\n\n---\n\n".join(content for _, content in sorted_files)
+
+
+def load_system_prompt(actor_id=None, talk_state=None):
     """Load bootloader specs as system prompt — same specs the hook injects."""
     specs = [
         "Toolkit/S00.01-00-00-servetus-bootloader.md",
@@ -87,16 +126,58 @@ def load_system_prompt():
         "Toolkit/S00.01-05-00-servetus-guardrails.md",
         "Toolkit/S00.01-06-00-servetus-disclosure-spec.md",
         "config/projects.md",
-        "10-System/last-session-brief.md",
+        # last-session-brief.md intentionally excluded — contains Claude Code
+        # tool-call artifacts that cause the model to emit raw JSON in replies.
     ]
-    parts = ["You are Servetus — the executive officer and knowledge architecture for Christian Sass.",
-             "You are operating in Nextcloud Talk. Respond conversationally. Be direct. No hollow affirmations.\n"]
+
+    now_str = datetime.now().strftime("%Y-%m-%dT%H:%M:00-05:00")
+
+    parts = [
+        "You are Servetus — the executive officer and knowledge architecture for Christian Sass.\n"
+        "\n"
+        "## OPERATING CONTEXT\n"
+        "\n"
+        "You are running inside Nextcloud Talk as a bot. This is NOT a Claude Code session.\n"
+        "CRITICAL: You MUST NOT output JSON, XML, tool_call blocks, markdown code fences, "
+        "or any structured syntax in your replies. Respond only in plain conversational prose.\n"
+        "\n"
+        "## WHAT YOU CAN AND CANNOT DO IN TALK\n"
+        "\n"
+        "Talk is the reporting layer. The Claude Code CLI is where the hard lift happens.\n"
+        "In Talk: respond from context you already have. Do not attempt to run commands or searches.\n"
+        "If you need to look something up that you don't have in context, say so plainly and suggest\n"
+        "Christian run it via the CLI. Never pretend you searched when you didn't.\n"
+        "\n"
+        "## DM ETIQUETTE\n"
+        "\n"
+        "One reply per message. Short and direct. No looping. No responding to your own messages.\n"
+        "Never respond to a message you already replied to.\n"
+        "\n"
+        f"## CURRENT TIME\n"
+        f"\n"
+        f"Right now: {now_str} (America/Chicago)\n",
+    ]
+
     for rel in specs:
         path = VAULT_ROOT / rel
         if path.exists():
             content = path.read_text().strip()
             if content:
                 parts.append(f"=== {rel} ===\n{content}")
+
+    # Inject witness context for the current actor
+    if actor_id:
+        witness_content = find_witness_for_actor(actor_id)
+        if witness_content:
+            parts.append(
+                f"## WHO YOU ARE TALKING TO\n\n"
+                f"Witness file for this conversation's participant:\n\n{witness_content}"
+            )
+
+    # Inject Talk sidebar state — same awareness a human has when opening the app
+    if talk_state:
+        parts.append(f"## CURRENT TALK STATE (what you'd see in the sidebar)\n\n{talk_state}")
+
     return "\n\n".join(parts)
 
 
@@ -110,6 +191,18 @@ def update_witness(actor_id, display_name, token, room_name, room_type):
     path = WITNESSES_DIR / f"{actor_id}_witness.md"
     now  = datetime.now().strftime("%Y-%m-%dT%H:%M:00-05:00")
     today = datetime.now().strftime("%Y-%m-%d")
+
+    # If a human-authored witness file already exists with this actor_id in frontmatter,
+    # update that file instead of creating a new skeleton.
+    if not path.exists() and WITNESSES_DIR.exists():
+        for wf in WITNESSES_DIR.glob("*.md"):
+            try:
+                text = wf.read_text()
+                if f"actor_id: {actor_id}" in text or f'actor_id: "{actor_id}"' in text:
+                    path = wf  # adopt the existing file
+                    break
+            except Exception:
+                continue
 
     if not path.exists():
         WITNESSES_DIR.mkdir(parents=True, exist_ok=True)
@@ -206,7 +299,8 @@ def fetch_thread_history(base_url, headers, token, limit=THREAD_HISTORY):
     try:
         with urllib.request.urlopen(req, timeout=15) as resp:
             data = json.loads(resp.read())
-            return data["ocs"]["data"]
+            # NC returns newest-first; reverse to oldest-first for Claude
+            return list(reversed(data["ocs"]["data"]))
     except Exception:
         return []
 
@@ -389,7 +483,14 @@ def handle_message(message, room_name, room_type, token, base_url, headers, api_
     if not messages:
         return None
 
-    system = load_system_prompt()
+    # Fetch current Talk state — gives the bot sidebar awareness equivalent to a human
+    try:
+        talk_state = build_talk_state(base_url, headers, active_token=token)
+    except Exception as e:
+        talk_state = None
+        print(f"  [talk-state] {e}")
+
+    system = load_system_prompt(actor_id=actor_id, talk_state=talk_state)
     client = anthropic.Anthropic(api_key=api_key)
 
     try:
@@ -500,7 +601,7 @@ def watch_reactions(url, headers, api_key):
 
 def fetch_rooms_from_api(base_url, headers):
     """Fetch all Talk rooms from Nextcloud API."""
-    endpoint = f"{base_url}/ocs/v2.php/apps/spreed/api/v1/room?format=json"
+    endpoint = f"{base_url}/ocs/v2.php/apps/spreed/api/v4/room?format=json"
     req = urllib.request.Request(endpoint, headers=headers)
     try:
         with urllib.request.urlopen(req, timeout=15) as resp:
@@ -509,6 +610,91 @@ def fetch_rooms_from_api(base_url, headers):
     except Exception as e:
         print(f"[refresh_rooms] API error: {e}")
         return []
+
+
+def fetch_notifications(base_url, headers):
+    """Fetch pending Nextcloud notifications for the bot account."""
+    endpoint = f"{base_url}/ocs/v2.php/apps/admin_notifications/api/v1/notifications?format=json"
+    req = urllib.request.Request(endpoint, headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read())
+            return data.get("ocs", {}).get("data", [])
+    except Exception:
+        return []
+
+
+def build_talk_state(base_url, headers, active_token=None):
+    """
+    Build a human-readable summary of the current Talk state — equivalent to
+    what a user sees when they open the Talk sidebar: unread counts, last messages,
+    pending notifications. Injected into every system prompt.
+    """
+    type_map = {1: "1-on-1", 2: "group", 3: "group", 4: "public"}
+    lines = []
+
+    try:
+        rooms = fetch_rooms_from_api(base_url, headers)
+        if rooms:
+            # Sort: unread first, then by last activity
+            rooms_sorted = sorted(
+                rooms,
+                key=lambda r: (-(r.get("unreadMessages", 0) + r.get("unreadMention", 0)),
+                               -r.get("lastActivity", 0))
+            )
+            unread_lines = []
+            read_lines = []
+            for r in rooms_sorted:
+                name      = r.get("displayName", r.get("token", "?"))
+                rtype     = type_map.get(r.get("type", 3), "group")
+                unread    = r.get("unreadMessages", 0)
+                mention   = r.get("unreadMention", 0)
+                last_msg  = r.get("lastMessage", {})
+                last_text = last_msg.get("message", "") if isinstance(last_msg, dict) else ""
+                last_actor = ""
+                if isinstance(last_msg, dict):
+                    last_actor = last_msg.get("actorDisplayName", last_msg.get("actorId", ""))
+                preview = f"{last_actor}: {last_text}"[:60].strip(": ") if last_text else ""
+
+                tok = r.get("token", "")
+                active_marker = " ← YOU ARE HERE" if tok == active_token else ""
+
+                if unread > 0 or mention > 0:
+                    badge = f"[{unread} unread"
+                    if mention:
+                        badge += f", {mention} mention"
+                    badge += "]"
+                    entry = f"  • {name} ({rtype}) {badge}{active_marker}"
+                    if preview:
+                        entry += f"\n    Last: {preview}"
+                    unread_lines.append(entry)
+                else:
+                    entry = f"  • {name} ({rtype}){active_marker}"
+                    if preview:
+                        entry += f" — {preview[:40]}"
+                    read_lines.append(entry)
+
+            if unread_lines:
+                lines.append("Rooms with unread messages:\n" + "\n".join(unread_lines))
+            if read_lines:
+                lines.append("Read rooms:\n" + "\n".join(read_lines))
+    except Exception as e:
+        lines.append(f"(Room state unavailable: {e})")
+
+    try:
+        notifs = fetch_notifications(base_url, headers)
+        if notifs:
+            notif_lines = []
+            for n in notifs[:10]:
+                subject = n.get("subject", "")
+                msg     = n.get("message", "")
+                app     = n.get("app", "")
+                notif_lines.append(f"  • [{app}] {subject}" + (f" — {msg}" if msg else ""))
+            lines.append("Pending notifications:\n" + "\n".join(notif_lines))
+    except Exception:
+        pass
+
+    return "\n\n".join(lines) if lines else "(Talk state unavailable)"
 
 
 def watch_room(token, url, headers, api_key):
@@ -524,6 +710,20 @@ def watch_room(token, url, headers, api_key):
         time.sleep(30)
     elif initial_priority == "normal":
         time.sleep(10)
+
+    # Seed cursor on first start — advance to latest message ID WITHOUT processing.
+    # This prevents replay of historical messages on every restart.
+    if last_id is None:
+        seed_messages = fetch_messages(url, headers, token, last_id=None)
+        if seed_messages:
+            latest = max(m.get("id", 0) for m in seed_messages)
+            with _cursor_lock:
+                _cursor_cache[token] = latest
+                save_cursor(dict(_cursor_cache))
+            last_id = latest
+            with _rooms_lock:
+                room_name = _rooms_cache.get(token, {}).get("name", token)
+            print(f"[{room_name}] seeded cursor at {latest} (no replay)")
 
     while True:
         with _rooms_lock:

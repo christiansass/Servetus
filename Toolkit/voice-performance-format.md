@@ -9,6 +9,8 @@ created: 2026-03-20
 
 # Servetus Voice Performance Format (SVP)
 
+> **Naming note (2026-03-22):** "Prosody" is the candidate name for the Servetus transcription engine. The word refers to the rhythm, stress, and intonation of speech — exactly what this pipeline captures. The alignment with SVP's design intent is not accidental.
+
 The SVP is the notation system for how something was said, as distinct from what
 was said. It is the performance layer of a transcript — the dynamics, rhythm, and
 prosody that change the meaning of words entirely.

@@ -24,19 +24,21 @@ W           = 72    # total box width
 C           = W - 6 # inner content width (2 borders + 2-space padding each side)
 PIPE_L      = 2     # left pipe column  (╦ breaks box bottom here)
 PIPE_R      = 5     # right pipe column (╦ breaks box bottom here)
-BRAIN_W     = 38    # brain box outer width (left-justified, ≤ Claude Code footer)
+BRAIN_W     = W     # brain box full width — matches main brief box (speech bubble)
 MODEL       = "claude-sonnet-4-6"
 MONTHS      = ["","Jan","Feb","Mar","Apr","May","Jun",
                "Jul","Aug","Sep","Oct","Nov","Dec"]
 now         = datetime.now()
 
 # ── ANSI ──────────────────────────────────────────────────────────────────────
-BOLD  = "\033[1m"
-DIM   = "\033[2m"
-GREEN = "\033[32m"
-YELLOW= "\033[33m"
-RED   = "\033[31m"
-RESET = "\033[0m"
+BOLD    = "\033[1m"
+DIM     = "\033[2m"
+GREEN   = "\033[32m"
+YELLOW  = "\033[33m"
+RED     = "\033[31m"
+RESET   = "\033[0m"
+PURPLE  = "\033[38;5;135m"   # Obsidian purple  ≈ #7B4FDB
+NC_BLUE = "\033[38;5;39m"    # Nextcloud blue   ≈ #0082C9
 
 # ── Box drawing ───────────────────────────────────────────────────────────────
 def _plain(s):
@@ -338,29 +340,34 @@ def funnel_animation():
         + "╚" + "═" * (BRAIN_W - PIPE_R - 2) + "╗"
     )
 
-    def brow(content):
-        return "║" + content[:BRAIN_I].ljust(BRAIN_I) + "║"
+    def cbrow(content):
+        """brow() with ANSI-aware padding — escape codes don't count toward width."""
+        plain = _plain(content)
+        pad   = max(0, BRAIN_I - len(plain))
+        return f"{NC_BLUE}║{RESET}" + content + " " * pad + f"{NC_BLUE}║{RESET}"
 
-    # Brain art — mascot pending (task #1). Placeholder until art arrives.
+    # Speech bubble — context flowing into Claude below
+    vault_path = str(VAULT).replace(str(pathlib.Path.home()), "~")
     brain = [
-        brow(""),
-        brow("  [ mascot art — task #1 ]"),
-        brow(""),
-        "╚" + "═" * BRAIN_I + "╝",
+        cbrow(""),
+        cbrow(f"  {NC_BLUE}☁{RESET}  {vault_path}"),
+        cbrow(f"  {BOLD}◆ Obsidian vault{RESET}  {DIM}·{RESET}  {NC_BLUE}☁ Nextcloud{RESET}  {DIM}·{RESET}  context loaded"),
+        cbrow(""),
+        f"{NC_BLUE}╚{'═' * BRAIN_I}╝{RESET}",
     ]
 
-    # Phase 1: pipes drop, dim
+    # Phase 1: pipes drop
     for _ in range(PIPE_ROWS):
-        sys.stdout.write(f"{DIM}{pipe_row}{RESET}\n")
+        sys.stdout.write(f"{NC_BLUE}{pipe_row}{RESET}\n")
         sys.stdout.flush()
         time.sleep(0.060)
-    sys.stdout.write(f"{DIM}{spread}{RESET}\n")
+    sys.stdout.write(f"{NC_BLUE}{spread}{RESET}\n")
     sys.stdout.flush()
 
-    # Phase 2: brain materializes, green
+    # Phase 2: speech bubble materializes
     time.sleep(0.060)
     for line in brain:
-        sys.stdout.write(f"{GREEN}{line}{RESET}\n")
+        sys.stdout.write(f"{line}\n")
         sys.stdout.flush()
         time.sleep(0.045)
 

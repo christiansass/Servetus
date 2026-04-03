@@ -44,6 +44,29 @@ Ask Claude:
 - "System status" → Reports version, folder structure, config state
 - "Help" → Lists available operations
 
+## Machines
+
+### MacBook Pro (christiansass-macbook-pro)
+- **Tailscale IP:** 100.120.83.63
+- **Vault:** `~/Nextcloud/Obsidian/Servetus`
+- **Engine:** Claude Code (primary)
+- **Launcher:** `sc` → `launch-menu.py` → Claude Code
+
+### WordInFilm (Linux Mint 22.3 — Elgin)
+- **Tailscale IP:** 100.114.61.2
+- **Vault:** `/mnt/Cloud/Nextcloud/Obsidian/Servetus`
+- **Engine:** Ollama (local, default) + Claude Code (escalation / `@claude`)
+- **Launcher:** `servetus` → `servetus_router.py`
+- **GPU:** NVIDIA GTX 1080 Ti
+- **Local model:** llama3.1:8b via Ollama
+
+#### Security notes — WordInFilm
+- `sastian` has passwordless sudo via `/etc/sudoers.d/sastian-nopasswd` — set 2026-04-02
+  - Rationale: machine is on private Tailscale network; convenience for remote admin via Claude Code SSH
+  - To revoke: `sudo rm /etc/sudoers.d/sastian-nopasswd`
+- SSH public key for Claude Code remote access stored in `~/.ssh/authorized_keys` (key: `claude-code@macbook`)
+  - To revoke: remove the `claude-code@macbook` line from `~/.ssh/authorized_keys`
+
 ## Version History
 
 See `CHANGELOG.md` for full release notes.

@@ -13,6 +13,13 @@
 10-System/morning-reminder-*.md
 10-System/memory/
 10-System/last-session-brief.md
+10-System/hopper-events.log
+10-System/hopper-cursor.txt
+10-System/.transcription-queue-state.json
+10-System/transcription-queue.log
+10-System/talk-listener.log
+10-System/__pycache__/
+config/telegram.session
 
 # Local AI preload (personal)
 CLAUDE.md
@@ -82,3 +89,14 @@ config/
 !09-Shared/_shared-spec.md
 !09-Shared/_shared-template.md
 10-System/context-card.md
+
+# Library — personal content, copyrighted source texts
+Library/**
+!Library/.gitkeep
+
+# Personas — personal, gitignored except default and template
+Toolkit/personas/miguel-servetus_persona/**
+Toolkit/personas/jrr-tolkien_persona/**
+Toolkit/personas/cs-lewis_persona/**
+!Toolkit/personas/default_persona/**
+!Toolkit/personas/_persona-template.md

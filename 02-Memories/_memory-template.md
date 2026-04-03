@@ -1,20 +1,23 @@
 ---
 type: memory
-title: "One idea stated plainly"
-slug: "YYYY-MM-DD-slug"
+title: One idea stated plainly
+slug: YYYY-MM-DD-slug
 date: YYYY-MM-DDTHH:MM:SS-06:00
-
-source_artifact: "[[01-artifacts/YYYY/MM-Month/YYYY-MM-DD/YYYY-MM-DD-slug]]"
-source_offset: ""                     # timestamp or page reference in source
-corroboration_score: 1                # 1=testimony | 2=established | 3+=confirmed
-
-linked_event: ""
-linked_project: ""
-linked_arc: ""
-
+source_artifact: '[[01-artifacts/YYYY/MM-Month/YYYY-MM-DD/YYYY-MM-DD-slug]]'
+source_offset: ''
+corroboration_score: 1
+linked_event: ''
+linked_project: ''
+linked_arc: ''
 circles: []
 published: false
-tags: [memory]
+tags:
+- memory
+provenance:
+  session_id: null
+  session_jsonl: null
+  session_jsonl_path: null
+  extracted: null
 ---
 
 ## The Idea

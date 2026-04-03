@@ -5,8 +5,8 @@ Servetus Launch Menu
 Interactive context picker shown at the start of every sc session.
 
 Displays:
-  - Open sessions     (with ↺ resume if a matching JSONL is found)
-  - Recent sessions   (last 4 closed, with ↺ resume if session_id known)
+  - Open sessions     (with < resume if a matching JSONL is found)
+  - Recent sessions   (last 4 closed, with < resume if session_id known)
   - Active arcs       (from 05-Arcs/ — status: active)
   - Recent projects   (from 04-Projects/ — sorted by mtime)
 
@@ -39,12 +39,17 @@ PROJECTS_DIR = HOME / ".claude" / "projects"
 W = 72
 C = W - 4
 
-BOLD   = "\033[1m"
-DIM    = "\033[2m"
-GREEN  = "\033[32m"
-YELLOW = "\033[33m"
-CYAN   = "\033[36m"
-RESET  = "\033[0m"
+BOLD    = "\033[1m"
+DIM     = "\033[2m"
+GREEN   = "\033[32m"
+YELLOW  = "\033[33m"
+CYAN    = "\033[36m"
+RESET   = "\033[0m"
+PURPLE  = "\033[38;5;135m"   # Obsidian purple  ≈ #7B4FDB
+NC_BLUE = "\033[38;5;39m"    # Nextcloud blue   ≈ #0082C9
+
+OB_GEM   = "◆"   # Obsidian — crystalline gem
+NC_CLOUD = "☁"   # Nextcloud — cloud
 
 
 # ── Box drawing ───────────────────────────────────────────────────────────────
@@ -52,10 +57,10 @@ RESET  = "\033[0m"
 def _plain(s):
     return re.sub(r'\033\[[0-9;]*m', '', s)
 
-def top():   return "╔" + "═" * (W - 2) + "╗"
-def bot():   return "╚" + "═" * (W - 2) + "╝"
-def div():   return "╠" + "═" * (W - 2) + "╣"
-def blank(): return "║" + " " * (W - 2) + "║"
+def top():   return f"{PURPLE}╔{'═' * (W - 2)}╗{RESET}"
+def bot():   return f"{PURPLE}╚{'═' * (W - 2)}╝{RESET}"
+def div():   return f"{PURPLE}╠{'═' * (W - 2)}╣{RESET}"
+def blank(): return f"{PURPLE}║{' ' * (W - 2)}║{RESET}"
 
 def row(content, indent=2):
     plain  = _plain(content)
@@ -64,17 +69,18 @@ def row(content, indent=2):
     if len(plain) > avail:
         content = plain[:avail - 1] + "…"
     pad = C - len(_plain(content)) - indent
-    return f"║{prefix}{content}{' ' * max(0, pad)}  ║"
+    return f"{PURPLE}║{RESET}{prefix}{content}{' ' * max(0, pad)}  {PURPLE}║{RESET}"
 
 def item_row(n, label, detail="", marker=""):
     num   = f"{CYAN}{n:>2}.{RESET} "
-    lbl   = f"{BOLD}{label[:30]:<30}{RESET}"
+    short = label[:30]
+    lbl   = f"{BOLD}{short}{RESET}{' ' * (30 - len(short))}"  # bold text only; pad outside bold
     det   = f"  {DIM}{detail}{RESET}" if detail else ""
     mrk   = f"  {marker}" if marker else ""
     return row(f"{num}{lbl}{det}{mrk}", indent=2)
 
 def section(title):
-    return [div(), row(f"{BOLD}{title}{RESET}", indent=2)]
+    return [div(), row(f"{NC_BLUE}{BOLD}{title}{RESET}", indent=2)]
 
 
 # ── Session registry ──────────────────────────────────────────────────────────
@@ -245,7 +251,7 @@ def show_menu():
                    and s.get("vault", "") == str(VAULT)]
     closed_sess = sorted(
         [s for s in registry if s.get("status") == "closed"],
-        key=lambda s: s.get("closed", ""),
+        key=lambda s: s.get("closed") or "",
         reverse=True,
     )[:4]
     arcs        = get_active_arcs()
@@ -259,8 +265,15 @@ def show_menu():
     # Header
     lines.append(top())
     lines.append(row(
-        f"{BOLD}SERVETUS{RESET}  ●  What's the context for this window?  "
+        f"{PURPLE}{BOLD}SERVETUS{RESET}"
+        f"  {DIM}·{RESET}  "
+        f"{PURPLE}{OB_GEM} Obsidian{RESET}  "
+        f"{NC_BLUE}{NC_CLOUD} Nextcloud{RESET}  "
         f"{DIM}{now.strftime('%Y-%m-%d  %H:%M')}  ·  {socket.gethostname()}{RESET}",
+        indent=2,
+    ))
+    lines.append(row(
+        f"{DIM}What's the context for this window?{RESET}",
         indent=2,
     ))
 
@@ -276,7 +289,7 @@ def show_menu():
             # Show short ID if available; otherwise fall back to started timestamp
             id_tag = f"[{sid[:8]}]" if sid else calendar_time(s.get("started", ""))
             detail = f"{age}  ·  {id_tag}"
-            marker = f"{GREEN}↺ resume{RESET}" if resume else ""
+            marker = f"{GREEN}< resume{RESET}" if resume else ""
             lines.append(item_row(n, s.get("room") or "(no label)", detail, marker))
 
     # Recent closed sessions
@@ -288,7 +301,7 @@ def show_menu():
                      find_jsonl_for_session(s.get("started"), project_dir)
             items.append((s.get("room", ""), resume))
             age    = relative_time(s.get("closed") or s.get("started", ""))
-            marker = f"{DIM}↺ resume{RESET}" if resume else ""
+            marker = f"{DIM}< resume{RESET}" if resume else ""
             lines.append(item_row(n, s.get("room") or "(no label)", age, marker))
 
     # Active arcs
@@ -320,9 +333,9 @@ def show_menu():
     n_hint = f"1–{len(items)}" if items else "—"
     lines.append(div())
     lines.append(row(
-        f"  {CYAN}[{n_hint}]{RESET} continue   "
-        f"  {CYAN}[N]{RESET} new label   "
-        f"  {CYAN}[Enter]{RESET} no context",
+        f"  {PURPLE}[{n_hint}]{RESET} continue   "
+        f"  {PURPLE}[N]{RESET} new label   "
+        f"  {PURPLE}[Enter]{RESET} today's SOC",
         indent=2,
     ))
     lines.append(bot())
@@ -335,7 +348,7 @@ def show_menu():
         tty.write("  Context: ")
         tty.flush()
         tty_in = open("/dev/tty", "r")
-        raw    = tty_in.readline().strip()
+        raw    = _plain(tty_in.readline()).strip()
         tty.write("\n")
         tty.flush()
     except (OSError, IOError):
@@ -353,7 +366,7 @@ def show_menu():
         try:
             tty.write("  Label: ")
             tty.flush()
-            room = tty_in.readline().strip()
+            room = _plain(tty_in.readline()).strip()
             tty.write("\n")
             tty.flush()
         except:
@@ -361,6 +374,32 @@ def show_menu():
     elif raw:
         # Typed a name directly instead of a number
         room = raw
+    else:
+        # Enter with no input → default to today's SOC
+        today = datetime.now().strftime("%Y-%m-%d")
+        room = f"{today}_SOC"
+        # Find the most recent JSONL from today to resume
+        # BUT skip sessions that are marked "closed" in the registry
+        closed_ids = {
+            s.get("session_id") for s in registry
+            if s.get("status") == "closed" and s.get("session_id")
+        }
+        if project_dir and project_dir.exists():
+            today_jsonls = []
+            for jf in project_dir.glob("*.jsonl"):
+                if "subagent" in jf.name:
+                    continue
+                if jf.stem in closed_ids:
+                    continue  # Skip closed sessions
+                try:
+                    mtime = datetime.fromtimestamp(jf.stat().st_mtime)
+                    if mtime.strftime("%Y-%m-%d") == today:
+                        today_jsonls.append((mtime, jf.stem))
+                except Exception:
+                    pass
+            if today_jsonls:
+                today_jsonls.sort(reverse=True)
+                resume_id = today_jsonls[0][1]
 
     try:
         tty.close()
