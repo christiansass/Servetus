@@ -374,6 +374,28 @@ def main():
     print(f"[queue] Starting — vault: {VAULT_ROOT}")
     env   = load_env()
     state = load_state()
+
+    # On startup: reset any in-progress entries that have no active Whisper process.
+    # These are orphaned from a previous run — reset to error so they get retried.
+    import subprocess as _sp
+    try:
+        result = _sp.run(["pgrep", "-f", "whisper"], capture_output=True, text=True)
+        active_pids = set(result.stdout.split())
+        if not active_pids:
+            # No Whisper running — all in-progress entries are orphaned
+            processed = state.setdefault("processed", {})
+            reset_count = 0
+            for k, v in processed.items():
+                if v.get("status") == "in-progress":
+                    v["status"] = "error"
+                    v["error"] = "orphaned in-progress on startup — retrying"
+                    reset_count += 1
+            if reset_count:
+                save_state(state)
+                print(f"[queue] Reset {reset_count} orphaned in-progress entries to error")
+    except Exception:
+        pass  # pgrep not available — skip orphan reset
+
     watch = Path(args.dir) if args.dir else watch_dir(env)
     print(f"[queue] Watching: {watch}")
     print(f"[queue] State: {STATE_FILE}")
