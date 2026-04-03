@@ -359,6 +359,83 @@ def assemble(room_filter: Optional[str] = None,
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
 
+DAEMON_INTERVAL = 300  # seconds between daemon context refreshes (5 min)
+
+
+def run_daemon():
+    """
+    Daemon mode: continuously refresh context and write a summary to
+    10-System/last-session-brief.md every DAEMON_INTERVAL seconds.
+
+    This is the mode used by the secretary container in docker-compose.
+    It keeps last-session-brief.md current so the talk-listener always
+    has a fresh context snapshot to inject into Claude's system prompt.
+    """
+    import time as _time
+
+    print(f"[secretary] Daemon started — refreshing every {DAEMON_INTERVAL}s", file=sys.stderr)
+
+    while True:
+        try:
+            ctx = assemble()
+            brief_path = SYSTEM / "last-session-brief.md"
+
+            # Build a concise markdown brief from the context
+            lines = [
+                f"# Secretary Brief — {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}",
+                "",
+            ]
+
+            # Hopper
+            hopper = ctx.get("hopper", {})
+            new_items = hopper.get("new_items", [])
+            if new_items:
+                lines.append("## Hopper (new since last session)")
+                for item in new_items[-10:]:
+                    lines.append(f"- {item.get('raw', '')}")
+                lines.append("")
+
+            # Radar
+            radar = ctx.get("radar", {})
+            open_loops = radar.get("open_loops", [])
+            if open_loops:
+                lines.append("## Open Loops")
+                for loop in open_loops[:5]:
+                    lines.append(f"- {loop}")
+                lines.append("")
+
+            # Transcription queue
+            tq = ctx.get("transcription", {})
+            ok_count = tq.get("ok_count", 0)
+            total    = tq.get("total_files", 0)
+            inprog   = tq.get("in_progress", [])
+            lines.append("## Transcription Queue")
+            lines.append(f"- Completed: {ok_count}/{total}")
+            if inprog:
+                lines.append(f"- Processing: {', '.join(inprog)}")
+            lines.append("")
+
+            # Services
+            svcs = ctx.get("services", {})
+            if svcs:
+                up = [k for k, v in svcs.items() if v.get("active")]
+                down = [k for k, v in svcs.items() if not v.get("active")]
+                lines.append("## Services")
+                if up:
+                    lines.append(f"- Up: {', '.join(up)}")
+                if down:
+                    lines.append(f"- Down: {', '.join(down)}")
+                lines.append("")
+
+            brief_path.write_text("\n".join(lines))
+            print(f"[secretary] Brief updated: {len(lines)} lines", file=sys.stderr)
+
+        except Exception as e:
+            print(f"[secretary] Daemon error: {e}", file=sys.stderr)
+
+        _time.sleep(DAEMON_INTERVAL)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Servetus secretary — deterministic context assembly"
@@ -368,7 +445,13 @@ def main():
     parser.add_argument("--room",     metavar="TOKEN",     help="Scope to a Talk room token")
     parser.add_argument("--advance",  action="store_true", help="Advance hopper cursor after read")
     parser.add_argument("--witness",  metavar="ACTOR_ID",  help="Look up a single witness")
+    parser.add_argument("--daemon",   action="store_true",
+                        help="Run continuously, refreshing last-session-brief.md every 5 min")
     args = parser.parse_args()
+
+    if args.daemon:
+        run_daemon()
+        return  # run_daemon() loops forever
 
     if args.witness:
         result = read_witness(args.witness)

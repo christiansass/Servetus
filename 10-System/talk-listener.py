@@ -28,6 +28,7 @@ import re
 import base64
 import time
 import sys
+import subprocess
 import threading
 import urllib.request
 import urllib.error
@@ -35,6 +36,16 @@ import urllib.parse
 from pathlib import Path
 from datetime import datetime
 import anthropic
+
+# Lazy import — approval module lives alongside this file
+def _get_approval_manager():
+    try:
+        sys.path.insert(0, str(Path(__file__).parent))
+        from approval import ApprovalManager
+        return ApprovalManager()
+    except Exception as e:
+        print(f"[approval] Could not load ApprovalManager: {e}", file=sys.stderr)
+        return None
 
 VAULT_ROOT  = Path(__file__).parent.parent
 ENV_FILE    = VAULT_ROOT / "config" / "nextcloud.env"
@@ -463,6 +474,100 @@ def is_addressed_to_me(message, room_type, room=None, history=None, api_key=None
     return False
 
 
+def _secretary_status() -> str:
+    """
+    Run secretary.py and return a human-readable status summary.
+    Called by !status command — deterministic, no LLM.
+    """
+    secretary = Path(__file__).parent / "secretary.py"
+    lines = [f"Servetus status — {datetime.now().strftime('%Y-%m-%d %H:%M')} CT", ""]
+    try:
+        result = subprocess.run(
+            [sys.executable, str(secretary), "--pretty"],
+            capture_output=True, text=True, timeout=20
+        )
+        data = json.loads(result.stdout) if result.stdout.strip() else {}
+
+        # Transcription queue
+        q = data.get("transcription", {})
+        ok      = q.get("total_processed", "?")
+        errors  = q.get("total_errors", 0)
+        recent  = q.get("most_recent")
+        if recent:
+            import os as _os
+            current = _os.path.basename(recent[1]) if len(recent) > 1 else "?"
+            lines.append(f"Transcription: {ok} done, last: {current}")
+        else:
+            lines.append(f"Transcription: {ok} done")
+        if errors:
+            lines.append(f"  Errors: {errors}")
+
+        # Services
+        svcs = data.get("services", {})
+        up   = [k for k, v in svcs.items() if v.get("active")]
+        down = [k for k, v in svcs.items() if not v.get("active")]
+        if up:
+            lines.append(f"Services up: {', '.join(up)}")
+        if down:
+            lines.append(f"Services down: {', '.join(down)}")
+
+        # Hopper
+        hopper = data.get("hopper", {})
+        new_count = len(hopper.get("new_items", []))
+        if new_count:
+            lines.append(f"Hopper: {new_count} new items since last session")
+
+    except Exception as e:
+        lines.append(f"(secretary error: {e})")
+
+    return "\n".join(lines)
+
+
+def handle_command(message, room_name, room_type, token, base_url, headers, api_key) -> bool:
+    """
+    Intercept structured commands before they reach Claude.
+
+    Commands handled here:
+      !status       — deterministic queue + service status (no LLM)
+      APPROVE: ...  — route to approval engine
+      REJECT: ...   — route to approval engine
+
+    Returns True if the message was handled (caller should not also call handle_message).
+    """
+    actor_id = message.get("actorId", "")
+    text     = message.get("message", "").strip()
+    text_lc  = text.lower()
+
+    # ── !status ──────────────────────────────────────────────────────────────
+    if text_lc.startswith("!status"):
+        reply = _secretary_status()
+        try:
+            send_message(base_url, headers, token, reply)
+        except Exception as e:
+            print(f"[command] !status send failed: {e}", file=sys.stderr)
+        return True
+
+    # ── Approval tokens ───────────────────────────────────────────────────────
+    if text_lc.startswith("approve:") or text_lc.startswith("reject:"):
+        mgr = _get_approval_manager()
+        if mgr is None:
+            return False  # fall through to Claude if approval module unavailable
+        try:
+            outcome = mgr.process_message(
+                room_token=token,
+                actor=actor_id,
+                message=text,
+            )
+            if outcome:
+                print(f"[approval] Outcome for {actor_id}: {outcome}")
+            # approval.py posts its own Talk messages — nothing more to do here
+        except Exception as e:
+            print(f"[approval] process_message error: {e}", file=sys.stderr)
+        return True  # always consume approval tokens — don't pass to Claude
+
+    return False
+
+
 def handle_message(message, room_name, room_type, token, base_url, headers, api_key, history=None):
     """Fetch thread context, call Claude, post reply. Returns sent message ID or None."""
     actor_id = message.get("actorId", "")
@@ -761,6 +866,12 @@ def watch_room(token, url, headers, api_key):
                         update_witness(msg_actor, msg_display, token, name, room_type)
                     except Exception:
                         pass
+
+                # Check for structured commands first (no LLM, no is_addressed_to_me gate)
+                msg_text = msg.get("message", "").strip()
+                if msg_actor != MY_ACTOR and msg_text:
+                    if handle_command(msg, name, room_type, token, url, headers, api_key):
+                        continue  # command handled — skip Claude response
 
                 history = fetch_thread_history(url, headers, token)
                 if is_addressed_to_me(msg, room_type, room, history, api_key):
