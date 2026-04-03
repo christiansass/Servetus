@@ -1,12 +1,18 @@
 ---
 type: spec
-title: "Memories Spec"
-slug: "memories-spec"
+title: Memories Spec
+slug: memories-spec
 date: 2026-03-12
-
 circles: []
 published: false
-tags: [spec, memories]
+tags:
+- spec
+- memories
+provenance:
+  session_id: null
+  session_jsonl: null
+  session_jsonl_path: null
+  extracted: null
 ---
 
 # Memories Spec
