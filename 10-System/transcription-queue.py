@@ -54,9 +54,11 @@ MONTH_NAMES = {
 }
 
 POLL_INTERVAL = 30          # seconds between directory scans
-STANDUP_ROOM  = "tnft3avs"  # Binary Ranch Standup
-JIM_ROOM      = "eco9ue5r"  # Jim Coler Social
+SERVETUS_ROOM = "cufo8jwd"  # Christian B Sass (1:1) — internal Servetus notifications only
+JIM_ROOM      = "eco9ue5r"  # Jim Coler Social — Jim-specific recordings only
 JIM_KEYWORDS  = {"jim", "jcoler", "coler"}
+# NOTE: transcription notifications do NOT go to Binary Ranch Standup (tnft3avs).
+# That is a team-facing room. Transcription is internal Servetus infrastructure.
 
 
 # ── Env / Config ──────────────────────────────────────────────────────────────
@@ -143,7 +145,8 @@ def notify(env: dict, mp3_name: str, artifact_path: str, duration_s: float,
         f"**Artifact:** {artifact_path}\n"
         f"**Preview:** {short}"
     )
-    send_talk_message(env, STANDUP_ROOM, msg)
+    # Post to Christian's 1:1 only — not to any team room
+    send_talk_message(env, SERVETUS_ROOM, msg)
 
     # Also notify Jim room if this recording involves him
     name_lower = mp3_name.lower()
