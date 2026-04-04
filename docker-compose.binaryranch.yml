@@ -1,0 +1,73 @@
+# Servetus Node — BinaryRanch (Dell PowerEdge R420)
+# CPU-only — no NVIDIA/CUDA required
+# Shares vault with WordinFilm via Nextcloud sync (vault IS the message bus)
+#
+# Usage:
+#   cp config/nextcloud.env.example config/nextcloud.env
+#   # Set ANTHROPIC_API_KEY, VAULT_PATH in environment or .env
+#   docker compose -f docker-compose.binaryranch.yml up -d
+#
+# Node capabilities: claude-code, talk, cluster-routing
+# WordinFilm capabilities: whisper, ollama, browse, talk, cluster-routing
+#
+# Cluster bus: 10-System/cluster/ in the shared vault
+#   nodes/     — heartbeat registry (each node writes its status every 60s)
+#   queue/     — pending tasks (JSON files, claimed by target_node)
+#   results/   — completed task output
+
+services:
+
+  # ── Cluster Router + Claude Code Daemon ─────────────────────────
+  # Polls vault queue, claims tasks targeted at binaryranch,
+  # executes via claude --print or anthropic SDK.
+  # Interactive access: docker exec -it servetus-claude bash → claude
+  servetus-claude:
+    build:
+      context: .
+      dockerfile: Dockerfile.binaryranch
+    image: servetus-binaryranch:latest
+    container_name: servetus-claude
+    command: python3 /vault/10-System/cluster-router.py
+    environment:
+      - ENV_FILE=/vault/config/nextcloud.env
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - NODE_NAME=binaryranch
+      - NODE_CAPABILITIES=claude-code,talk,cluster-routing
+    volumes:
+      - vault:/vault
+    restart: always
+    networks:
+      - servetus-br-internal
+
+  # ── Talk Listener ────────────────────────────────────────────────
+  # Receives Nextcloud Talk messages and dispatches to cluster queue.
+  # Same code as WordinFilm; credentials differ via nextcloud.env.
+  servetus-talk:
+    image: servetus-binaryranch:latest
+    container_name: servetus-talk-br
+    depends_on:
+      - servetus-claude
+    command: python3 /vault/10-System/talk-listener.py
+    environment:
+      - ENV_FILE=/vault/config/nextcloud.env
+    volumes:
+      - vault:/vault
+    restart: always
+    networks:
+      - servetus-br-internal
+
+
+# ── Networks ──────────────────────────────────────────────────────
+networks:
+  servetus-br-internal:
+    driver: bridge
+
+
+# ── Volumes ───────────────────────────────────────────────────────
+volumes:
+  vault:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${VAULT_PATH:-/mnt/Cloud/Nextcloud/Obsidian/Servetus}

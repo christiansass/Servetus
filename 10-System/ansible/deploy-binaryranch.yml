@@ -1,0 +1,165 @@
+---
+# deploy-binaryranch.yml
+# Stub Ansible playbook — Servetus BinaryRanch node deployment
+#
+# Beta: tested on Dell PowerEdge R420 at BinaryRanch
+# Production target: purpose-built machine (future Ansible-managed node)
+#
+# Parameterized for portability — override vars in inventory or --extra-vars
+#
+# Usage:
+#   ansible-playbook -i inventory/binaryranch.ini deploy-binaryranch.yml
+#   # Or target a new machine:
+#   ansible-playbook -i "192.168.1.x," deploy-binaryranch.yml \
+#     -e vault_path=/mnt/Cloud/Nextcloud/Obsidian/Servetus \
+#     -e anthropic_api_key=sk-ant-...
+
+- name: Deploy Servetus BinaryRanch Node
+  hosts: binaryranch
+  become: true
+
+  vars:
+    vault_path: /mnt/Cloud/Nextcloud/Obsidian/Servetus
+    docker_compose_file: docker-compose.binaryranch.yml
+    servetus_user: servetus
+    servetus_group: servetus
+    compose_dir: /opt/servetus
+
+    # Override in vault or via --extra-vars (never commit real keys)
+    anthropic_api_key: "{{ lookup('env', 'ANTHROPIC_API_KEY') }}"
+
+
+  tasks:
+
+    # ── System Prerequisites ───────────────────────────────────────
+
+    - name: Install Docker dependencies
+      apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+        state: present
+        update_cache: true
+
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker apt repository
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+
+    - name: Install Docker CE and Compose plugin
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+
+    - name: Ensure Docker service is running
+      service:
+        name: docker
+        state: started
+        enabled: true
+
+
+    # ── Servetus User ──────────────────────────────────────────────
+
+    - name: Create servetus group
+      group:
+        name: "{{ servetus_group }}"
+        state: present
+
+    - name: Create servetus user
+      user:
+        name: "{{ servetus_user }}"
+        group: "{{ servetus_group }}"
+        groups: docker
+        system: true
+        create_home: false
+        shell: /usr/sbin/nologin
+
+    - name: Create compose directory
+      file:
+        path: "{{ compose_dir }}"
+        state: directory
+        owner: "{{ servetus_user }}"
+        group: "{{ servetus_group }}"
+        mode: "0750"
+
+
+    # ── Vault Mount ───────────────────────────────────────────────
+    # Assumes Nextcloud client is installed and syncing separately.
+    # This task only verifies the vault path exists before deploying.
+
+    - name: Verify vault path exists
+      stat:
+        path: "{{ vault_path }}"
+      register: vault_stat
+      failed_when: not vault_stat.stat.exists
+
+
+    # ── Deploy Compose Stack ───────────────────────────────────────
+
+    - name: Copy docker-compose.binaryranch.yml
+      copy:
+        src: "{{ playbook_dir }}/../../docker-compose.binaryranch.yml"
+        dest: "{{ compose_dir }}/docker-compose.binaryranch.yml"
+        owner: "{{ servetus_user }}"
+        group: "{{ servetus_group }}"
+        mode: "0640"
+
+    - name: Copy Dockerfile.binaryranch
+      copy:
+        src: "{{ playbook_dir }}/../../Dockerfile.binaryranch"
+        dest: "{{ compose_dir }}/Dockerfile.binaryranch"
+        owner: "{{ servetus_user }}"
+        group: "{{ servetus_group }}"
+        mode: "0640"
+
+    - name: Write environment file
+      copy:
+        dest: "{{ compose_dir }}/.env"
+        content: |
+          VAULT_PATH={{ vault_path }}
+          ANTHROPIC_API_KEY={{ anthropic_api_key }}
+        owner: "{{ servetus_user }}"
+        group: "{{ servetus_group }}"
+        mode: "0600"  # credentials — owner read-only
+      no_log: true
+
+    - name: Build servetus-binaryranch image
+      community.docker.docker_compose_v2:
+        project_src: "{{ compose_dir }}"
+        files:
+          - docker-compose.binaryranch.yml
+        build: always
+        state: present
+      environment:
+        VAULT_PATH: "{{ vault_path }}"
+        ANTHROPIC_API_KEY: "{{ anthropic_api_key }}"
+
+    - name: Start Servetus BinaryRanch stack
+      community.docker.docker_compose_v2:
+        project_src: "{{ compose_dir }}"
+        files:
+          - docker-compose.binaryranch.yml
+        state: present
+      environment:
+        VAULT_PATH: "{{ vault_path }}"
+        ANTHROPIC_API_KEY: "{{ anthropic_api_key }}"
+
+    - name: Verify containers are running
+      community.docker.docker_container_info:
+        name: "{{ item }}"
+      loop:
+        - servetus-claude
+        - servetus-talk-br
+      register: container_info
+      failed_when: not container_info.container.State.Running

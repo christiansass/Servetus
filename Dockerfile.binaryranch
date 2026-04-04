@@ -1,0 +1,31 @@
+# Servetus — BinaryRanch Node Image
+# CPU-only. No NVIDIA/CUDA. Dell PowerEdge R420 (Xeon).
+# Includes Claude Code CLI + Python SDK for dual-use:
+#   - Daemon mode: cluster-router.py handles task dispatch
+#   - Interactive: docker exec -it servetus-claude bash → claude
+
+FROM node:20-slim
+
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    python3-venv \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Claude Code CLI (non-interactive use: claude --print)
+RUN npm install -g @anthropic-ai/claude-code
+
+# Python deps for cluster-router, talk-listener, and SDK calls
+RUN pip3 install --no-cache-dir --break-system-packages \
+    anthropic \
+    requests \
+    python-dotenv \
+    pyyaml
+
+# claude CLI writes config to HOME/.claude
+ENV HOME=/home/servetus
+RUN mkdir -p /home/servetus/.claude && chmod 777 /home/servetus/.claude
+
+WORKDIR /vault

@@ -70,6 +70,12 @@ _rooms_cache  = {}
 _reacted_ids = set()
 _reacted_lock = threading.Lock()
 
+# In-process dedup for message handling — catches double-fire on restart races
+# Keyed by (token, msg_id). Cursor file handles cross-restart dedup; this handles
+# same-process races between threads.
+_handled_ids = set()
+_handled_lock = threading.Lock()
+
 # Track Servetus message IDs per room for reaction monitoring (token -> list of int IDs)
 _servetus_msg_ids = {}
 _servetus_msg_ids_lock = threading.Lock()
@@ -77,6 +83,12 @@ _servetus_msg_ids_lock = threading.Lock()
 # Track which room tokens have active watcher threads
 _active_tokens = set()
 _active_tokens_lock = threading.Lock()
+
+# Cached Talk state — rebuilt at most every TALK_STATE_TTL seconds to avoid 429 storms
+_talk_state_cache: str = ""
+_talk_state_ts:    float = 0.0
+_talk_state_lock   = threading.Lock()
+TALK_STATE_TTL     = 60  # seconds
 
 
 def load_env():
@@ -154,10 +166,20 @@ def load_system_prompt(actor_id=None, talk_state=None):
         "\n"
         "## WHAT YOU CAN AND CANNOT DO IN TALK\n"
         "\n"
-        "Talk is the reporting layer. The Claude Code CLI is where the hard lift happens.\n"
-        "In Talk: respond from context you already have. Do not attempt to run commands or searches.\n"
-        "If you need to look something up that you don't have in context, say so plainly and suggest\n"
-        "Christian run it via the CLI. Never pretend you searched when you didn't.\n"
+        "Talk is the reporting layer. The Claude Code CLI (running as servetus-claude on BinaryRanch)\n"
+        "is where the hard lift happens. You are NOT limited to passive responses — you can dispatch\n"
+        "tasks to the cluster queue (10-System/cluster/queue/) and the Claude Code daemon will pick\n"
+        "them up within ~15 seconds. You can also tell Christian what you are queuing so he knows\n"
+        "it will happen. Do not say 'I can't do that from here' — either do it via the cluster,\n"
+        "or explain specifically what is blocking you.\n"
+        "\n"
+        "Cluster task types you can request:\n"
+        "  claude-code-run — autonomous vault editing, scripting, file operations\n"
+        "  summarize        — call Claude API on a document or transcript\n"
+        "  talk-send        — post a message to another Talk room\n"
+        "\n"
+        "In Talk: respond from context you already have. Do not pretend you searched when you didn't.\n"
+        "If you need to look something up, say so — and if it's actionable, dispatch it to the cluster.\n"
         "\n"
         "## DM ETIQUETTE\n"
         "\n"
@@ -316,12 +338,49 @@ def fetch_thread_history(base_url, headers, token, limit=THREAD_HISTORY):
         return []
 
 
+def expand_rich_message(msg: dict) -> str:
+    """
+    Expand Nextcloud Talk rich message placeholders into readable text.
+    NC sends map pins, voice memos, and files as literal {object} or {file}
+    with the actual data in messageParameters. This makes them legible to Claude.
+    """
+    text   = msg.get("message", "")
+    params = msg.get("messageParameters", {})
+    if not params:
+        return text
+
+    if "{object}" in text and "object" in params:
+        obj      = params["object"]
+        obj_type = obj.get("type", "")
+        if obj_type == "talk-location":
+            lat  = obj.get("latitude", "?")
+            lng  = obj.get("longitude", "?")
+            name = obj.get("name", "location")
+            return f"[Map pin shared: {name} — lat {lat}, lng {lng}]"
+        name = obj.get("name", obj.get("description", obj_type or "shared object"))
+        return f"[Shared object: {name}]"
+
+    if "{file}" in text and "file" in params:
+        f    = params["file"]
+        name = f.get("name", "file")
+        mime = f.get("mimetype", "")
+        if mime.startswith("audio/"):
+            return f"[Voice memo: {name}]"
+        elif mime.startswith("image/"):
+            return f"[Image: {name}]"
+        elif mime.startswith("video/"):
+            return f"[Video: {name}]"
+        return f"[File: {name} ({mime or 'unknown type'})]"
+
+    return text
+
+
 def build_claude_messages(history, new_message):
     """Convert Talk thread history into Claude API message format."""
     messages = []
     for msg in history:
         actor = msg.get("actorId", "")
-        text  = msg.get("message", "")
+        text  = expand_rich_message(msg)
         mtype = msg.get("messageType", "")
         if mtype in ("system", "command") or not text:
             continue
@@ -336,7 +395,7 @@ def build_claude_messages(history, new_message):
             messages.append({"role": role, "content": content})
 
     # Ensure thread ends with the new user message
-    new_text = new_message.get("message", "")
+    new_text = expand_rich_message(new_message)
     display  = new_message.get("actorDisplayName", "")
     actor    = new_message.get("actorId", "")
     content  = new_text if actor in ("csass",) else f"[{display}]: {new_text}"
@@ -568,6 +627,31 @@ def handle_command(message, room_name, room_type, token, base_url, headers, api_
     return False
 
 
+def get_cached_talk_state(base_url, headers, active_token=None) -> str:
+    """
+    Return the current Talk state string, rebuilt at most every TALK_STATE_TTL seconds.
+    Prevents per-message rooms-API calls that flood NC and trigger 429 storms.
+    """
+    global _talk_state_cache, _talk_state_ts
+    with _talk_state_lock:
+        if time.time() - _talk_state_ts < TALK_STATE_TTL and _talk_state_cache:
+            # Return cached state with active_token marker swapped in
+            if active_token:
+                # Replace any existing YOU ARE HERE marker before inserting the current one
+                state = re.sub(r" ← YOU ARE HERE", "", _talk_state_cache)
+                state = state.replace(f"({active_token})", f"({active_token}) ← YOU ARE HERE", 1)
+                return state
+            return _talk_state_cache
+        try:
+            fresh = build_talk_state(base_url, headers, active_token=active_token)
+            _talk_state_cache = fresh
+            _talk_state_ts    = time.time()
+            return fresh
+        except Exception as e:
+            print(f"  [talk-state] {e}")
+            return _talk_state_cache or "(Talk state unavailable)"
+
+
 def handle_message(message, room_name, room_type, token, base_url, headers, api_key, history=None):
     """Fetch thread context, call Claude, post reply. Returns sent message ID or None."""
     actor_id = message.get("actorId", "")
@@ -588,12 +672,8 @@ def handle_message(message, room_name, room_type, token, base_url, headers, api_
     if not messages:
         return None
 
-    # Fetch current Talk state — gives the bot sidebar awareness equivalent to a human
-    try:
-        talk_state = build_talk_state(base_url, headers, active_token=token)
-    except Exception as e:
-        talk_state = None
-        print(f"  [talk-state] {e}")
+    # Fetch current Talk state — cached to avoid per-message 429 storms
+    talk_state = get_cached_talk_state(base_url, headers, active_token=token)
 
     system = load_system_prompt(actor_id=actor_id, talk_state=talk_state)
     client = anthropic.Anthropic(api_key=api_key)
@@ -872,6 +952,13 @@ def watch_room(token, url, headers, api_key):
                 if msg_actor != MY_ACTOR and msg_text:
                     if handle_command(msg, name, room_type, token, url, headers, api_key):
                         continue  # command handled — skip Claude response
+
+                # In-process dedup — prevents double-fire on concurrent threads or restart races
+                handle_key = (token, msg_id)
+                with _handled_lock:
+                    if handle_key in _handled_ids:
+                        continue
+                    _handled_ids.add(handle_key)
 
                 history = fetch_thread_history(url, headers, token)
                 if is_addressed_to_me(msg, room_type, room, history, api_key):

@@ -10,8 +10,10 @@ Design:
   - Pure polling (30-second interval) — no watchdog dependency.
   - State file (.transcription-queue-state.json) prevents reprocessing.
   - Writes artifacts directly into 00-Artifacts/ date hierarchy.
-  - Posts to Binary Ranch Standup (tnft3avs) on every completion.
+  - Posts to Christian's 1:1 (cufo8jwd) on every completion.
   - Posts to Jim Coler Social (eco9ue5r) if filename contains "jim" or "jcoler".
+  - Posts AI standup summary to Binary Ranch Standup (tnft3avs) for Mon/Wed/Fri
+    recordings that start between 7–10 AM.
 
 Config (config/nextcloud.env):
   NEXTCLOUD_URL, NEXTCLOUD_USER, NEXTCLOUD_APP_PASSWORD
@@ -56,9 +58,14 @@ MONTH_NAMES = {
 POLL_INTERVAL = 30          # seconds between directory scans
 SERVETUS_ROOM = "cufo8jwd"  # Christian B Sass (1:1) — internal Servetus notifications only
 JIM_ROOM      = "eco9ue5r"  # Jim Coler Social — Jim-specific recordings only
+BR_STANDUP    = "tnft3avs"  # Binary Ranch Standup — receives AI summaries on MWF standups
 JIM_KEYWORDS  = {"jim", "jcoler", "coler"}
-# NOTE: transcription notifications do NOT go to Binary Ranch Standup (tnft3avs).
-# That is a team-facing room. Transcription is internal Servetus infrastructure.
+
+# Standup detection: Mon/Wed/Fri recordings that start between 7–10 AM are assumed
+# to be the Binary Ranch standup. Summaries are posted to BR_STANDUP automatically.
+STANDUP_DAYS  = {0, 2, 4}  # Monday=0, Wednesday=2, Friday=4
+STANDUP_HOUR_START = 7
+STANDUP_HOUR_END   = 10
 
 
 # ── Env / Config ──────────────────────────────────────────────────────────────
@@ -129,6 +136,71 @@ def send_talk_message(env: dict, room_token: str, message: str):
         print(f"  [talk] ERROR {e.code} sending to {room_token}: {e.read()[:200]}")
     except Exception as e:
         print(f"  [talk] ERROR sending to {room_token}: {e}")
+
+
+def claude_summarize(api_key: str, transcript: str) -> str:
+    """Call Claude API to summarize a standup transcript."""
+    url  = "https://api.anthropic.com/v1/messages"
+    body = json.dumps({
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 512,
+        "messages": [{
+            "role": "user",
+            "content": (
+                "You are summarizing a Binary Ranch standup meeting transcript. "
+                "Write a concise standup summary in plain text (no markdown headers, "
+                "no bullet symbols — just short paragraphs or a clean list). "
+                "Cover: what was discussed, any decisions made, blockers, and next steps. "
+                "Keep it under 300 words.\n\n"
+                f"TRANSCRIPT:\n{transcript[:12000]}"
+            ),
+        }],
+    }).encode()
+    req = urllib.request.Request(
+        url, data=body, method="POST",
+        headers={
+            "x-api-key": api_key,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+        },
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r:
+            resp = json.loads(r.read())
+        return resp["content"][0]["text"].strip()
+    except Exception as e:
+        raise RuntimeError(f"Claude API error: {e}")
+
+
+def maybe_post_standup_summary(env: dict, mp3_path: Path, transcript: str):
+    """
+    If this recording looks like a MWF standup (day-of-week + 7–10 AM window),
+    generate a Claude summary and post it to Binary Ranch Standup.
+    """
+    dt = recording_date(mp3_path)
+    if dt is None:
+        return
+    if dt.weekday() not in STANDUP_DAYS:
+        return
+    if not (STANDUP_HOUR_START <= dt.hour < STANDUP_HOUR_END):
+        return
+
+    api_key = env.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        print("  [standup] ANTHROPIC_API_KEY not set — skipping summary")
+        return
+
+    day_name = dt.strftime("%A %Y-%m-%d")
+    print(f"  [standup] MWF standup detected ({day_name}) — summarizing…")
+    try:
+        summary = claude_summarize(api_key, transcript)
+    except RuntimeError as e:
+        print(f"  [standup] Summarization failed: {e}")
+        return
+
+    msg = f"Standup summary ({day_name})\n\n{summary}"
+    send_talk_message(env, BR_STANDUP, msg)
+    print(f"  [standup] Summary posted to Binary Ranch Standup ({BR_STANDUP})")
 
 
 def notify(env: dict, mp3_name: str, artifact_path: str, duration_s: float,
@@ -219,22 +291,32 @@ def slugify(text: str, max_len: int = 50) -> str:
     return text[:max_len]
 
 
+def recording_date(mp3_path: Path) -> datetime | None:
+    """Extract recording date from filename like 'Recording 2025-09-05 12-15-25.mp3'."""
+    m = re.search(r"(\d{4})-(\d{2})-(\d{2})\s+(\d{2})-(\d{2})-(\d{2})", mp3_path.name)
+    if m:
+        return datetime(int(m[1]), int(m[2]), int(m[3]),
+                        int(m[4]), int(m[5]), int(m[6]))
+    return None
+
+
 def write_transcript_artifact(mp3_path: Path, transcript: str,
                                processed_at: datetime) -> Path:
     """
     Write transcript to 00-Artifacts/YYYY/MM-Mon/DD/whisper/<slug>.md
+    Files by recording date (from filename), not transcription date.
     Returns the path of the companion .md file.
     """
-    dt     = processed_at
+    dt     = recording_date(mp3_path) or processed_at
     month  = MONTH_NAMES[dt.month]
-    day    = dt.strftime("%d")
-    art_dir = ARTIFACTS / str(dt.year) / month / day / "whisper"
+    day_dir = dt.strftime("%Y-%m-%d")
+    art_dir = ARTIFACTS / str(dt.year) / month / day_dir
     art_dir.mkdir(parents=True, exist_ok=True)
 
-    today  = dt.strftime("%Y-%m-%d")
+    rec_date = dt.strftime("%Y-%m-%d")
     ts     = dt.strftime("%Y-%m-%dT%H:%M:00-05:00")
-    slug   = f"{today}-{slugify(mp3_path.stem)}"
-    rid    = f"SV-{today.replace('-','')}-{dt.strftime('%H%M')}-CST-WHSP"
+    slug   = slugify(mp3_path.stem)
+    rid    = f"SV-{rec_date.replace('-','')}-{dt.strftime('%H%M')}-CST-WHSP"
     md_path = art_dir / f"{slug}.md"
 
     # Copy the mp3 reference (we don't move the file — it lives in Nextcloud)
@@ -262,6 +344,7 @@ provenance:
   mimetype: "audio/mpeg"
   transcribed_by: "Whisper (small model, WordInFilm GTX 1080 Ti GPU)"
   source_path: "{mp3_path}"
+  transcribed_on: "{processed_at.strftime('%Y-%m-%d')}"
 
 tags:
   - servitus
@@ -272,7 +355,7 @@ tags:
 
 # {mp3_path.name}
 
-*Transcribed by Whisper (small model) on WordInFilm GTX 1080 Ti — {today}*
+*Recorded {rec_date} — transcribed {processed_at.strftime('%Y-%m-%d')} by Whisper (small) on WordInFilm GTX 1080 Ti*
 
 ---
 
@@ -304,6 +387,7 @@ def process_file(mp3_path: Path, env: dict) -> dict:
     art_rel    = str(md_path.relative_to(VAULT_ROOT))
 
     notify(env, mp3_path.name, art_rel, elapsed, transcript)
+    maybe_post_standup_summary(env, mp3_path, transcript)
 
     result = {
         "status": "ok",
