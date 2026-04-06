@@ -81,8 +81,8 @@ def slugify(text: str, max_len: int = 40) -> str:
 
 def artifact_dir(dt: datetime) -> Path:
     month = MONTH_NAMES[dt.month]
-    day   = dt.strftime("%d")
-    d     = ARTIFACTS / str(dt.year) / month / day / "browser"
+    day_dir = dt.strftime("%Y-%m-%d")
+    d     = ARTIFACTS / str(dt.year) / month / day_dir
     d.mkdir(parents=True, exist_ok=True)
     return d
 

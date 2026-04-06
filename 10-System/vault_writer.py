@@ -68,11 +68,11 @@ class IngestionResult:
 
 # ── Path helpers ──────────────────────────────────────────────────────────────
 
-def artifact_dir_for(dt: datetime, source_label: str = "otter") -> Path:
-    """00-Artifacts/YYYY/MM-Mon/DD/source/"""
+def artifact_dir_for(dt: datetime, source_label: str = "") -> Path:
+    """00-Artifacts/YYYY/MM-Mon/YYYY-MM-DD/"""
     month = MONTH_NAMES[dt.month]
-    day   = dt.strftime("%d")
-    return ARTIFACTS_DIR / str(dt.year) / month / day / source_label
+    day_dir = dt.strftime("%Y-%m-%d")
+    return ARTIFACTS_DIR / str(dt.year) / month / day_dir
 
 
 def slugify(text: str, max_len: int = 40) -> str:

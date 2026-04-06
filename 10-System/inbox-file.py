@@ -118,9 +118,9 @@ def slugify(text: str) -> str:
 
 
 def artifact_dest(dt: datetime, label: str, filename: str) -> Path:
-    month = MONTH_NAMES[dt.month]
-    day   = f"{dt.day:02d}"
-    return VAULT_ROOT / "00-Artifacts" / str(dt.year) / month / day / label / filename
+    month   = MONTH_NAMES[dt.month]
+    day_dir = dt.strftime("%Y-%m-%d")
+    return VAULT_ROOT / "00-Artifacts" / str(dt.year) / month / day_dir / filename
 
 
 def record_dest(dt: datetime, slug: str) -> Path:
