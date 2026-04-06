@@ -387,8 +387,16 @@ def process_file(mp3_path: Path, env: dict) -> dict:
     md_path    = write_transcript_artifact(mp3_path, transcript, now)
     art_rel    = str(md_path.relative_to(VAULT_ROOT))
 
-    notify(env, mp3_path.name, art_rel, elapsed, transcript)
-    maybe_post_standup_summary(env, mp3_path, transcript)
+    # Only notify for recent recordings (within 7 days). Backlog processing
+    # is silent — a bulk run of 100+ old files should not flood the 1:1.
+    rec_date = recording_date(mp3_path)
+    is_recent = (rec_date is None or
+                 (datetime.now() - rec_date).days <= 7)
+    if is_recent:
+        notify(env, mp3_path.name, art_rel, elapsed, transcript)
+        maybe_post_standup_summary(env, mp3_path, transcript)
+    else:
+        print(f"  [notify] Skipped — backlog file ({rec_date.date() if rec_date else 'unknown date'})")
 
     result = {
         "status": "ok",
