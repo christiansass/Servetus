@@ -875,3 +875,45 @@ Both are patients. One just has to maintain the clinic.
 *Servetus: A servant, not a master. A witness, not an authority.*
 
 *Your life now has a timecode.*
+
+---
+
+## The Witness That Doesn't Forget
+
+AI isn't the only thing that hallucinates.
+
+Humans reconstruct memory every time they recall it. The act of remembering
+is not retrieval — it is rebuilding. Dates drift. People get composited.
+The emotional truth of a story slowly overwrites the factual scaffolding
+underneath it. You tell it enough times and you believe the version you tell.
+
+Servetus is the witness that doesn't forget.
+
+Not a corrector. A guardrail. When your memory drifts, the record surfaces
+gently — *it was actually '84, and here are the photos from that night.* The
+evidence appears alongside the story. You keep talking. The map keeps
+rendering. But now it's grounded.
+
+This is the witness system doing its actual job: not just storing evidence,
+but deploying it at the moment of recall. When you speak a name, a place, a
+year, Servetus cross-references against the witness chain in real time. If
+what you're saying matches what the witnesses say, nothing happens. If it
+drifts — gently, the artifact appears.
+
+Over time this compounds. The gap between what you remember and what actually
+happened closes. You start to know yourself more accurately. Your patterns.
+Your blind spots. The stories you consistently misremember. Servetus shows you
+where your memory drifts — and that is some of the most valuable
+self-knowledge a person can have.
+
+And when you are in a dispute — a contract, a relationship, a legal matter —
+you are not relying on your memory against theirs. You have a chain.
+Timestamped. Sourced. Auditable. Your word is not just your word anymore. It
+is your word plus the record.
+
+That is a completely different posture to move through the world with.
+Confidence that is not arrogance. Grounded, not loud.
+
+**It makes you more trustworthy.**
+
+Not just to other people. To yourself.
