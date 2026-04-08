@@ -4,7 +4,7 @@
 
 > *"There is no trust without truth, and there is no assistant without trust."*
 
-**Current Version: 0.3.0** · [Changelog](CHANGELOG.md) · [Philosophy](Philosophy.md)
+**Current Version: 0.3.5** · [Changelog](CHANGELOG.md) · [Philosophy](Philosophy.md)
 
 ---
 

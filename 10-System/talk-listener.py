@@ -76,6 +76,35 @@ _reacted_lock = threading.Lock()
 _handled_ids = set()
 _handled_lock = threading.Lock()
 
+# Content-based dedup — catches duplicate messages from the Talk client
+# (same actor, same text, different msg_id within a short window).
+# Keyed by (token, actor_id, text_hash) -> timestamp of first occurrence.
+CONTENT_DEDUP_WINDOW = 10  # seconds
+_content_dedup = {}
+_content_dedup_lock = threading.Lock()
+
+
+def _is_content_duplicate(token, actor_id, text):
+    """
+    Return True if this actor sent identical text in this room within the dedup window.
+    Automatically prunes stale entries.
+    """
+    import hashlib
+    text_hash = hashlib.md5(text.encode()).hexdigest()
+    key = (token, actor_id, text_hash)
+    now = time.time()
+
+    with _content_dedup_lock:
+        # Prune entries older than 2x the window
+        stale = [k for k, ts in _content_dedup.items() if now - ts > CONTENT_DEDUP_WINDOW * 2]
+        for k in stale:
+            del _content_dedup[k]
+
+        if key in _content_dedup and now - _content_dedup[key] < CONTENT_DEDUP_WINDOW:
+            return True
+        _content_dedup[key] = now
+        return False
+
 # Track Servetus message IDs per room for reaction monitoring (token -> list of int IDs)
 _servetus_msg_ids = {}
 _servetus_msg_ids_lock = threading.Lock()
@@ -960,6 +989,12 @@ def watch_room(token, url, headers, api_key):
                         continue
                     _handled_ids.add(handle_key)
 
+                # Content-based dedup — catches client double-sends (same text, different msg_id)
+                if msg_actor and msg_actor != MY_ACTOR and msg_text:
+                    if _is_content_duplicate(token, msg_actor, msg_text):
+                        print(f"  [dedup] Skipped duplicate from {msg_actor}: {msg_text[:50]}")
+                        continue
+
                 history = fetch_thread_history(url, headers, token)
                 if is_addressed_to_me(msg, room_type, room, history, api_key):
                     sent_id = handle_message(msg, name, room_type, token, url, headers, api_key, history)
@@ -1083,6 +1118,12 @@ def run(once=False):
                         _cursor_cache[token] = msg_id
                         cursor_snapshot = dict(_cursor_cache)
                     save_cursor(cursor_snapshot)
+                    msg_actor = msg.get("actorId", "")
+                    msg_text  = msg.get("message", "").strip()
+                    if msg_actor and msg_actor != MY_ACTOR and msg_text:
+                        if _is_content_duplicate(token, msg_actor, msg_text):
+                            print(f"  [dedup] Skipped duplicate from {msg_actor}: {msg_text[:50]}")
+                            continue
                     history = fetch_thread_history(url, headers, token)
                     if is_addressed_to_me(msg, room_type, room, history, api_key):
                         handle_message(msg, name, room_type, token, url, headers, api_key, history)
