@@ -43,6 +43,16 @@ config/
 !10-System/
 !docs/
 !templates/
+!00-Artifacts/
+!01-Records/
+!02-Memories/
+!03-Events/
+!04-Projects/
+!05-Arcs/
+!06-Radar/
+!07-StoryMap/
+!08-Witnesses/
+!09-Shared/
 
 # Artifacts (original evidence locker — copied originals, date-sorted)
 00-Artifacts/**
