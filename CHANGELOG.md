@@ -7,6 +7,107 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [0.3.5] - 2026-04-07
+
+### Added
+
+**Server infrastructure (workstation node)**
+- `10-System/transcription-queue.py` — GPU Whisper daemon; watches `Talk/Audio/` for recordings, runs Whisper on GPU, writes `.md` transcripts, notifies Talk. Processes newest recordings first (`--oldest-first` flag available). Race-condition guard marks files in-progress before launching Whisper.
+- `10-System/secretary.py` — deterministic context assembly (hopper, radar, witnesses, rooms, artifacts, services). `--daemon` mode refreshes `last-session-brief.md` every 5 minutes.
+- `10-System/deploy-services-workstation.sh` — SSH deployment script for systemd user services on workstation.
+- `systemd/` — service unit files for `servetus-talk-listener` and `servetus-transcription-queue`.
+
+**Docker deployment**
+- `docker-compose.yml` — one-command Servetus node deployment. Six containers: `display` (Xvfb), `chromium` (persistent browser), `whisper` (GPU transcription), `ollama` (local LLM), `talk` (listener), `secretary` (context assembly, `network_mode: none` — fully air-gapped).
+- `docker-compose.binaryranch.yml` — CPU-only stack for colo server (no CUDA).
+- `Dockerfile.binaryranch` — BinaryRanch node image.
+- `.env.example` — `VAULT_PATH`, `API_KEY`, `SMTP` config.
+
+**Talk bot enhancements**
+- `expand_rich_message()` — expands `{object}/{file}` Nextcloud placeholders to readable text.
+- `get_cached_talk_state()` — 60s TTL cache eliminates per-message 429 storms.
+- `_handled_ids` dedup set — prevents double-response on restart races.
+- Content dedup: MD5 hash + 10-second window blocks duplicate posts from NC client double-send.
+- `handle_command()` — intercepts `!status`, `APPROVE:`, `REJECT:` before LLM; deterministic, no @mention gate.
+- System prompt updated — bot knows it can dispatch via cluster queue.
+- Per-room threads (`watch_room`), automatic room discovery (`refresh_rooms`, every 120s), emoji reaction detection (`watch_reactions`, every 15s).
+- Auto-create/update witness files in `08-Witnesses/` for every Talk participant.
+- Priority tiers: high/normal/low rooms with tiered 429 backoff.
+
+**Talk Bot API (Servetus XO)**
+- `10-System/talk-webhook.py` — push-based alternative to polling. NC pushes POST per message; no 429s. Setup instructions in module docstring.
+- `config/nextcloud.env.example` — added `WEBHOOK_SECRET`.
+
+**BinaryRanch cluster**
+- `10-System/cluster-router.py` — vault-native task daemon; polls `cluster/queue/`, claims and executes tasks.
+- `10-System/cluster-dispatch.py` — dispatch helper for cross-node task queuing.
+- `10-System/cluster/README.md` — bus schema, task types, node capability registry.
+- `ansible/deploy-binaryranch.yml` + `ansible/deploy-workstation.yml` — Ansible playbooks for both nodes.
+
+**Tools and libraries**
+- `10-System/nextcloud_cal.py` — CalDAV calendar read/write. 7 calendars. LLM-agnostic, importable by any component.
+- `10-System/approval.py` — two-factor approval engine via Talk. Token generation, 24hr TTL, quorum models (unanimous/majority/any-one/named), SMTP delivery.
+- `10-System/persona-loader.py` — loads `Toolkit/personas/<name>/` into system-prompt injection. Named personas overlay voice; guardrails remain underneath. Active persona persisted to `config/router_config.json`.
+- `10-System/shopping-agent.py` — eBay/Amazon price monitor. Daemon + `--once` + `--list` modes.
+- `10-System/rotate-credentials.py` — autonomous Nextcloud app password rotation.
+- `10-System/nc-task.py` — create Nextcloud Tasks via CalDAV.
+- `10-System/otter-import.py` — import Otter.ai transcripts.
+- `10-System/standup-summary-today.py` — one-shot watcher for standup recording.
+- `10-System/talk-room-map.py` — queries NC Talk API, builds `config/talk-rooms.json`.
+- `10-System/bootloader-hook.py` — self-locating path injection for session start.
+- `10-System/vault_writer.py`, `attachment_handler.py`, `conversation_logger.py` — vault write-back stack.
+- `10-System/lunar-calendar.py` — biblical/lunar calendar calculations.
+
+**Persistent display and browser agent**
+- `10-System/browser.py` — `ServetusBrowser` agent with vision loop, full screenshot audit trail, named sessions (persistent login state), Ollama or Claude vision backend.
+- `systemd/servetus-display.service` — Xvfb 1920×1080 on `:1`, starts at boot.
+- `systemd/servetus-chromium.service` — persistent Chromium, remote debugging port 9222.
+
+**System documentation**
+- `10-System/system-map.md` — full component inventory: 82 components, 3 nodes, all data flows.
+- `10-System/ROADMAP.md` — versioned roadmap v0.3 → v1.0 with exit criteria per milestone.
+- `10-System/servetus-architecture.canvas` — Obsidian canvas visual architecture diagram.
+
+**New Toolkit specs**
+- `S00.01-11-00` — Server-Bot Parity: MCP tool access for Talk bot.
+- `S00.01-12-00` — Telegram Integration: sovereign identity stack, MTProto, secure mobile OS+SIM model.
+- `S00.01-13-00` — Persistent Display: 1080p Xvfb, screen share via Talk. Rule 8: human screen privacy is absolute.
+- `S00.01-14-00` — Talk Approval Protocol: two-factor approval via Talk + out-of-band token.
+- `S00.01-15-00` — Container Architecture: one `docker-compose.yml` brings full node up. Ansible required (Rule 0).
+- `S00.01-16-00` — Collective Maintenance: approval flow, gap register.
+- `S00.01-17-00` — Talk Room Posting Protocol: five-check pre-post protocol for all Talk rooms.
+- `S00.01-18-00` — Interface Continuity: single Servetus identity across web, physical, Android. actorId as ground truth.
+- `S00.01-19-00` — Control Room: pipeline visibility dashboard spec.
+- `Toolkit/context-card-spec.md` — portable situational awareness card, generated at session close.
+- `Toolkit/security-scrub-protocol.md` — device fingerprint scrub procedure + pre-commit hook.
+- `Toolkit/voice-performance-format.md` — SVP spec: two-stave transcript + prosody notation.
+
+**GitHub Pages**
+- `docs/index.html` — dark terminal landing page.
+- `docs/philosophy.html` — renders `Philosophy.md` via `fetch()` + `marked.js`.
+- `docs/changelog.html` — renders `CHANGELOG.md`.
+- `docs/capture-tool.html` — WebDAV bookmarklet generator with sovereign credential model.
+
+### Changed
+- `10-System/session-close.py` — generates `10-System/context-card.md` on every close; credential scrub on both markdown and JSONL artifacts.
+- `Philosophy.md` — added: "The Patient With Amnesia", presence layer, session continuity.
+- Vault folder casing normalized: `06-Radar` (uppercase), legacy lowercase duplicates removed.
+- `10-System/pre-commit-check.sh` — pre-commit hook blocks real MAC/IP/hostname.
+- `S00.01-05-00` (Guardrails) — Rule 8 added: human screen privacy absolute.
+- `S00.01-10-90` (Session Start) — Step 0: cluster check-in; MCP placement rule added.
+- `S00.01-10-91` (Session Close) — collective review pass, updated notification routing table.
+- `S00.01-15-00` (Container Architecture) — Ansible required added as Rule 0.
+
+### Fixed
+- Transcription notifications routed to Christian's 1:1 only (not Binary Ranch Standup).
+- Orphaned in-progress queue entries reset on daemon startup.
+- `[HOPPER]` announcements redirected from stdout to `hopper-events.log` (was freezing terminal).
+- Stale lowercase folder duplicates removed from Git index.
+- Credentials scrubbed from JSONL witness artifacts at session close.
+- Backlog transcription notifications suppressed for recordings older than 7 days.
+
+---
+
 ## [0.3.0] - 2026-03-18
 
 ### Added
