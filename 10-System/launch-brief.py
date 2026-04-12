@@ -2,7 +2,7 @@
 """
 Servetus Launch Brief
 
-Prints the 8-gauge cluster to the terminal, then writes
+Prints the session brief to the terminal, then writes
 ~/.servetus_session.json so statusline.sh can show ACTIVE state.
 
 Called by ~/bin/sc before handing off to Claude Code.
@@ -10,7 +10,7 @@ Usage: python3 launch-brief.py [vault_path]
 """
 
 import json, os, pathlib, re, socket, subprocess, sys, time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # ── Config ────────────────────────────────────────────────────────────────────
 SCRIPT_DIR  = pathlib.Path(__file__).resolve().parent
@@ -22,9 +22,6 @@ SESSION_F   = HOME / ".servetus_session.json"
 CONTEXT_LIM = 200_000
 W           = 72    # total box width
 C           = W - 6 # inner content width (2 borders + 2-space padding each side)
-PIPE_L      = 2     # left pipe column  (╦ breaks box bottom here)
-PIPE_R      = 5     # right pipe column (╦ breaks box bottom here)
-BRAIN_W     = W     # brain box full width — matches main brief box (speech bubble)
 MODEL       = "claude-sonnet-4-6"
 MONTHS      = ["","Jan","Feb","Mar","Apr","May","Jun",
                "Jul","Aug","Sep","Oct","Nov","Dec"]
@@ -37,36 +34,24 @@ GREEN   = "\033[32m"
 YELLOW  = "\033[33m"
 RED     = "\033[31m"
 RESET   = "\033[0m"
-PURPLE  = "\033[38;5;135m"   # Obsidian purple  ≈ #7B4FDB
-NC_BLUE = "\033[38;5;39m"    # Nextcloud blue   ≈ #0082C9
+PURPLE  = "\033[38;5;135m"
 
 # ── Box drawing ───────────────────────────────────────────────────────────────
 def _plain(s):
     return re.sub(r'\033\[[0-9;]*m', '', s)
 
-def top():  return "╔" + "═"*(W-2) + "╗"
-def div():  return "╠" + "═"*(W-2) + "╣"
-def bot():
-    # Bottom border with ╦ openings at PIPE_L and PIPE_R — pipes exit downward here
-    return (
-        "╚"
-        + "═" * (PIPE_L - 1)
-        + "╦"
-        + "═" * (PIPE_R - PIPE_L - 1)
-        + "╦"
-        + "═" * (W - PIPE_R - 2)
-        + "╝"
-    )
+def top():  return f"{PURPLE}╔{'═'*(W-2)}╗{RESET}"
+def div():  return f"{PURPLE}╠{'═'*(W-2)}╣{RESET}"
+def bot():  return f"{PURPLE}╚{'═'*(W-2)}╝{RESET}"
 
 def row(content):
     plain = _plain(content)
     if len(plain) > C:
         content = plain[:C-1] + "…"
     pad = C - len(_plain(content))
-    return f"║  {content}{' ' * max(0, pad)}  ║"
+    return f"{PURPLE}║{RESET}  {content}{' ' * max(0, pad)}  {PURPLE}║{RESET}"
 
 def lrow(label, value, lw=10):
-    """Fixed-width label + value row."""
     return row(f"{label:<{lw}}{value}")
 
 def tbar(pct, width=18):
@@ -78,7 +63,6 @@ def fmtk(n):
 
 # ── Data collectors ───────────────────────────────────────────────────────────
 def read_fm(path):
-    """Parse minimal frontmatter: status, title, tags."""
     try:
         text = path.read_text(errors='replace')
         if not text.startswith('---'):
@@ -137,28 +121,23 @@ def session_stats():
     return dict(total=total, pct=pct, user=user_n, asst=asst_n,
                 first_ts=first_ts, last_ts=last_ts)
 
-def memory_stats():
-    cm    = VAULT / "CLAUDE.md"
-    size  = cm.stat().st_size if cm.exists() else 0
-    tkit  = VAULT / "Toolkit"
-    specs = sorted([f for f in tkit.glob("*.md") if not f.name.startswith('_')]) \
-            if tkit.exists() else []
-    return dict(claude_kb=size / 1024, specs=specs)
-
-def active_arcs():
+def active_arcs(limit=3):
+    """Return (titles[:limit], total_count) sorted by file mtime — most recent first."""
     d = VAULT / "05-Arcs"
-    if not d.exists(): return []
-    out = []
-    for f in sorted(d.glob("*.md")):
+    if not d.exists(): return [], 0
+    files = []
+    for f in d.glob("*.md"):
         if f.name.startswith('_'): continue
         fm = read_fm(f)
         if fm.get('status', '').lower() == 'active':
-            out.append(fm.get('title', f.stem))
-    return out
+            files.append((fm.get('title', f.stem), f.stat().st_mtime))
+    files.sort(key=lambda x: x[1], reverse=True)
+    titles = [t for t, _ in files]
+    return titles[:limit], len(titles)
 
-def projects():
+def projects(limit=4):
     d = VAULT / "04-Projects"
-    if not d.exists(): return []
+    if not d.exists(): return [], 0
     out = []
     for sub in d.iterdir():
         if not sub.is_dir() or sub.name.startswith(('_', '.')): continue
@@ -167,58 +146,25 @@ def projects():
             try: mtime = max(mtime, f.stat().st_mtime)
             except: pass
         out.append((sub.name, mtime))
-    return sorted(out, key=lambda x: x[1], reverse=True)
+    out.sort(key=lambda x: x[1], reverse=True)
+    return [p[0] for p in out[:limit]], len(out)
 
-def radar_items():
-    d = VAULT / "06-Radar"
-    if not d.exists(): return []
-    out = []
-    for f in sorted(d.glob("*.md")):
-        if f.name.startswith('_') or 'spec' in f.name or 'template' in f.name:
-            continue
-        fm = read_fm(f)
-        out.append(dict(title=fm.get('title', f.stem), tags=fm.get('tags', [])))
-    return out
-
-def last_artifact():
-    base = VAULT / "00-Artifacts"
-    if not base.exists(): return None
-    latest = None
-    for yr in sorted(base.iterdir()):
-        if not yr.is_dir(): continue
-        for mo in sorted(yr.iterdir()):
-            if not mo.is_dir(): continue
-            for dy in sorted(mo.iterdir()):
-                if dy.is_dir(): latest = dy.name
-    return latest
-
-def write_path():
-    m = now.month
-    return (f"00-Artifacts/{now.year}/{m:02d}-{MONTHS[m]}/"
-            f"{now.year}-{m:02d}-{now.day:02d}/claude/")
-
-def system_checks():
-    checks = {}
-    checks['session-close'] = (VAULT / "10-System" / "session-close.py").exists()
-    checks['statusline']    = (HOME / ".claude" / "statusline.sh").exists()
+def git_status():
     try:
         r = subprocess.run(['git', 'status', '--porcelain'], cwd=str(VAULT),
                            capture_output=True, text=True, timeout=3)
         if r.returncode == 0:
             changed = len([l for l in r.stdout.splitlines() if l.strip()])
-            checks['git'] = 'clean' if not changed else f"{changed} pending"
-        else:
-            checks['git'] = None
+            return 'clean' if not changed else f"{changed} pending"
     except:
-        checks['git'] = None
-    return checks
+        pass
+    return None
 
 def version():
     try: return (VAULT / "10-System" / "VERSION").read_text().strip()
     except: return "0.x"
 
 def session_registry():
-    """Load ~/.servetus_sessions.json, return [] on any failure."""
     registry = HOME / ".servetus_sessions.json"
     if not registry.exists():
         return []
@@ -228,7 +174,6 @@ def session_registry():
         return []
 
 def last_closed_session(sessions):
-    """Most recent closed session for this vault."""
     closed = [s for s in sessions
               if s.get("status") == "closed"
               and s.get("vault") == str(VAULT)
@@ -237,23 +182,12 @@ def last_closed_session(sessions):
         return None
     return max(closed, key=lambda s: s["closed"])
 
-def other_open_sessions(sessions):
-    """Open sessions for this vault other than the one we just started."""
-    return [s for s in sessions
-            if s.get("status") == "open"
-            and s.get("vault") == str(VAULT)
-            and s.get("started") != CURRENT_STARTED]
-
 def elapsed(ts_str):
-    """Human-readable time since an ISO timestamp string."""
     if not ts_str:
         return "?"
     try:
         dt = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
-        if dt.tzinfo:
-            diff = datetime.now(dt.tzinfo) - dt
-        else:
-            diff = now - dt
+        diff = (datetime.now(dt.tzinfo) if dt.tzinfo else now) - dt
         secs = int(diff.total_seconds())
     except:
         return "?"
@@ -264,15 +198,10 @@ def elapsed(ts_str):
     return f"{days}d ago"
 
 def fmt_closed_ts(ts_str):
-    """Format a close timestamp for display: 'Mon 05:13' or 'Mar 15 22:41'."""
-    if not ts_str:
-        return ""
+    if not ts_str: return ""
     try:
         dt = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
-        if dt.tzinfo:
-            dt = dt.astimezone()
-        else:
-            dt = dt
+        dt = dt.astimezone() if dt.tzinfo else dt
         if dt.date() == now.date():
             return dt.strftime("today %H:%M")
         if (now.date() - dt.date()).days == 1:
@@ -282,11 +211,10 @@ def fmt_closed_ts(ts_str):
         return ts_str[:16]
 
 # ── Write session file ────────────────────────────────────────────────────────
-CURRENT_STARTED = now.isoformat(timespec="seconds")  # stable key for this run
+CURRENT_STARTED = now.isoformat(timespec="seconds")
 
 def write_session():
     room = os.environ.get("SERVETUS_ROOM", "")
-    # ~/.servetus_session.json — current session state (statusline reads this)
     try:
         SESSION_F.write_text(json.dumps({
             "started": CURRENT_STARTED,
@@ -297,12 +225,22 @@ def write_session():
         }, indent=2))
     except:
         pass
-    # ~/.servetus_sessions.json — registry (append open entry)
     registry = HOME / ".servetus_sessions.json"
     try:
         sessions = json.loads(registry.read_text()) if registry.exists() else []
     except:
         sessions = []
+
+    # Dedup: skip if this started timestamp is already registered
+    if any(s.get("started") == CURRENT_STARTED for s in sessions):
+        return
+
+    # Auto-expire open sessions older than 7 days (never properly closed)
+    cutoff = (now - timedelta(days=7)).isoformat(timespec="seconds")
+    for s in sessions:
+        if s.get("status") == "open" and s.get("started", "9999") < cutoff:
+            s["status"] = "expired"
+
     sessions.append({
         "room":       room,
         "started":    CURRENT_STARTED,
@@ -317,261 +255,98 @@ def write_session():
     except:
         pass
 
-# ── Funnel animation ──────────────────────────────────────────────────────────
-def funnel_animation():
-    """
-    Pipes exit through ╦ openings in the box bottom border, drop 3 rows,
-    then spread right into the brain box — left-justified, like a plug.
-
-    Phase 1: pipe rows print dim, one at a time.
-    Phase 2: brain box materializes in green.
-    """
-    BRAIN_I   = BRAIN_W - 2  # inner content width = 36
-    PIPE_ROWS = 3
-
-    # Two pipes dropping from the ╦ openings in the box bottom
-    pipe_row = " " * PIPE_L + "║" + " " * (PIPE_R - PIPE_L - 1) + "║"
-
-    # Spread row: pipes expand right into brain box top
-    #   ╔═╝  ╚══...══╗
-    spread = (
-        "╔" + "═" * (PIPE_L - 1) + "╝"
-        + " " * (PIPE_R - PIPE_L - 1)
-        + "╚" + "═" * (BRAIN_W - PIPE_R - 2) + "╗"
-    )
-
-    def cbrow(content):
-        """brow() with ANSI-aware padding — escape codes don't count toward width."""
-        plain = _plain(content)
-        pad   = max(0, BRAIN_I - len(plain))
-        return f"{NC_BLUE}║{RESET}" + content + " " * pad + f"{NC_BLUE}║{RESET}"
-
-    # Speech bubble — context flowing into Claude below
-    vault_path = str(VAULT).replace(str(pathlib.Path.home()), "~")
-    brain = [
-        cbrow(""),
-        cbrow(f"  {NC_BLUE}☁{RESET}  {vault_path}"),
-        cbrow(f"  {BOLD}◆ Obsidian vault{RESET}  {DIM}·{RESET}  {NC_BLUE}☁ Nextcloud{RESET}  {DIM}·{RESET}  context loaded"),
-        cbrow(""),
-        f"{NC_BLUE}╚{'═' * BRAIN_I}╝{RESET}",
-    ]
-
-    # Phase 1: pipes drop
-    for _ in range(PIPE_ROWS):
-        sys.stdout.write(f"{NC_BLUE}{pipe_row}{RESET}\n")
-        sys.stdout.flush()
-        time.sleep(0.060)
-    sys.stdout.write(f"{NC_BLUE}{spread}{RESET}\n")
-    sys.stdout.flush()
-
-    # Phase 2: speech bubble materializes
-    time.sleep(0.060)
-    for line in brain:
-        sys.stdout.write(f"{line}\n")
-        sys.stdout.flush()
-        time.sleep(0.045)
-
-    sys.stdout.write("\n")
-    sys.stdout.flush()
-
-
 # ── Print brief ───────────────────────────────────────────────────────────────
 def main():
     write_session()
 
-    sess  = session_stats()
-    mem   = memory_stats()
-    arcs  = active_arcs()
-    projs = projects()
-    radar = radar_items()
-    art   = last_artifact()
-    wpath = write_path()
-    sys_  = system_checks()
-    ver   = version()
-    reg   = session_registry()
-    last  = last_closed_session(reg)
-    other = other_open_sessions(reg)
-    vault_sessions = [s for s in reg if s.get("vault") == str(VAULT)]
-    is_first = len(vault_sessions) <= 1  # only the current open one
+    sess       = session_stats()
+    arc_top, arc_total   = active_arcs(limit=3)
+    proj_top, proj_total = projects(limit=4)
+    reg        = session_registry()
+    last       = last_closed_session(reg)
+    git        = git_status()
+    ver        = version()
+    room       = os.environ.get("SERVETUS_ROOM", "")
 
     out = []
 
-    # Title
+    # ── Header ───────────────────────────────────────────────────────────────
     out.append(top())
-    room  = os.environ.get("SERVETUS_ROOM", "")
     room_suffix = f"  ·  {YELLOW}{room}{RESET}" if room else ""
-    title = f"{BOLD}SERVETUS{RESET}  ●  Memory Architecture Layer{room_suffix}"
-    out.append(row(title))
-    ts_str = now.strftime("%Y-%m-%d  %H:%M:%S")
-    ver_ts = f"v{ver}  ·  {ts_str}"
-    pad    = C - len(ver_ts)
-    out.append(row(f"{DIM}{' ' * max(0, pad)}{ver_ts}{RESET}"))
+    out.append(row(f"{BOLD}SERVETUS{RESET}  ·  v{ver}  ·  "
+                   f"{now.strftime('%Y-%m-%d  %H:%M')}{room_suffix}"))
+    vault_short = str(VAULT).replace(str(HOME), "~")
+    out.append(row(f"{DIM}{vault_short}  ·  {MODEL}{RESET}"))
 
-    # SESSION
+    # ── SESSION (context usage) ───────────────────────────────────────────────
     out.append(div())
-    if sess:
+    if sess and sess['total'] > 0:
         pct = sess['pct']
-        rem = CONTEXT_LIM - sess['total']
         bc  = GREEN if pct < 60 else (YELLOW if pct < 80 else RED)
         out.append(lrow("SESSION",
-            f"{bc}{tbar(pct)}{RESET}  {pct}%  |  "
-            f"{fmtk(sess['total'])} used  |  ↑{sess['user']} ↓{sess['asst']}"))
-        detail = f"{fmtk(rem)} remaining"
-        if sess['last_ts']:
-            detail += f"  ·  last active {sess['last_ts'].strftime('%Y-%m-%d %H:%M')}"
-        out.append(lrow("", detail))
+            f"{bc}{tbar(pct)}{RESET}  {pct}%  ·  "
+            f"{fmtk(sess['total'])} used  ·  ↑{sess['user']} ↓{sess['asst']}"))
         if pct >= 80:
-            out.append(lrow("", f"{RED}context {pct}% full — recommend a new session{RESET}"))
+            out.append(lrow("", f"{RED}context {pct}% full — start a new session{RESET}"))
         elif pct >= 60:
-            out.append(lrow("", f"{YELLOW}context filling — consider new session for unrelated work{RESET}"))
+            out.append(lrow("", f"{YELLOW}context filling — consider a new session{RESET}"))
     else:
-        out.append(lrow("SESSION", f"{GREEN}fresh — no prior session found{RESET}"))
+        out.append(lrow("SESSION", f"{GREEN}fresh{RESET}"))
 
-    # LAST SESSION
+    # ── LAST CLOSED SESSION ───────────────────────────────────────────────────
     out.append(div())
-    if is_first:
-        out.append(lrow("LAST", f"{GREEN}first session — no prior history{RESET}"))
-    elif last:
-        room_s  = last.get("room", "") or "—"
-        closed  = last.get("closed", "")
-        when    = fmt_closed_ts(closed)
-        ago     = elapsed(closed)
-        # Summary fields written by session-close (if present)
-        turns   = last.get("turns", "")
-        files   = last.get("files_touched", [])
-        dur     = last.get("duration", "")
-        line1 = f"{ago}  ·  {when}  ·  {YELLOW}{room_s}{RESET}"
-        out.append(lrow("LAST", line1))
-        detail_parts = []
-        if turns:    detail_parts.append(f"{turns} turns")
-        if dur:      detail_parts.append(dur)
-        if files:    detail_parts.append("  ".join(files[:4]) + (f"  +{len(files)-4}" if len(files) > 4 else ""))
-        if detail_parts:
-            out.append(lrow("", f"{DIM}{'  ·  '.join(detail_parts)}{RESET}"))
+    if last:
+        room_s = last.get("room", "") or "—"
+        closed = last.get("closed", "")
+        ago    = elapsed(closed)
+        when   = fmt_closed_ts(closed)
+        line   = f"{ago}  ·  {when}  ·  {YELLOW}{room_s}{RESET}"
+        turns  = last.get("turns", "")
+        dur    = last.get("duration", "")
+        detail = "  ·  ".join(x for x in [
+            f"{turns} turns" if turns else "",
+            dur if dur else "",
+        ] if x)
+        out.append(lrow("LAST", line))
+        if detail:
+            out.append(lrow("", f"{DIM}{detail}{RESET}"))
     else:
-        out.append(lrow("LAST", f"{DIM}no prior closed sessions found{RESET}"))
+        out.append(lrow("LAST", f"{DIM}no prior closed sessions{RESET}"))
 
-    # OTHER OPEN SESSIONS
-    if other:
-        out.append(div())
-        for s in other[:3]:
-            s_room    = s.get("room", "—") or "—"
-            s_started = fmt_closed_ts(s.get("started", ""))
-            out.append(lrow("OPEN", f"{YELLOW}{s_room}{RESET}  ·  started {s_started}"))
-
-    # MEMORY
+    # ── ARCS ──────────────────────────────────────────────────────────────────
     out.append(div())
-    # Build spec name list that fits within inner width (label=10, so budget=C-10)
-    budget = C - 10
-    spec_parts = []
-    for f in mem['specs']:
-        candidate = "  ".join(spec_parts + [f.stem])
-        if len(candidate) > budget - 5:  # leave room for "+N"
-            remaining = len(mem['specs']) - len(spec_parts)
-            spec_parts.append(f"+{remaining}")
-            break
-        spec_parts.append(f.stem)
-    spec_names = "  ".join(spec_parts)
-    out.append(lrow("MEMORY",
-        f"CLAUDE.md {mem['claude_kb']:.1f}kb  +  {len(mem['specs'])} Toolkit specs"))
-    if spec_names:
-        out.append(lrow("", f"{DIM}{spec_names}{RESET}"))
-
-    # RADAR
-    out.append(div())
-    if radar:
-        tags    = [t for item in radar for t in item['tags']]
-        tag_str = "  ".join(f"#{t}" for t in tags[:6])
-        out.append(lrow("RADAR",
-            f"{len(radar)} items" + (f"  |  {tag_str}" if tag_str else "")))
-        titles = "  ·  ".join(item['title'] for item in radar[:3])
-        out.append(lrow("", f"{DIM}{titles}{RESET}"))
+    if arc_top:
+        arc_str = "  ·  ".join(arc_top)
+        suffix  = f"  ·  {DIM}+{arc_total - len(arc_top)} more{RESET}" \
+                  if arc_total > len(arc_top) else ""
+        out.append(lrow("ARCS", f"{GREEN}{arc_str}{RESET}{suffix}"))
     else:
-        out.append(lrow("RADAR", f"{DIM}no items filed{RESET}"))
+        out.append(lrow("ARCS", f"{DIM}none active{RESET}"))
 
-    # ARC
+    # ── PROJECTS ──────────────────────────────────────────────────────────────
     out.append(div())
-    if arcs:
-        budget = C - 10
-        arc_parts = []
-        for a in arcs:
-            candidate = "  ·  ".join(arc_parts + [a])
-            if len(candidate) > budget - 6:
-                arc_parts.append(f"+{len(arcs) - len(arc_parts)}")
-                break
-            arc_parts.append(a)
-        arc_str = "  ·  ".join(arc_parts)
-        out.append(lrow("ARC", f"{GREEN}{arc_str}{RESET}"))
-    else:
-        out.append(lrow("ARC", f"{DIM}no active arcs{RESET}"))
-
-    # PROJECTS
-    out.append(div())
-    if projs:
-        budget = C - 10
-        proj_parts = []
-        for p in projs:
-            candidate = "  ·  ".join(proj_parts + [p[0]])
-            if len(candidate) > budget - 6:
-                proj_parts.append(f"+{len(projs) - len(proj_parts)}")
-                break
-            proj_parts.append(p[0])
-        names  = "  ·  ".join(proj_parts)
-        top_dt = datetime.fromtimestamp(projs[0][1])
-        out.append(lrow("PROJECTS", names))
-        out.append(lrow("",
-            f"{DIM}most recent: {projs[0][0]}  —  {top_dt.strftime('%Y-%m-%d')}{RESET}"))
+    if proj_top:
+        proj_str = "  ·  ".join(proj_top)
+        suffix   = f"  ·  {DIM}+{proj_total - len(proj_top)} more{RESET}" \
+                   if proj_total > len(proj_top) else ""
+        out.append(lrow("PROJECTS", f"{proj_str}{suffix}"))
     else:
         out.append(lrow("PROJECTS", f"{DIM}none{RESET}"))
 
-    # TEMPORAL
-    out.append(div())
-    today_ym = now.strftime("%Y-%m")
-    if art:
-        art_ym = art[:7]
-        if art_ym >= today_ym:
-            period = f"{GREEN}present{RESET} ({today_ym})"
-        else:
-            period = f"{YELLOW}historical{RESET} ({art_ym})"
-        out.append(lrow("TEMPORAL", f"{period}  ·  last artifact: {art}"))
-    else:
-        out.append(lrow("TEMPORAL", f"{DIM}no artifacts yet{RESET}"))
-
-    # WRITE
-    out.append(div())
-    out.append(lrow("WRITE", f"→ {wpath}"))
-
-    # SYSTEM
-    out.append(div())
-    parts = []
-    for key, val in sys_.items():
-        if val is True or val == 'clean':
-            parts.append(f"{GREEN}{key} ✓{RESET}")
-        elif val is False or val is None:
-            parts.append(f"{RED}{key} ✗{RESET}")
-        else:
-            parts.append(f"{YELLOW}{key}: {val}{RESET}")
-    out.append(lrow("SYSTEM", "   ".join(parts)))
-
-    # ORPHANS — unarchived sessions flagged by last session-close
-    orphan_file = VAULT / "10-System" / "orphan-sessions.json"
-    if orphan_file.exists():
-        try:
-            orphans = json.loads(orphan_file.read_text())
-            if orphans:
-                out.append(div())
-                dates = ", ".join(o.get("date", o.get("short_id", "?")) for o in orphans)
-                out.append(lrow(
-                    f"{YELLOW}ORPHANS{RESET}",
-                    f"{YELLOW}{len(orphans)} unarchived session(s): {dates} — run session-close <path> to recover{RESET}"
-                ))
-        except Exception:
-            pass
+    # ── FOOTER (git status, compact) ─────────────────────────────────────────
+    if git is not None:
+        out.append(div())
+        gc = GREEN if git == 'clean' else YELLOW
+        out.append(lrow("GIT", f"{gc}{git}{RESET}"))
 
     out.append(bot())
     print("\n".join(out))
     print()
-    funnel_animation()
+
+    # ── Context plug-in line ──────────────────────────────────────────────────
+    print(f"  {DIM}↳ vault context loaded  ·  {vault_short}{RESET}")
+    print()
+
 
 if __name__ == "__main__":
     main()

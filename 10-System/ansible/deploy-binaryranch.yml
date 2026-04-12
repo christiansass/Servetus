@@ -1,58 +1,171 @@
 ---
 # deploy-binaryranch.yml
-# Stub Ansible playbook — Servetus BinaryRanch node deployment
+# BinaryRanch base node — Debian 12, Docker, Nextcloud AIO, Caddy, Tailscale
 #
-# Beta: tested on Dell PowerEdge R420 at BinaryRanch
-# Production target: purpose-built machine (future Ansible-managed node)
-#
-# Parameterized for portability — override vars in inventory or --extra-vars
+# This playbook provisions a clean BinaryRanch server. It does NOT include
+# Servetus services (talk-listener, transcription-queue). Run this first,
+# then migrate data separately.
 #
 # Usage:
-#   ansible-playbook -i inventory/binaryranch.ini deploy-binaryranch.yml
-#   # Or target a new machine:
-#   ansible-playbook -i "192.168.1.x," deploy-binaryranch.yml \
-#     -e vault_path=/mnt/Cloud/Nextcloud/Obsidian/Servetus \
-#     -e anthropic_api_key=sk-ant-...
+#   ansible-playbook -i "TARGET_IP," deploy-binaryranch.yml \
+#     -e tailscale_auth_key=tskey-... \
+#     -e nextcloud_domain=cloud.binaryranch.com \
+#     -e admin_email=admin@cloud.binaryranch.com
+#
+# Secrets: pass via --extra-vars or ansible-vault. Never commit real keys.
 
-- name: Deploy Servetus BinaryRanch Node
-  hosts: binaryranch
+- name: BinaryRanch Base Node
+  hosts: all
   become: true
 
   vars:
-    vault_path: /mnt/Cloud/Nextcloud/Obsidian/Servetus
-    docker_compose_file: docker-compose.binaryranch.yml
-    servetus_user: servetus
-    servetus_group: servetus
-    compose_dir: /opt/servetus
+    nextcloud_domain:    "cloud.binaryranch.com"
+    admin_email:         "admin@cloud.binaryranch.com"
+    docker_root:         "/media/docker/volumes"
+    nextcloud_data_dir:  "/mnt/ncdata"
+    caddy_config_dir:    "/opt/nextcloud-aio/caddy"
+    tailscale_auth_key:  "{{ lookup('env', 'TAILSCALE_AUTH_KEY') }}"
 
-    # Override in vault or via --extra-vars (never commit real keys)
-    anthropic_api_key: "{{ lookup('env', 'ANTHROPIC_API_KEY') }}"
+    # Nextcloud AIO env — matches current R420 deployment
+    aio_apache_port:      "11000"
+    aio_talk_port:        "3478"
+    aio_upload_limit:     "10G"
+    aio_max_time:         "3600"
+    aio_memory_limit:     "1024M"
+    aio_apache_binding:   "127.0.0.1"
+    aio_trusted_proxies:  "127.0.0.1"
 
 
   tasks:
 
-    # ── System Prerequisites ───────────────────────────────────────
+    # ── Base system ────────────────────────────────────────────────────────────
 
-    - name: Install Docker dependencies
+    - name: Update apt cache
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install base packages
       apt:
         name:
           - ca-certificates
           - curl
           - gnupg
+          - ufw
+          - fail2ban
+          - unattended-upgrades
+          - rsync
+          - htop
+          - git
+        state: present
+
+    - name: Set timezone to America/Chicago
+      timezone:
+        name: America/Chicago
+
+
+    # ── UFW firewall ───────────────────────────────────────────────────────────
+
+    - name: UFW — deny all inbound by default
+      ufw:
+        default: deny
+        direction: incoming
+
+    - name: UFW — allow all outbound
+      ufw:
+        default: allow
+        direction: outgoing
+
+    - name: UFW — allow SSH
+      ufw:
+        rule: allow
+        port: "22"
+        proto: tcp
+
+    - name: UFW — allow HTTPS
+      ufw:
+        rule: allow
+        port: "443"
+        proto: tcp
+
+    - name: UFW — allow HTTP (Caddy ACME)
+      ufw:
+        rule: allow
+        port: "80"
+        proto: tcp
+
+    - name: UFW — allow Nextcloud Talk (TURN/STUN)
+      ufw:
+        rule: allow
+        port: "{{ aio_talk_port }}"
+        proto: any
+
+    - name: UFW — allow Tailscale
+      ufw:
+        rule: allow
+        port: "41641"
+        proto: udp
+
+    - name: UFW — enable
+      ufw:
+        state: enabled
+
+
+    # ── SSH hardening ──────────────────────────────────────────────────────────
+
+    - name: Disable SSH password authentication
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^#?PasswordAuthentication"
+        line: "PasswordAuthentication no"
+      notify: Restart SSH
+
+    - name: Disable SSH root login
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^#?PermitRootLogin"
+        line: "PermitRootLogin no"
+      notify: Restart SSH
+
+
+    # ── Tailscale ──────────────────────────────────────────────────────────────
+
+    - name: Add Tailscale GPG key
+      apt_key:
+        url: https://pkgs.tailscale.com/stable/debian/bookworm.gpg
+        state: present
+
+    - name: Add Tailscale apt repository
+      apt_repository:
+        repo: "deb https://pkgs.tailscale.com/stable/debian bookworm main"
+        state: present
+
+    - name: Install Tailscale
+      apt:
+        name: tailscale
         state: present
         update_cache: true
 
-    - name: Add Docker GPG key
+    - name: Authenticate Tailscale
+      command: tailscale up --authkey={{ tailscale_auth_key }} --accept-routes
+      args:
+        creates: /var/lib/tailscale/tailscaled.state
+      no_log: true
+
+
+    # ── Docker ─────────────────────────────────────────────────────────────────
+
+    - name: Add Docker GPG key (Debian)
       apt_key:
-        url: https://download.docker.com/linux/ubuntu/gpg
+        url: https://download.docker.com/linux/debian/gpg
         state: present
 
-    - name: Add Docker apt repository
+    - name: Add Docker apt repository (Debian bookworm)
       apt_repository:
-        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        repo: "deb [arch=amd64] https://download.docker.com/linux/debian bookworm stable"
         state: present
 
-    - name: Install Docker CE and Compose plugin
+    - name: Install Docker CE
       apt:
         name:
           - docker-ce
@@ -62,104 +175,122 @@
         state: present
         update_cache: true
 
+    - name: Create Docker daemon config (set data root)
+      copy:
+        dest: /etc/docker/daemon.json
+        content: |
+          {
+            "data-root": "{{ docker_root }}"
+          }
+        mode: "0644"
+      notify: Restart Docker
+
+    - name: Ensure Docker data root exists
+      file:
+        path: "{{ docker_root }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0711"
+
     - name: Ensure Docker service is running
       service:
         name: docker
         state: started
         enabled: true
 
-
-    # ── Servetus User ──────────────────────────────────────────────
-
-    - name: Create servetus group
-      group:
-        name: "{{ servetus_group }}"
-        state: present
-
-    - name: Create servetus user
+    - name: Add christian user to docker group
       user:
-        name: "{{ servetus_user }}"
-        group: "{{ servetus_group }}"
+        name: christian
         groups: docker
-        system: true
-        create_home: false
-        shell: /usr/sbin/nologin
+        append: true
 
-    - name: Create compose directory
+
+    # ── Nextcloud data directory ───────────────────────────────────────────────
+
+    - name: Ensure Nextcloud data dir exists
       file:
-        path: "{{ compose_dir }}"
+        path: "{{ nextcloud_data_dir }}"
         state: directory
-        owner: "{{ servetus_user }}"
-        group: "{{ servetus_group }}"
+        owner: root
+        group: root
         mode: "0750"
 
 
-    # ── Vault Mount ───────────────────────────────────────────────
-    # Assumes Nextcloud client is installed and syncing separately.
-    # This task only verifies the vault path exists before deploying.
+    # ── Caddy ──────────────────────────────────────────────────────────────────
 
-    - name: Verify vault path exists
-      stat:
-        path: "{{ vault_path }}"
-      register: vault_stat
-      failed_when: not vault_stat.stat.exists
+    - name: Ensure Caddy config directory exists
+      file:
+        path: "{{ caddy_config_dir }}"
+        state: directory
+        mode: "0755"
 
-
-    # ── Deploy Compose Stack ───────────────────────────────────────
-
-    - name: Copy docker-compose.binaryranch.yml
+    - name: Write Caddyfile
       copy:
-        src: "{{ playbook_dir }}/../../docker-compose.binaryranch.yml"
-        dest: "{{ compose_dir }}/docker-compose.binaryranch.yml"
-        owner: "{{ servetus_user }}"
-        group: "{{ servetus_group }}"
-        mode: "0640"
-
-    - name: Copy Dockerfile.binaryranch
-      copy:
-        src: "{{ playbook_dir }}/../../Dockerfile.binaryranch"
-        dest: "{{ compose_dir }}/Dockerfile.binaryranch"
-        owner: "{{ servetus_user }}"
-        group: "{{ servetus_group }}"
-        mode: "0640"
-
-    - name: Write environment file
-      copy:
-        dest: "{{ compose_dir }}/.env"
+        dest: "{{ caddy_config_dir }}/Caddyfile"
         content: |
-          VAULT_PATH={{ vault_path }}
-          ANTHROPIC_API_KEY={{ anthropic_api_key }}
-        owner: "{{ servetus_user }}"
-        group: "{{ servetus_group }}"
-        mode: "0600"  # credentials — owner read-only
-      no_log: true
+          {
+              email {{ admin_email }}
+          }
 
-    - name: Build servetus-binaryranch image
-      community.docker.docker_compose_v2:
-        project_src: "{{ compose_dir }}"
-        files:
-          - docker-compose.binaryranch.yml
-        build: always
-        state: present
-      environment:
-        VAULT_PATH: "{{ vault_path }}"
-        ANTHROPIC_API_KEY: "{{ anthropic_api_key }}"
+          {{ nextcloud_domain }}:443 {
+              header Strict-Transport-Security "max-age=31536000; includeSubDomains"
+              reverse_proxy localhost:{{ aio_apache_port }}
+          }
 
-    - name: Start Servetus BinaryRanch stack
-      community.docker.docker_compose_v2:
-        project_src: "{{ compose_dir }}"
-        files:
-          - docker-compose.binaryranch.yml
-        state: present
-      environment:
-        VAULT_PATH: "{{ vault_path }}"
-        ANTHROPIC_API_KEY: "{{ anthropic_api_key }}"
+          www.{{ nextcloud_domain }} {
+              redir https://{{ nextcloud_domain }}{uri} permanent
+          }
+        mode: "0644"
 
-    - name: Verify containers are running
-      community.docker.docker_container_info:
-        name: "{{ item }}"
-      loop:
-        - servetus-claude
-        - servetus-talk-br
-      register: container_info
-      failed_when: not container_info.container.State.Running
+    - name: Start Caddy container
+      community.docker.docker_container:
+        name: caddy
+        image: caddy:2.7-alpine
+        restart_policy: unless-stopped
+        volumes:
+          - "{{ caddy_config_dir }}/Caddyfile:/etc/caddy/Caddyfile:ro"
+          - "caddy_data:/data"
+          - "caddy_config:/config"
+          - "/var/log/caddy:/var/log/caddy"
+        network_mode: host
+
+
+    # ── Nextcloud AIO ──────────────────────────────────────────────────────────
+
+    - name: Start Nextcloud AIO mastercontainer
+      community.docker.docker_container:
+        name: nextcloud-aio-mastercontainer
+        image: nextcloud/all-in-one:latest
+        restart_policy: unless-stopped
+        volumes:
+          - "nextcloud_aio_mastercontainer:/mnt/docker-aio-config"
+          - "/var/run/docker.sock:/var/run/docker.sock"
+        ports:
+          - "8080:8080"
+          - "{{ aio_apache_port }}:{{ aio_apache_port }}"
+        env:
+          NEXTCLOUD_DATADIR:          "{{ nextcloud_data_dir }}"
+          APACHE_PORT:                "{{ aio_apache_port }}"
+          APACHE_IP_BINDING:          "{{ aio_apache_binding }}"
+          TALK_PORT:                  "{{ aio_talk_port }}"
+          TRUSTED_PROXIES:            "{{ aio_trusted_proxies }}"
+          NEXTCLOUD_UPLOAD_LIMIT:     "{{ aio_upload_limit }}"
+          NEXTCLOUD_MAX_TIME:         "{{ aio_max_time }}"
+          NEXTCLOUD_MEMORY_LIMIT:     "{{ aio_memory_limit }}"
+          COLLABORA_SECCOMP_DISABLED: "false"
+          SKIP_DOMAIN_VALIDATION:     "false"
+
+
+  # ── Handlers ──────────────────────────────────────────────────────────────
+
+  handlers:
+    - name: Restart SSH
+      service:
+        name: ssh
+        state: restarted
+
+    - name: Restart Docker
+      service:
+        name: docker
+        state: restarted

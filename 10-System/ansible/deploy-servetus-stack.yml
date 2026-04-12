@@ -1,0 +1,130 @@
+---
+# deploy-servetus-stack.yml
+# Servetus application stack deployment — separate from base node provisioning.
+#
+# This is the Servetus-specific layer: the servetus user, compose directory,
+# vault mount verification, and container stack deployment. Run AFTER
+# deploy-binaryranch.yml has provisioned the base node.
+#
+# Preserved from original deploy-binaryranch.yml (pre-April 2026 rewrite).
+# To be revisited when Servetus gets its own dedicated services deployment
+# after the R420 → new server migration is stable.
+#
+# Usage:
+#   ansible-playbook -i inventory/binaryranch.ini deploy-servetus-stack.yml
+#   # Or target a specific machine:
+#   ansible-playbook -i "192.168.1.x," deploy-servetus-stack.yml \
+#     -e vault_path=/mnt/Cloud/Nextcloud/Obsidian/Servetus \
+#     -e anthropic_api_key=sk-ant-...
+
+- name: Deploy Servetus BinaryRanch Node
+  hosts: binaryranch
+  become: true
+
+  vars:
+    vault_path: /mnt/Cloud/Nextcloud/Obsidian/Servetus
+    docker_compose_file: docker-compose.binaryranch.yml
+    servetus_user: servetus
+    servetus_group: servetus
+    compose_dir: /opt/servetus
+
+    # Override in vault or via --extra-vars (never commit real keys)
+    anthropic_api_key: "{{ lookup('env', 'ANTHROPIC_API_KEY') }}"
+
+
+  tasks:
+
+    # ── Servetus User ──────────────────────────────────────────────
+
+    - name: Create servetus group
+      group:
+        name: "{{ servetus_group }}"
+        state: present
+
+    - name: Create servetus user
+      user:
+        name: "{{ servetus_user }}"
+        group: "{{ servetus_group }}"
+        groups: docker
+        system: true
+        create_home: false
+        shell: /usr/sbin/nologin
+
+    - name: Create compose directory
+      file:
+        path: "{{ compose_dir }}"
+        state: directory
+        owner: "{{ servetus_user }}"
+        group: "{{ servetus_group }}"
+        mode: "0750"
+
+
+    # ── Vault Mount ───────────────────────────────────────────────
+    # Assumes Nextcloud client is installed and syncing separately.
+    # This task only verifies the vault path exists before deploying.
+
+    - name: Verify vault path exists
+      stat:
+        path: "{{ vault_path }}"
+      register: vault_stat
+      failed_when: not vault_stat.stat.exists
+
+
+    # ── Deploy Compose Stack ───────────────────────────────────────
+
+    - name: Copy docker-compose.binaryranch.yml
+      copy:
+        src: "{{ playbook_dir }}/../../docker-compose.binaryranch.yml"
+        dest: "{{ compose_dir }}/docker-compose.binaryranch.yml"
+        owner: "{{ servetus_user }}"
+        group: "{{ servetus_group }}"
+        mode: "0640"
+
+    - name: Copy Dockerfile.binaryranch
+      copy:
+        src: "{{ playbook_dir }}/../../Dockerfile.binaryranch"
+        dest: "{{ compose_dir }}/Dockerfile.binaryranch"
+        owner: "{{ servetus_user }}"
+        group: "{{ servetus_group }}"
+        mode: "0640"
+
+    - name: Write environment file
+      copy:
+        dest: "{{ compose_dir }}/.env"
+        content: |
+          VAULT_PATH={{ vault_path }}
+          ANTHROPIC_API_KEY={{ anthropic_api_key }}
+        owner: "{{ servetus_user }}"
+        group: "{{ servetus_group }}"
+        mode: "0600"  # credentials — owner read-only
+      no_log: true
+
+    - name: Build servetus-binaryranch image
+      community.docker.docker_compose_v2:
+        project_src: "{{ compose_dir }}"
+        files:
+          - docker-compose.binaryranch.yml
+        build: always
+        state: present
+      environment:
+        VAULT_PATH: "{{ vault_path }}"
+        ANTHROPIC_API_KEY: "{{ anthropic_api_key }}"
+
+    - name: Start Servetus BinaryRanch stack
+      community.docker.docker_compose_v2:
+        project_src: "{{ compose_dir }}"
+        files:
+          - docker-compose.binaryranch.yml
+        state: present
+      environment:
+        VAULT_PATH: "{{ vault_path }}"
+        ANTHROPIC_API_KEY: "{{ anthropic_api_key }}"
+
+    - name: Verify containers are running
+      community.docker.docker_container_info:
+        name: "{{ item }}"
+      loop:
+        - servetus-claude
+        - servetus-talk-br
+      register: container_info
+      failed_when: not container_info.container.State.Running

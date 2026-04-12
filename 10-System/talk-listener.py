@@ -723,10 +723,13 @@ def handle_message(message, room_name, room_type, token, base_url, headers, api_
         return None
 
 
-def send_message(base_url, headers, token, message_text):
-    """Post a message to a Talk room."""
+MAX_MESSAGE_CHARS = 3000  # safe limit well under Nextcloud Talk's 32k and any nginx config
+
+
+def _post_one(base_url, headers, token, text):
+    """POST a single message chunk. Raises on HTTP error."""
     import urllib.parse
-    data = urllib.parse.urlencode({"message": message_text}).encode()
+    data = urllib.parse.urlencode({"message": text}).encode()
     req  = urllib.request.Request(
         f"{base_url}/ocs/v2.php/apps/spreed/api/v1/chat/{token}?format=json",
         data=data,
@@ -735,6 +738,35 @@ def send_message(base_url, headers, token, message_text):
     )
     with urllib.request.urlopen(req, timeout=15) as resp:
         return json.loads(resp.read())
+
+
+def send_message(base_url, headers, token, message_text):
+    """Post a message to a Talk room, chunking if it exceeds MAX_MESSAGE_CHARS."""
+    if len(message_text) <= MAX_MESSAGE_CHARS:
+        return _post_one(base_url, headers, token, message_text)
+
+    # Split on paragraph boundaries where possible, fall back to hard split
+    chunks = []
+    remaining = message_text
+    while remaining:
+        if len(remaining) <= MAX_MESSAGE_CHARS:
+            chunks.append(remaining)
+            break
+        # Try to split at last paragraph break within the limit
+        window = remaining[:MAX_MESSAGE_CHARS]
+        cut = window.rfind("\n\n")
+        if cut == -1:
+            cut = window.rfind("\n")
+        if cut == -1:
+            cut = MAX_MESSAGE_CHARS
+        chunks.append(remaining[:cut].rstrip())
+        remaining = remaining[cut:].lstrip()
+
+    last = None
+    for i, chunk in enumerate(chunks):
+        label = f"({i+1}/{len(chunks)}) " if len(chunks) > 1 else ""
+        last = _post_one(base_url, headers, token, label + chunk)
+    return last
 
 
 REACTION_POLL_INTERVAL = 15  # seconds between reaction sweeps
@@ -1039,6 +1071,24 @@ def spawn_room_thread(token, url, headers, api_key):
     print(f"[talk-listener] Thread started: {name} ({token})")
 
 
+def presence_heartbeat(url, headers, interval: int = 240):
+    """Background thread: keeps Servetus status set to 'online' every interval seconds.
+    Prevents Nextcloud from auto-marking the bot as away during inactivity."""
+    status_url = f"{url}/ocs/v2.php/apps/user_status/api/v1/user_status/status?format=json"
+    while True:
+        try:
+            body = urllib.parse.urlencode({"statusType": "online"}).encode()
+            req = urllib.request.Request(status_url, data=body, headers={
+                **headers,
+                "Content-Type": "application/x-www-form-urlencoded",
+            }, method="PUT")
+            with urllib.request.urlopen(req, timeout=10):
+                pass
+        except Exception as e:
+            print(f"[presence] Heartbeat failed: {e}", file=sys.stderr)
+        time.sleep(interval)
+
+
 def refresh_rooms(url, headers, api_key):
     """Background thread: discovers new Talk rooms every ROOM_REFRESH_INTERVAL seconds."""
     type_map = {1: "onetoone", 2: "group", 3: "group", 4: "public"}
@@ -1153,6 +1203,10 @@ def run(once=False):
     # Reaction monitoring thread
     threading.Thread(target=watch_reactions, args=(url, headers, api_key),
                      daemon=True, name="reactions").start()
+
+    # Presence heartbeat — keeps Servetus status online, never auto-away
+    threading.Thread(target=presence_heartbeat, args=(url, headers),
+                     daemon=True, name="presence-heartbeat").start()
 
     print(f"[talk-listener] Monitoring {len(tokens)} rooms. "
           f"Room refresh every {ROOM_REFRESH_INTERVAL}s.")
