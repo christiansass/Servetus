@@ -71,16 +71,21 @@ External verification (journalism, court records) gets a separate badge. Three w
 These rules govern all time, date, location, and folder decisions across the entire vault. Every spec that touches these domains must reference this section rather than define its own interpretation.
 
 ### Calendar
+
 Servetus operates on the **Gregorian calendar**. Day boundaries are **midnight local time**. Weeks begin on Sunday.
 
 ### Authoritative Timestamp
+
 The authoritative timestamp for any artifact is the **recording device's clock at the moment of capture** — not the upload time, not the server time, not UTC unless the device was set to UTC. If the device timezone differs from the vault owner's home timezone, both are recorded. The device-local time is authoritative; CST is the display convention.
 
 ### Authoritative Location
+
 The authoritative location for any artifact is the **recording device's physical location at the moment of capture** — derived from GPS if available, falling back to BSSID triangulation, then known location anchors, then manual entry.
 
 ### Folder Date Naming
+
 Date-based folders use the format: `YYYY/MM-Mon/DD/`
+
 - Year: four digits
 - Month: two-digit number with three-letter name — e.g. `03-Mar`
 - Day: two digits with leading zero
@@ -88,8 +93,9 @@ Date-based folders use the format: `YYYY/MM-Mon/DD/`
 This ensures no folder can be mistaken for another regardless of manual sorting or accidental moves.
 
 **Canonical specs:**
-- Time format and timezone: [[Toolkit/time-rules]]
-- Folder naming and placement: [[Toolkit/sorting-and-placement]]
+
+- Time format and timezone: \[\[Toolkit/time-rules\]\]
+- Folder naming and placement: \[\[Toolkit/sorting-and-placement\]\]
 
 ---
 
@@ -118,10 +124,10 @@ Servetus/
 
 ### The Originals / Records Distinction
 
-**`00-Artifacts/` — The Evidence Locker**
+`00-Artifacts/` **— The Evidence Locker**
 Copied originals in their original format, original filenames. Date is the primary sort; source is the final differentiator within the date: `00-Artifacts/2026/03-Mar/12/otter/`. Nothing is renamed. The root Inbox (`Nextcloud/Obsidian/Inbox/`) holds the true originals permanently — `00-source` holds the vault's working copy.
 
-**`01-Records/` — The Field Records**
+`01-Records/` **— The Field Records**
 Markdown representations of the originals. Faithful transcription of content, Servetus naming convention, full provenance frontmatter. The artifact record points back to its source in `00-Artifacts/` by original filename and hash. Each artifact may have its own subfolder when multiple file types belong to the same capture event.
 
 The binary file never leaves the inbox. The artifact folder is pure Markdown — human-readable, git-trackable, auditable without proprietary software.
@@ -146,23 +152,24 @@ The root Inbox is a Hopper — a transit zone. Files arrive, get triaged, and MO
 
 ## Core Data Model
 
-| Type | Purpose | Folder |
-|------|---------|--------|
-| **Artifact** | Original source file — the physical evidence, untouched | 00 |
-| **Record** | Markdown field record of an artifact — faithful transcription + provenance | 01 |
-| **Memory** | One atomized thought extracted from a record | 02 |
-| **Event** | A discrete moment in time | 03 |
-| **Project** | Mid-length goal with deliverables | 04 |
-| **Arc** | A long-running storyline (relationship, chapter, thread) | 05 |
-| **Radar** | Your current lens — what you're actively tracking | 06 |
-| **StoryMap** | The full map of your life | 07 |
-| **Witness** | A person whose story touches yours | 08 |
+| Type     | Purpose                                                                    | Folder |
+|----------|----------------------------------------------------------------------------|--------|
+| **Artifact** | Original source file — the physical evidence, untouched                    | 00     |
+| **Record**   | Markdown field record of an artifact — faithful transcription + provenance | 01     |
+| **Memory**   | One atomized thought extracted from a record                               | 02     |
+| **Event**    | A discrete moment in time                                                  | 03     |
+| **Project**  | Mid-length goal with deliverables                                          | 04     |
+| **Arc**      | A long-running storyline (relationship, chapter, thread)                   | 05     |
+| **Radar**    | Your current lens — what you're actively tracking                          | 06     |
+| **StoryMap** | The full map of your life                                                  | 07     |
+| **Witness**  | A person whose story touches yours                                         | 08     |
 
 All records are **plain Markdown** with **YAML frontmatter** — readable by humans, parseable by machines.
 
 ### Frontmatter (v0.2 — flat)
 
 **Artifact** — origin fingerprint lives here, on the raw evidence:
+
 ```yaml
 ---
 type: artifact
@@ -183,6 +190,7 @@ tags: [session, artifact]
 ```
 
 **Memory** — provenance inherited via `source_artifact`, no origin block needed:
+
 ```yaml
 ---
 type: memory
@@ -220,24 +228,31 @@ Every spec in `Toolkit/` is a ticket waiting to become a committed function. The
 ## Architecture Principles
 
 ### 1. Human-Readable Always
+
 No binary blobs. No compiled code. No proprietary formats. Just files.
 
 ### 2. Map vs. Engine
+
 Servetus is a memory map, not a skill. The map exists independent of whichever AI reads it. Switch engines without losing memory.
 
 ### 3. AI as Prototyping Layer, Not Authority
+
 LLMs prototype behavior. Proven behavior becomes code. Code becomes the system. The AI is scaffolding — useful until the structure can stand without it.
 
 ### 4. Sovereignty by Default
+
 Your data lives on your infrastructure. Servetus orchestrates — it doesn't own.
 
 ### 5. Artifacts Over Assertions
+
 If there is no artifact, it is not memory. It is confabulation.
 
 ### 6. Code Over Prompts
+
 Proven behaviors become scripts. Scripts become the system. Prompts are scaffolding.
 
 ### 7. Every Folder Is a Watch Folder
+
 Servetus must be aware of every file modification. Changes made inside Obsidian, on the command line, or by any tool are system events. A future Servetus daemon monitors all vault folders and notifies the system of modifications — so nothing changes silently.
 
 ---
@@ -257,6 +272,7 @@ Servetus (the system) ensures the interpretation layer is never controlled by a 
 ## Current Status: v0.3.0
 
 **Implemented:**
+
 - ✅ Altitude-based folder structure (00-Artifacts → 10-System)
 - ✅ Artifact chain — every claim traces to evidence
 - ✅ Machine origin fingerprint on all records (machine/mac/ip/os)
@@ -274,6 +290,7 @@ Servetus (the system) ensures the interpretation layer is never controlled by a 
 - ✅ Toolkit specs (bootloader, export rules, schema, time, spelling, routing)
 
 **In Progress:**
+
 - ⏳ Session context injection — `last-session-brief.md` written at close, read at open
 - ⏳ Corroboration score implementation
 - ⏳ StoryMap visualization
@@ -281,6 +298,7 @@ Servetus (the system) ensures the interpretation layer is never controlled by a 
 - ⏳ Conversational Traffic Controller — real-time topic detection, session routing
 
 **Ecosystem (separate repos):**
+
 - 🔧 [Nextcloud MCP](https://github.com/binaryranch/nextcloud-mcp) *(coming)* — MIT-licensed MCP server for CalDAV, CardDAV, and WebDAV. The sovereignty-respecting alternative to Google Calendar/Gmail MCPs. Servetus uses it for calendar corroboration and witness verification.
 
 ---
