@@ -276,7 +276,7 @@ Servetus (the system) ensures the interpretation layer is never controlled by a 
 - ✅ Altitude-based folder structure (00-Artifacts → 10-System)
 - ✅ Artifact chain — every claim traces to evidence
 - ✅ Machine origin fingerprint on all records (machine/mac/ip/os)
-- ✅ Session bracket — `sc` opens a bracketed session, `session-close.py` closes it
+- ✅ Session bracket — `servetus` opens a bracketed session, `session-close.py` closes it
 - ✅ Full-fidelity session artifacts — JSONL witness + rich Markdown transcript + images
 - ✅ Per-turn timestamps with millisecond precision
 - ✅ Inbox pipeline — triage (`inbox-triage.py`), file, finalize (`inbox-file.py`)
@@ -327,10 +327,10 @@ bash install.sh
 
 1. Clone this repo into your Obsidian vault location
 2. Open in Obsidian
-3. Run `bash install.sh` — deploys `sc` launcher, statusline, and session bracket
+3. Run `bash install.sh` — deploys `servetus` launcher, statusline, and session bracket
 4. Read `Toolkit/bootloader.md` to understand the system
 5. Customize `config/` with your projects and tags
-6. Type `sc` to open a bracketed session
+6. Type `servetus` (or `sv`) to open a bracketed session
 
 For AI assistants: Read `CLAUDE.md` first — it's gitignored, stays local to your machine.
 

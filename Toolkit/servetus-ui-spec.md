@@ -137,7 +137,7 @@ launch-menu.py
   → writes ~/.servetus_session.json:
       { "llm_key": "claude", "llm_cmd": "claude", "llm_args": [], "room": "..." }
 
-sc script
+servetus script
   → reads llm_cmd + llm_args
   → runs launch-brief.py (reads llm_key → correct brain art in animation)
   → exec's the selected LLM command
@@ -154,7 +154,7 @@ Spec: separate from this doc — see `Toolkit/session-start.md`.
 
 ### 1.5 Terminal open questions
 
-- **`sc` script:** alias or file? Needs to be a proper script to branch on LLM
+- **`servetus` script:** resolved — canonical file at `~/bin/servetus`, `sv` symlink for short access
 - **Offline detection:** warn in menu if `ollama` is not running
 - **Default fallback:** Enter with no LLM → use `"default": true` from roster
 - **Brain art:** all LLM mascots pending design (see §3.2)
@@ -269,7 +269,7 @@ can link back to it. The artifact format must be stable across LLMs.
 | `10-System/launch-brief.py` | exists | `funnel_animation(llm_key)` — brain art dict |
 | `10-System/launch-menu.py` | exists | Add LLM section above context |
 | `config/llm-roster.json` | new | LLM roster definition |
-| `~/bin/sc` or `10-System/sc.sh` | unclear | Needs to exec correct LLM command |
+| `~/bin/servetus` | canonical file | Execs correct LLM command; `sv` symlink for short access |
 | `10-System/session-close.py` | exists | Record `llm_key` in frontmatter |
 | `10-System/web/` | new (future) | Local web server + frontend |
 | `10-System/voice/` | exists (stub) | Talk Bot implementation |
