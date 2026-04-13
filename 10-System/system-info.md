@@ -50,7 +50,7 @@ Ask Claude:
 - **Tailscale IP:** 100.120.83.63
 - **Vault:** `~/Nextcloud/Obsidian/Servetus`
 - **Engine:** Claude Code (primary)
-- **Launcher:** `sc` → `launch-menu.py` → Claude Code
+- **Launcher:** `servetus` → `launch-menu.py` → Claude Code
 
 ### WordInFilm (Linux Mint 22.3 — Elgin)
 - **Tailscale IP:** 100.114.61.2

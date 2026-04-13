@@ -2,7 +2,7 @@
 """
 Servetus Launch Menu
 --------------------
-Interactive context picker shown at the start of every sc session.
+Interactive context picker shown at the start of every servetus session.
 
 Displays:
   - Open sessions     (with < resume if a matching JSONL is found)
@@ -16,14 +16,14 @@ Side effects:
   - Writes selected room + resume_id into ~/.servetus_session.json
   - Appends a new "open" entry to ~/.servetus_sessions.json (session registry)
 
-Output (stdout, two lines — for sc to capture):
+Output (stdout, two lines — for servetus to capture):
   line 1: room label  (may be empty)
   line 2: resume_id   (may be empty)
 
-Display and input go to /dev/tty directly so stdout capture in sc is clean.
+Display and input go to /dev/tty directly so stdout capture in servetus is clean.
 
 Usage:
-    python3 launch-menu.py [vault_path]
+    python3 launch-menu.py [vault_path] [username]
 """
 
 import json, pathlib, re, socket, sys
@@ -31,6 +31,7 @@ from datetime import datetime
 
 VAULT        = pathlib.Path(sys.argv[1]).resolve() if len(sys.argv) > 1 \
                else pathlib.Path(__file__).resolve().parent.parent
+USERNAME     = sys.argv[2] if len(sys.argv) > 2 else "csass"
 HOME         = pathlib.Path.home()
 SESSION_F    = HOME / ".servetus_session.json"    # single current session
 REGISTRY_F   = HOME / ".servetus_sessions.json"  # registry of all sessions
@@ -117,6 +118,7 @@ def register_open(room, resume_id):
                 pass
     sessions.append({
         "room":       room,
+        "user":       USERNAME,
         "started":    now_str,
         "machine":    machine,
         "vault":      str(VAULT),
@@ -341,7 +343,7 @@ def show_menu():
     lines.append(bot())
     lines.append("")
 
-    # Write display to /dev/tty so stdout capture in sc stays clean
+    # Write display to /dev/tty so stdout capture in servetus stays clean
     try:
         tty = open("/dev/tty", "w")
         tty.write("\n".join(lines) + "\n")
@@ -375,22 +377,32 @@ def show_menu():
         # Typed a name directly instead of a number
         room = raw
     else:
-        # Enter with no input → default to today's SOC
-        today = datetime.now().strftime("%Y-%m-%d")
-        room = f"{today}_SOC"
-        # Find the most recent JSONL from today to resume
-        # BUT skip sessions that are marked "closed" in the registry
+        # Enter with no input → SC_<username>_YYMMDD (new naming standard)
+        today_short = datetime.now().strftime("%y%m%d")
+        room = f"SC_{USERNAME}_{today_short}"
+        # Auto-resume: only pick up a session belonging to this user.
+        # Sessions written by launch-brief.py carry a "user" field.
+        # Old sessions (no user field) are assumed to belong to csass.
+        resumable_ids = {
+            s.get("session_id") for s in registry
+            if s.get("session_id")
+            and s.get("status") != "closed"
+            and s.get("user", "csass") == USERNAME
+        }
         closed_ids = {
             s.get("session_id") for s in registry
             if s.get("status") == "closed" and s.get("session_id")
         }
         if project_dir and project_dir.exists():
             today_jsonls = []
+            today = datetime.now().strftime("%Y-%m-%d")
             for jf in project_dir.glob("*.jsonl"):
                 if "subagent" in jf.name:
                     continue
                 if jf.stem in closed_ids:
-                    continue  # Skip closed sessions
+                    continue  # skip explicitly closed sessions
+                if resumable_ids and jf.stem not in resumable_ids:
+                    continue  # skip sessions belonging to other users
                 try:
                     mtime = datetime.fromtimestamp(jf.stat().st_mtime)
                     if mtime.strftime("%Y-%m-%d") == today:
@@ -416,7 +428,7 @@ def main():
     room, resume_id = show_menu()
 
     # Write into ~/.servetus_session.json so launch-brief.py reads the room
-    # and sc can read resume_id before brief runs
+    # and servetus can read resume_id before brief runs
     try:
         existing = {}
         if SESSION_F.exists():

@@ -185,7 +185,7 @@ def find_servetus_project_dir() -> Path:
     raise FileNotFoundError(
         f"Could not find Claude Code project directory for vault: {VAULT_ROOT}\n"
         f"Expected: {project_dir}\n"
-        f"Launch Claude Code from within the vault using 'sc'."
+        f"Launch Claude Code from within the vault using 'servetus'."
     )
 
 
@@ -513,6 +513,7 @@ def build_artifact(jsonl_path: Path, ctx: dict, origin: dict, witness_path: Path
     short_id     = jsonl_path.stem[:8]
     file_slug    = f"{date_str}-claude-session-{short_id}"
     room         = os.environ.get("SERVETUS_ROOM", "")
+    user         = os.environ.get("SERVETUS_USER", "csass")
     title        = f"Claude Code Session — {created.strftime('%B %d, %Y')}"
 
     duration_secs = int((modified - created).total_seconds())
@@ -534,6 +535,7 @@ slug: "{file_slug}"
 session-name: "{meta.get('slug', '')}"
 session-id: "{meta.get('sessionId', jsonl_path.stem)}"
 session-room: "{room}"
+session-user: "{user}"
 
 date: {datetime_str}
 closed: {closed_str}
@@ -578,6 +580,7 @@ tags: [artifact, session, claude-code]
     lines.append(f"|---|---|")
     lines.append(f"| **Name** | `{meta.get('slug', '—')}` |")
     lines.append(f"| **Session ID** | `{meta.get('sessionId', jsonl_path.stem)}` |")
+    lines.append(f"| **User** | `{user}` |")
     lines.append(f"| **Model** | {meta.get('model', '—')} |")
     lines.append(f"| **Claude Code** | v{meta.get('version', '—')} |")
     lines.append(f"| **Permission mode** | {meta.get('permissionMode', '—')} |")

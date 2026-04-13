@@ -56,7 +56,7 @@ Format: `MAJOR.MINOR.PATCH` on a single line.
 
 ## session-close.py
 
-Runs automatically when `sc` (the Claude Code launcher) exits. Captures the
+Runs automatically when `servetus` (the Claude Code launcher) exits. Captures the
 `.jsonl` session transcript from `~/.claude/projects/` and writes it as an
 artifact to `00-inbox/` with full origin fingerprint (machine, MAC, IP, OS).
 

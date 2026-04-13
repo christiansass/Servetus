@@ -5,7 +5,7 @@ Servetus Launch Brief
 Prints the session brief to the terminal, then writes
 ~/.servetus_session.json so statusline.sh can show ACTIVE state.
 
-Called by ~/bin/sc before handing off to Claude Code.
+Called by ~/bin/servetus before handing off to Claude Code.
 Usage: python3 launch-brief.py [vault_path]
 """
 
@@ -215,6 +215,7 @@ CURRENT_STARTED = now.isoformat(timespec="seconds")
 
 def write_session():
     room = os.environ.get("SERVETUS_ROOM", "")
+    user = os.environ.get("SERVETUS_USER", "csass")
     try:
         SESSION_F.write_text(json.dumps({
             "started": CURRENT_STARTED,
@@ -222,6 +223,7 @@ def write_session():
             "vault":   str(VAULT),
             "machine": socket.gethostname(),
             "room":    room,
+            "user":    user,
         }, indent=2))
     except:
         pass
@@ -243,6 +245,7 @@ def write_session():
 
     sessions.append({
         "room":       room,
+        "user":       user,
         "started":    CURRENT_STARTED,
         "machine":    socket.gethostname(),
         "vault":      str(VAULT),
@@ -267,6 +270,7 @@ def main():
     git        = git_status()
     ver        = version()
     room       = os.environ.get("SERVETUS_ROOM", "")
+    user       = os.environ.get("SERVETUS_USER", "csass")
 
     out = []
 
@@ -274,7 +278,7 @@ def main():
     out.append(top())
     room_suffix = f"  ·  {YELLOW}{room}{RESET}" if room else ""
     out.append(row(f"{BOLD}SERVETUS{RESET}  ·  v{ver}  ·  "
-                   f"{now.strftime('%Y-%m-%d  %H:%M')}{room_suffix}"))
+                   f"{now.strftime('%Y-%m-%d  %H:%M')}  [{user}]{room_suffix}"))
     vault_short = str(VAULT).replace(str(HOME), "~")
     out.append(row(f"{DIM}{vault_short}  ·  {MODEL}{RESET}"))
 
