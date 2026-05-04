@@ -14,7 +14,7 @@ carddav_uid: ""
 
 client_of: []
 # client_of example:
-#   - org: binaryranch
+#   - org: colo node
 #     status: active       # prospect | active | former | none
 #     since: YYYY-MM-DD
 #   - org: sevenstalents
@@ -22,7 +22,7 @@ client_of: []
 
 vendor_of: []
 # vendor_of example:
-#   - org: binaryranch
+#   - org: colo node
 #     service: ""
 #     status: active       # active | former | none
 

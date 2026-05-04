@@ -145,7 +145,7 @@ When a room is opened via the launch menu:
 1. Watch `Inbox/Claude/` for new session folders
 2. On new artifact detected → call `arc-update.py`
 3. On new Otter/audio file → call transcription pipeline
-4. Report: "Session `{id}` processed → updated arcs: BinaryRanch, Servetus"
+4. Report: "Session `{id}` processed → updated arcs: colo node, Servetus"
 
 ---
 
@@ -184,7 +184,7 @@ identifiable and reversible.
 ## Session Identity — Sub-labels Within a Room
 
 Sessions within the same arc cannot all share the same name. The launch menu
-becomes unnavigable when 4 sessions all read "BinaryRanch Arc."
+becomes unnavigable when 4 sessions all read "colo node Arc."
 
 ### Design
 
@@ -193,8 +193,8 @@ Each session gets a two-part identity:
 ```
 {Arc} › {focus-slug}
 
-BinaryRanch Arc › mike-mazur-onboarding
-BinaryRanch Arc › nextcloud-migration
+colo node Arc › mike-mazur-onboarding
+colo node Arc › nextcloud-migration
 Servetus Development Arc › event-pipeline-spec
 ```
 
@@ -233,7 +233,7 @@ without opening it.
 ## Origin
 
 Conceived 2026-03-21, Servetus Development Arc session.
-Context: multiple siloed BinaryRanch Arc sessions visible simultaneously,
+Context: multiple siloed colo node Arc sessions visible simultaneously,
 each with partial divergent context. The close loop wasn't wired — sessions
 produced artifacts but didn't write back into arcs. Every new session started
 blind instead of informed.

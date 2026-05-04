@@ -11,16 +11,16 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-**Server infrastructure (workstation node)**
+**Server infrastructure (gpu node node)**
 - `10-System/transcription-queue.py` — GPU Whisper daemon; watches `Talk/Audio/` for recordings, runs Whisper on GPU, writes `.md` transcripts, notifies Talk. Processes newest recordings first (`--oldest-first` flag available). Race-condition guard marks files in-progress before launching Whisper.
 - `10-System/secretary.py` — deterministic context assembly (hopper, radar, witnesses, rooms, artifacts, services). `--daemon` mode refreshes `last-session-brief.md` every 5 minutes.
-- `10-System/deploy-services-workstation.sh` — SSH deployment script for systemd user services on workstation.
+- `10-System/deploy-services-gpu node.sh` — SSH deployment script for systemd user services on gpu node.
 - `systemd/` — service unit files for `servetus-talk-listener` and `servetus-transcription-queue`.
 
 **Docker deployment**
 - `docker-compose.yml` — one-command Servetus node deployment. Six containers: `display` (Xvfb), `chromium` (persistent browser), `whisper` (GPU transcription), `ollama` (local LLM), `talk` (listener), `secretary` (context assembly, `network_mode: none` — fully air-gapped).
-- `docker-compose.binaryranch.yml` — CPU-only stack for colo server (no CUDA).
-- `Dockerfile.binaryranch` — BinaryRanch node image.
+- `docker-compose.colo node.yml` — CPU-only stack for colo server (no CUDA).
+- `Dockerfile.colo node` — colo node node image.
 - `.env.example` — `VAULT_PATH`, `API_KEY`, `SMTP` config.
 
 **Talk bot enhancements**
@@ -38,11 +38,11 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `10-System/talk-webhook.py` — push-based alternative to polling. NC pushes POST per message; no 429s. Setup instructions in module docstring.
 - `config/nextcloud.env.example` — added `WEBHOOK_SECRET`.
 
-**BinaryRanch cluster**
+**colo node cluster**
 - `10-System/cluster-router.py` — vault-native task daemon; polls `cluster/queue/`, claims and executes tasks.
 - `10-System/cluster-dispatch.py` — dispatch helper for cross-node task queuing.
 - `10-System/cluster/README.md` — bus schema, task types, node capability registry.
-- `ansible/deploy-binaryranch.yml` + `ansible/deploy-workstation.yml` — Ansible playbooks for both nodes.
+- `ansible/deploy-colo node.yml` + `ansible/deploy-gpu node.yml` — Ansible playbooks for both nodes.
 
 **Tools and libraries**
 - `10-System/nextcloud_cal.py` — CalDAV calendar read/write. 7 calendars. LLM-agnostic, importable by any component.
@@ -99,7 +99,7 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `S00.01-15-00` (Container Architecture) — Ansible required added as Rule 0.
 
 ### Fixed
-- Transcription notifications routed to Christian's 1:1 only (not Binary Ranch Standup).
+- Transcription notifications routed to Christian's 1:1 only (not colo node Standup).
 - Orphaned in-progress queue entries reset on daemon startup.
 - `[HOPPER]` announcements redirected from stdout to `hopper-events.log` (was freezing terminal).
 - Stale lowercase folder duplicates removed from Git index.

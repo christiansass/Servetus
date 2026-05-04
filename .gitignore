@@ -131,3 +131,8 @@ Toolkit/personas/jrr-tolkien_persona/**
 Toolkit/personas/cs-lewis_persona/**
 !Toolkit/personas/default_persona/**
 !Toolkit/personas/_persona-template.md
+
+# 10-System — operational files, not public
+# Contains real hostnames, paths, credentials refs
+# Will be parameterized via env files in distribution version
+10-System/**

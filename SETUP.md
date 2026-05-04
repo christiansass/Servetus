@@ -32,10 +32,10 @@ Clone Servetus into your Obsidian vault location:
 ```bash
 # Linux/macOS/WSL
 cd ~/path/to/your/obsidian/vaults
-git clone git@github.com:christiansass/Servetus.git
+git clone git@github.com:username/Servetus.git
 
 # Or with HTTPS
-git clone https://github.com/christiansass/Servetus.git
+git clone https://github.com/username/Servetus.git
 ```
 
 ### 2. Open in Obsidian

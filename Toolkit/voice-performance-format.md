@@ -48,7 +48,7 @@ behind.
 Every spoken turn has two staves:
 
 ```
-## 00:04:23 — Mike Mazur
+## 00:04:23 — collaborator-d collaborator-d
 "I think we should move forward with the infrastructure decision."
 *[340ms] · ↗think · steady · [1.2s] · ↘infra[stress]structure · trails ↘*
 ```
@@ -124,11 +124,11 @@ the notes. The SVP line is the expression marking.
 ## Full Example
 
 ```markdown
-## 00:04:23 — Mike Mazur
+## 00:04:23 — collaborator-d collaborator-d
 "I think we should move forward with the infrastructure decision."
 *mp · ↗think · [340ms] · steady → · [1.2s] · ↘infra[stress]structure · [trail] ↘ · [unsure]*
 
-## 00:04:51 — Christian Sass
+## 00:04:51 — [vault-owner]
 "AJ needs to be in that conversation before we commit to anything."
 *mf · [latch] · f[stress]AJ · [commit] · steady → · ↘anything*
 ```
@@ -175,6 +175,6 @@ to be read by a non-linguist years after the recording was made.
 - [x] Two-stave architecture defined
 - [x] Core notation vocabulary drafted
 - [ ] AuToBI integration into extraction pipeline
-- [ ] Validated against real transcript (BinaryRanch call 2026-03-18)
+- [ ] Validated against real transcript (colo node call 2026-03-18)
 - [ ] RaP comparison — confirm symbol conflicts and resolve
 - [ ] Obsidian rendering — confirm notation displays correctly

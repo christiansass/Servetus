@@ -108,7 +108,7 @@ pipeline_score: 0          # trust score
 
 ## Origin Note
 
-Design decision captured 2026-03-12, Quincy IL, during processing of the first
+Design decision captured 2026-03-12, [location] IL, during processing of the first
 artifact destined for the Josh Matrisciana witness record. The insight: Servetus
 becomes a party to every conversation it records — not a tool, but a witness.
 A trustworthy transcriptionist with its own verifiable identity.

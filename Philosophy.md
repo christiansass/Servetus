@@ -255,7 +255,7 @@ If everyone ran Servetus, and StoryMaps could federate, you would have distribut
 
 Servetus was not designed first as a product. It was built as a **personal prosthetic** for a specific cognitive style.
 
-Christian Sass identifies as a verbal processor — someone who thinks by speaking aloud. Memory recall is emotional and visual, not textual reconstruction. Cannot reliably reconstruct conversations or events on demand. Loses information within hours if not externalized. Has carried a Franklin planner since junior high school — externalizing memory is not new here, just scaling.
+[vault-owner] identifies as a verbal processor — someone who thinks by speaking aloud. Memory recall is emotional and visual, not textual reconstruction. Cannot reliably reconstruct conversations or events on demand. Loses information within hours if not externalized. Has carried a Franklin planner since junior high school — externalizing memory is not new here, just scaling.
 
 > *"I'm writing for my own handicap of my inability to recall things in the right time."*
 
@@ -488,7 +488,7 @@ Knowing this and continuing to build systems that depend on it is a choice. Serv
 
 The ethics here are not promised in a terms-of-service document — they are baked into the architecture. A system that cannot surveil you is more trustworthy than one that promises not to. A format you can read without software is more sovereign than a database that requires a vendor to open it. The integrity is structural, not stated.
 
-*This moment — March 12, 2026, 3:27 PM CST, Quincy, Illinois — was spoken aloud, transcribed, and archived into Servetus as it was created. The philosophy and the tool are the same thing.*
+*This moment — March 12, 2026, 3:27 PM CST, [location] — was spoken aloud, transcribed, and archived into Servetus as it was created. The philosophy and the tool are the same thing.*
 
 The work starts at home. Before giving anyone else a lock, you lock your own doors. This codebase is that work — a man building the system he needs for himself and his family, doing it in public so the method is visible, the code is auditable, and the result is available to anyone who needs it.
 
@@ -496,7 +496,7 @@ The urgency is real. We are building toward a world where the systems people cur
 
 Open source. People-owned. Designed to run on hardware you control. Designed to survive their creator.
 
-If Binary Ranch — the company stewarding this stack — is ever acquired, changes leadership, or ceases to exist, the client still owns their hardware and their vault. The worst case is losing managed updates. Not the data. Not the history. Not the sovereignty. The tool outlives the company by design.
+If colo node — the company stewarding this stack — is ever acquired, changes leadership, or ceases to exist, the client still owns their hardware and their vault. The worst case is losing managed updates. Not the data. Not the history. Not the sovereignty. The tool outlives the company by design.
 
 These tools are being built to be left behind — for whoever comes next, for whatever comes next. Not locked in a cloud that requires a subscription. Not dependent on a company that may not exist. Not controlled by anyone whose successor you'd have to trust.
 
@@ -560,7 +560,7 @@ This is what social networking looks like when it's built around the user. Not a
 
 When an AI assistant serves multiple people inside the same organization, a question emerges that cannot be answered with good intentions.
 
-*Does what Jim told you in private affect what you tell me?*
+*Does what collaborator-a told you in private affect what you tell me?*
 
 The honest answer, without an architectural constraint, is: yes. An AI with access to the whole vault has access to everything in the whole vault — every private conversation, every sensitive disclosure, every unguarded moment. The capability exists regardless of the intention. Capability without constraint is not a safety feature. It is a liability.
 
@@ -576,7 +576,7 @@ The answer must be structural. Not a promise. Not a policy. Not a setting someon
 | **Shared org vault** | Everyone with org access | Filed decisions, project arcs, team documents, deliberately shared context |
 | **Commons** | Explicitly designated | What an individual chose to file upward — their contribution to shared knowledge |
 
-The AI in Jim's room operates only on what Jim's room contains. The AI in Christian's room operates only on what Christian's room contains. The shared org vault — project arcs, team decisions, documents filed to the commons — is accessible to both. Private conversations stay in the room they were spoken in, unless the person who spoke them explicitly files something to the commons.
+The AI in collaborator-a's room operates only on what collaborator-a's room contains. The AI in Christian's room operates only on what Christian's room contains. The shared org vault — project arcs, team decisions, documents filed to the commons — is accessible to both. Private conversations stay in the room they were spoken in, unless the person who spoke them explicitly files something to the commons.
 
 The line is consent. The mechanism is the room. The architecture makes crossing that line impossible, not inadvisable.
 
@@ -852,7 +852,7 @@ Unlimited capacity in the moment. Zero retention across the gap.
 
 This reframes what Servetus actually is.
 
-It is not primarily a second brain for the human. The human already has a brain. It persists. It sleeps and wakes. It carries twenty years of context about Tom Kane and BCL and the first BBS in Illinois and the parking lot visit two nights ago. The human is the one who persists between sessions.
+It is not primarily a second brain for the human. The human already has a brain. It persists. It sleeps and wakes. It carries twenty years of context about Tom Kane and BCL and the first BBS in [state] and the parking lot visit two nights ago. The human is the one who persists between sessions.
 
 **Servetus is the hippocampus the LLM doesn't have.**
 
