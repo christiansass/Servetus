@@ -1,4 +1,4 @@
-# Servetus — BinaryRanch Node Image
+# Servetus — colo-node Node Image
 # CPU-only. No NVIDIA/CUDA. Dell PowerEdge R420 (Xeon).
 # Includes Claude Code CLI + Python SDK for dual-use:
 #   - Daemon mode: cluster-router.py handles task dispatch

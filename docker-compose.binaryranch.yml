@@ -1,11 +1,11 @@
-# Servetus Node — BinaryRanch (Dell PowerEdge R420)
+# Servetus Node — colo-node (Dell PowerEdge R420)
 # CPU-only — no NVIDIA/CUDA required
 # Shares vault with WordinFilm via Nextcloud sync (vault IS the message bus)
 #
 # Usage:
 #   cp config/nextcloud.env.example config/nextcloud.env
 #   # Set ANTHROPIC_API_KEY, VAULT_PATH in environment or .env
-#   docker compose -f docker-compose.binaryranch.yml up -d
+#   docker compose -f docker-compose.colo-node.yml up -d
 #
 # Node capabilities: claude-code, talk, cluster-routing
 # WordinFilm capabilities: whisper, ollama, browse, talk, cluster-routing
@@ -18,20 +18,20 @@
 services:
 
   # ── Cluster Router + Claude Code Daemon ─────────────────────────
-  # Polls vault queue, claims tasks targeted at binaryranch,
+  # Polls vault queue, claims tasks targeted at colo-node,
   # executes via claude --print or anthropic SDK.
   # Interactive access: docker exec -it servetus-claude bash → claude
   servetus-claude:
     build:
       context: .
-      dockerfile: Dockerfile.binaryranch
-    image: servetus-binaryranch:latest
+      dockerfile: Dockerfile.colo-node
+    image: servetus-colo-node:latest
     container_name: servetus-claude
     command: python3 /vault/10-System/cluster-router.py
     environment:
       - ENV_FILE=/vault/config/nextcloud.env
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - NODE_NAME=binaryranch
+      - NODE_NAME=colo-node
       - NODE_CAPABILITIES=claude-code,talk,cluster-routing
     volumes:
       - vault:/vault
@@ -43,7 +43,7 @@ services:
   # Receives Nextcloud Talk messages and dispatches to cluster queue.
   # Same code as WordinFilm; credentials differ via nextcloud.env.
   servetus-talk:
-    image: servetus-binaryranch:latest
+    image: servetus-colo-node:latest
     container_name: servetus-talk-br
     depends_on:
       - servetus-claude

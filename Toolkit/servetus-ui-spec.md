@@ -93,7 +93,7 @@ The launch menu gains an LLM picker above the context picker.
 ║   4. ollama / mistral     local  · fast                            ║
 ╠══════════════════════════════════════════════════════════════════════╣
 ║  CONTEXT — arc / project / session                                  ║
-║   5. BinaryRanch Arc      2h ago                                   ║
+║   5. colo-node Arc      2h ago                                   ║
 ║   6. T-Mobile Breach      yesterday                                ║
 ╠══════════════════════════════════════════════════════════════════════╣
 ║  [1–N] pick   [N] new label   [Enter] defaults                     ║

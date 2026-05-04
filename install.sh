@@ -3,16 +3,16 @@
 # Servetus One-Line Installer
 # =============================================================================
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/christiansass/Servetus/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/username/Servetus/main/install.sh | bash
 #
 # Or clone first:
-#   git clone https://github.com/christiansass/Servetus.git
+#   git clone https://github.com/username/Servetus.git
 #   bash Servetus/install.sh
 # =============================================================================
 
 set -e
 
-REPO="https://github.com/christiansass/Servetus.git"
+REPO="https://github.com/username/Servetus.git"
 
 echo ""
 echo "  ╔═══════════════════════════════╗"

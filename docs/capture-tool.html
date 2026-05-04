@@ -170,7 +170,7 @@ textarea#template-editor{
 
   <div class="security-box">
     <strong>If you're technically minded, here's exactly what's happening — and what isn't.</strong>
-    <p>This page is a static HTML file hosted on GitHub Pages. It has no backend, no server, no database, no tracking, no analytics, no cookies, no form submissions. You can <a href="https://github.com/christiansass/Servetus/blob/main/docs/capture-tool.html" target="_blank" style="color:var(--success)">read every line of source</a> right now.</p>
+    <p>This page is a static HTML file hosted on GitHub Pages. It has no backend, no server, no database, no tracking, no analytics, no cookies, no form submissions. You can <a href="https://github.com/username/Servetus/blob/main/docs/capture-tool.html" target="_blank" style="color:var(--success)">read every line of source</a> right now.</p>
     <p><strong>The generator never asks for your credentials.</strong> What it produces is a self-contained JavaScript bookmarklet — a <code>javascript:</code> URL you drag to your bookmarks bar. That bookmarklet contains no username, no password, no Nextcloud URL. On first click, it prompts you for those three things directly in your browser. They are written to your browser's <code>localStorage</code> — a sandboxed, device-local key-value store that no external party can read or access. They never leave your machine.</p>
     <p><strong>Use a Nextcloud app password, not your account password.</strong> Generate one at Nextcloud → Settings → Security → App passwords. Scope it. Name it. If it's ever compromised, revoke that one token — your account and all other sessions remain unaffected.</p>
     <p><strong>The write path is direct:</strong> your browser sends a <code>PUT</code> request via WebDAV straight to your Nextcloud instance. No relay, no proxy, no middleman service ever sees the request or the content. The generated note goes from your clipboard to your server in one hop.</p>
@@ -186,9 +186,9 @@ textarea#template-editor{
         <div class="theme-name">Servetus</div>
         <div class="theme-desc">Sovereign intelligence</div>
       </div>
-      <div class="theme-card" data-theme="binaryranch" onclick="applyTheme('binaryranch',this)">
+      <div class="theme-card" data-theme="colo-node" onclick="applyTheme('colo-node',this)">
         <div class="theme-dot" style="background:#ff6b35"></div>
-        <div class="theme-name">Binary Ranch</div>
+        <div class="theme-name">colo-node</div>
         <div class="theme-desc">Sovereign cloud</div>
       </div>
       <div class="theme-card" data-theme="custom" onclick="applyTheme('custom',this)">
@@ -299,8 +299,8 @@ textarea#template-editor{
   <div class="footer">
     <div class="footer-brand" id="footer-brand">Servetus // Sovereign Intelligence</div>
     <div class="footer-links">
-      <a href="https://github.com/binaryranch" target="_blank">GitHub</a>
-      <a href="https://binaryranch.com" target="_blank">Binary Ranch</a>
+      <a href="https://github.com/colo-node" target="_blank">GitHub</a>
+      <a href="https://colo-node.com" target="_blank">colo-node</a>
     </div>
   </div>
 </div>
@@ -323,7 +323,7 @@ textarea#template-editor{
 // ── THEMES ──────────────────────────────────────────────────────────────────
 var THEMES = {
   servetus:    { accent:'#00d4ff', rgb:'0,212,255',   tagline:'In God we trust. All others bring data.', btnLabel:'Servetus Capture', footer:'Servetus // Sovereign Intelligence' },
-  binaryranch: { accent:'#ff6b35', rgb:'255,107,53',  tagline:"Don't rent what you can own.",            btnLabel:'Ranch Capture',    footer:'Binary Ranch // Sovereign Cloud Infrastructure' },
+  colo-node: { accent:'#ff6b35', rgb:'255,107,53',  tagline:"Don't rent what you can own.",            btnLabel:'Ranch Capture',    footer:'colo-node // Sovereign Cloud Infrastructure' },
   custom:      { accent:'#a855f7', rgb:'168,85,247',  tagline:'Your tagline here.',                      btnLabel:'Save to Vault',    footer:'Vault Capture' }
 };
 var currentTheme = 'servetus';

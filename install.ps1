@@ -2,7 +2,7 @@
 # Servetus One-Line Installer (Windows PowerShell)
 # =============================================================================
 # Usage (PowerShell, run as normal user):
-#   irm https://raw.githubusercontent.com/christiansass/Servetus/main/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/username/Servetus/main/install.ps1 | iex
 #
 # Or after cloning:
 #   .\Servetus\install.ps1
@@ -10,7 +10,7 @@
 
 $ErrorActionPreference = "Stop"
 
-$REPO = "https://github.com/christiansass/Servetus.git"
+$REPO = "https://github.com/username/Servetus.git"
 
 Write-Host ""
 Write-Host "  +===============================+"

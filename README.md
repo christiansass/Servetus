@@ -299,7 +299,7 @@ Servetus (the system) ensures the interpretation layer is never controlled by a 
 
 **Ecosystem (separate repos):**
 
-- 🔧 [Nextcloud MCP](https://github.com/binaryranch/nextcloud-mcp) *(coming)* — MIT-licensed MCP server for CalDAV, CardDAV, and WebDAV. The sovereignty-respecting alternative to Google Calendar/Gmail MCPs. Servetus uses it for calendar corroboration and witness verification.
+- 🔧 [Nextcloud MCP](https://github.com/colo-node/nextcloud-mcp) *(coming)* — MIT-licensed MCP server for CalDAV, CardDAV, and WebDAV. The sovereignty-respecting alternative to Google Calendar/Gmail MCPs. Servetus uses it for calendar corroboration and witness verification.
 
 ---
 

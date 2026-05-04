@@ -23,9 +23,9 @@ This is not optional. It is a hard gate.
 |----------|----------|------|
 | MAC address | `aa:bb:cc:dd:ee:ff` | Hardware identity — permanent per NIC |
 | Private IP | `10.0.0.x`, `192.168.x.x` | Network topology leak |
-| Hostname | `my-machine`, `BinaryRanchDev` | Machine identification |
+| Hostname | `my-machine`, `colo-nodeDev` | Machine identification |
 | OS version (exact) | `Linux Mint 22.x`, `macOS 14.4.1` | Attack surface fingerprint |
-| Username / homedir | `/Users/sastian/`, `~/sastian/` | Account identity |
+| Username / homedir | `/Users/username/`, `~/username/` | Account identity |
 | Serial numbers | Any hardware serial | Device tracking |
 | UUIDs tied to hardware | Disk UUID, board UUID | Hardware fingerprint |
 
@@ -80,7 +80,7 @@ real-hostname==>my-machine
 EOF
 
 git filter-repo --replace-text /tmp/replacements.txt
-git remote add origin https://github.com/christiansass/Servetus.git
+git remote add origin https://github.com/username/Servetus.git
 git push --force origin main
 
 # Sync live vault to rewritten history
