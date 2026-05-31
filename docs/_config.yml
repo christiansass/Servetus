@@ -1,0 +1,6 @@
+title: "Servetus"
+description: "A fully sovereign AI operating system for Nextcloud"
+theme: minima
+baseurl: "/Servetus"
+url: "https://christiansass.github.io"
+permalink: /updates/:year/:month/:day/:title/
