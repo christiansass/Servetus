@@ -412,15 +412,15 @@
   </div>
 </section>
 
-<!-- ── What's Shipped ── -->
+<!-- ── What's Working ── -->
 <section>
   <div class="container">
-    <h2>What's <span class="accent">shipped</span> in v0.3.0</h2>
+    <h2>What's <span class="accent">working</span></h2>
     <div class="feature-grid">
       <div class="feature-card">
-        <div class="icon">◈</div>
-        <h3>KITT Statusline</h3>
-        <p>Running clock ticking every second. Session age. Room label. Red bouncing scanner on AI thinking.</p>
+        <div class="icon">◉</div>
+        <h3>Full-Fidelity Artifacts</h3>
+        <p>Every session: JSONL raw witness + rich Markdown transcript + extracted images, co-located in one folder.</p>
       </div>
       <div class="feature-card">
         <div class="icon">▤</div>
@@ -433,11 +433,6 @@
         <p>Background file watcher + triage + two-stage filer. New files announced to terminal without touching the LLM.</p>
       </div>
       <div class="feature-card">
-        <div class="icon">◉</div>
-        <h3>Full-Fidelity Artifacts</h3>
-        <p>Every session: JSONL raw witness + rich Markdown transcript + extracted images, co-located in one folder.</p>
-      </div>
-      <div class="feature-card">
         <div class="icon">⚠</div>
         <h3>Orphan Scanner</h3>
         <p>Detects real sessions closed without artifacts. Surfaces them in the launch brief at next open.</p>
@@ -447,29 +442,44 @@
         <h3>Timecode, Not Timestamps</h3>
         <p>Per-turn timestamps with millisecond precision. Local time always. Seconds pattern distinguishes human vs automated.</p>
       </div>
+      <div class="feature-card">
+        <div class="icon">⬡</div>
+        <h3>Altitude Folder Structure</h3>
+        <p>00-Artifacts through 10-System — numbered layers from raw evidence to operational code. Session brackets open and close cleanly.</p>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ── Status ── -->
+<!-- ── What's Next ── -->
 <section>
   <div class="container">
-    <h2>Build <span class="accent">status</span></h2>
+    <h2>What's <span class="accent">next</span></h2>
     <ul class="status-list">
-      <li><span class="check">✓</span> Altitude folder structure (00-Artifacts → 10-System)</li>
-      <li><span class="check">✓</span> Session bracket — sc open / session-close</li>
-      <li><span class="check">✓</span> Full-fidelity artifacts — JSONL + Markdown + images</li>
-      <li><span class="check">✓</span> Inbox pipeline — triage, file, finalize</li>
-      <li><span class="check">✓</span> Background Hopper daemon</li>
-      <li><span class="check">✓</span> Launch brief dashboard</li>
-      <li><span class="check">✓</span> KITT statusline with running clock</li>
-      <li><span class="check">✓</span> Orphan session scanner</li>
-      <li><span class="check">✓</span> Cross-platform installers</li>
-      <li><span class="pending">⏳</span> Session context injection (last-session-brief → LLM)</li>
-      <li><span class="pending">⏳</span> StoryMap visualization</li>
-      <li><span class="pending">⏳</span> Voice capture pipeline</li>
-      <li><span class="pending">⏳</span> Conversational Traffic Controller</li>
+      <li><span class="pending">⏳</span> Hermes integration — process execution layer underneath Servetus</li>
+      <li><span class="pending">⏳</span> Nextcloud Passwords secrets backend for Hermes (replacing Bitwarden-only)</li>
+      <li><span class="pending">⏳</span> Semantic orchestration — deterministic artifact production across specialized layers</li>
+      <li><span class="pending">⏳</span> Nextcloud dashboard replacement — sovereign alternative to Notion</li>
+      <li><span class="pending">⏳</span> StoryMap visualization — visual graph of your second brain</li>
+      <li><span class="pending">⏳</span> Voice capture pipeline — ambient recording to structured artifacts</li>
+      <li><span class="pending">⏳</span> Conversational Traffic Controller — multi-room, multi-user session routing</li>
+      <li><span class="pending">⏳</span> Spatial / AR interface — focal-plane UX for ambient AI interaction</li>
     </ul>
+  </div>
+</section>
+
+<!-- ── News ── -->
+<section>
+  <div class="container">
+    <h2><span class="accent">News</span></h2>
+    <div class="feature-card" style="margin-bottom:16px;">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;">
+        <h3 style="margin:0;"><a href="updates/2026/05/30/finding-our-tribe/">Finding Our Tribe</a></h3>
+        <span style="font-family:var(--font-mono); font-size:11px; color:var(--dim);">May 30, 2026</span>
+      </div>
+      <p style="margin:0;">Two Discord sessions. Seven hours. Six independent builders who had been working toward the same destination without knowing each other existed. The coming out party for Binary Ranch.</p>
+    </div>
+    <p><a href="updates/">All updates &rarr;</a></p>
   </div>
 </section>
 
@@ -533,6 +543,8 @@
   <div class="container">
     <p>
       <a href="https://github.com/christiansass/Servetus">GitHub</a>
+      &nbsp;·&nbsp;
+      <a href="updates/">News</a>
       &nbsp;·&nbsp;
       <a href="philosophy.html">Philosophy</a>
       &nbsp;·&nbsp;
