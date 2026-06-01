@@ -51,6 +51,7 @@ config/
 !05-Arcs/
 !06-Radar/
 !07-StoryMap/
+!08-People/
 !08-Witnesses/
 !09-Shared/
 
@@ -100,6 +101,12 @@ config/
 !07-StoryMap/_storymap-spec.md
 !07-StoryMap/_storymap-template.md
 
+# People (public index cards — personal content, not committed)
+08-People/**
+!08-People/.gitkeep
+!08-People/_people-spec.md
+!08-People/_people-template.md
+
 # Witnesses (people, private intel)
 08-Witnesses/**
 !08-Witnesses/.gitkeep
@@ -111,6 +118,17 @@ config/
 !09-Shared/.gitkeep
 !09-Shared/_shared-spec.md
 !09-Shared/_shared-template.md
+!09-Shared/reporter/
+09-Shared/reporter/**
+!09-Shared/reporter/_reporter-template.md
+!09-Shared/reporter/drafts/
+!09-Shared/reporter/drafts/.gitkeep
+!09-Shared/reporter/approved/
+!09-Shared/reporter/approved/.gitkeep
+!09-Shared/reporter/published/
+!09-Shared/reporter/published/.gitkeep
+!09-Shared/reporter/session-logs/
+!09-Shared/reporter/session-logs/.gitkeep
 10-System/context-card.md
 
 # Library — personal content, copyrighted source texts
