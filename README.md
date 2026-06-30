@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/images/servetus-container.jpeg" alt="Servetus Container" width="400">
+</p>
+
 # Servetus
 
 **A human-readable memory map for personal knowledge sovereignty.**
@@ -5,6 +9,23 @@
 > *"There is no trust without truth, and there is no assistant without trust."*
 
 **Current Version: 0.3.5** · [Changelog](CHANGELOG.md) · [Philosophy](Philosophy.md)
+
+---
+
+> **PRE-RELEASE — NOT READY FOR INSTALLATION**
+>
+> Servetus is under active development. The specifications, folder structure,
+> and tooling are changing daily. If you're here because you're interested,
+> welcome — read the philosophy, explore the specs, ask questions. But do not
+> attempt to install or run this as your own vault yet. The install path,
+> SETUP.md, and CLAUDE.md template do not yet reflect the current working
+> state of the system.
+>
+> **Target audience right now:** Developers following the project who want to
+> understand the architecture. Not end users.
+>
+> When this notice is removed, it's ready. Until then, watch and learn —
+> we'll get you set up properly when it ships.
 
 ---
 

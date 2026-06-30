@@ -43,6 +43,8 @@ config/
 !10-System/
 !docs/
 !templates/
+!assets/
+!assets/images/
 !00-Artifacts/
 !01-Records/
 !02-Memories/
@@ -54,6 +56,11 @@ config/
 !08-People/
 !08-Witnesses/
 !09-Shared/
+
+# Grok project skills (versioned slash commands — e.g. /clean-exit)
+!.grok/
+!.grok/skills/
+!.grok/skills/**
 
 # Artifacts (original evidence locker — copied originals, date-sorted)
 00-Artifacts/**
