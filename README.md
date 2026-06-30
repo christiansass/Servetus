@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/images/servetus-container.jpeg" alt="Servetus Container" width="400">
+  <img src="assets/images/servetus-container.jpeg" alt="Servetus Container" width="300">
 </p>
 
 # Servetus
