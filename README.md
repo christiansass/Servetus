@@ -336,6 +336,23 @@ For AI assistants: Read `CLAUDE.md` first — it's gitignored, stays local to yo
 
 ---
 
+## Ecosystem
+
+Servetus is the brain — the memory map, the artifact chain, the Constitution. It's the open standard anyone can adopt.
+
+**Segundo** is the product built on top. The face. The AI agent personality that customers talk to. Segundo runs on Servetus — same vault, same Constitution, same architecture. Binary Ranch ships Segundo as a commercial product.
+
+| Layer | Name | What it is |
+|-------|------|-----------|
+| Philosophy | Servetus | The brain. The vault, the Constitution, the artifact chain. Open standard. |
+| Product | Segundo | The face. The agent personality. What business owners buy. |
+| Role | Foreman | The executive function. The coordinator sitting in the bridge seat. |
+| Company | Binary Ranch | Ships Segundo. Sells operational intelligence. |
+
+The interfaces — CLI, desktop, mobile, voice, web — are the senses. They all serve the brain. The brain is Servetus. The face is Segundo.
+
+---
+
 ## Contributing
 
 This is an open standard. We welcome:
