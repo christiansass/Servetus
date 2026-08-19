@@ -351,6 +351,8 @@ Servetus is the brain — the memory map, the artifact chain, the Constitution. 
 
 The interfaces — CLI, desktop, mobile, voice, web — are the senses. They all serve the brain. The brain is Servetus. The face is Segundo.
 
+> `...`
+
 ---
 
 ## Contributing
